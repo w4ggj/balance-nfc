@@ -6,6 +6,8 @@
   <title>Balance Martial Arts &amp; Gaming</title>
   <meta name="description" content="Welcome to Balance Martial Arts &amp; Gaming in Pinellas Park, FL. Find upcoming events, shop, search for singles, and follow us on social." />
   <meta name="theme-color" content="#0e0f13" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
 
   <!-- Open Graph / share preview -->
   <meta property="og:title" content="Balance Martial Arts & Gaming" />
@@ -26,9 +28,9 @@
       --surface-2: #22252e;   /* card hover / borders              */
       --text:      #f4f5f7;   /* primary text                      */
       --muted:     #9aa0ad;   /* secondary text                    */
-      --accent:    #e63946;   /* primary brand accent (edit me)    */
-      --accent-2:  #ffb703;   /* secondary accent  (edit me)       */
-      --ring:      rgba(230, 57, 70, .35);
+      --accent:    #c81e27;   /* brand red   (from logo)           */
+      --accent-2:  #f5c518;   /* brand gold  (from logo flames)    */
+      --ring:      rgba(200, 30, 39, .35);
 
       --radius: 18px;
       --maxw: 560px;
@@ -41,8 +43,8 @@
 
     body {
       background:
-        radial-gradient(1200px 600px at 50% -10%, rgba(230,57,70,.14), transparent 60%),
-        radial-gradient(900px 500px at 110% 10%, rgba(255,183,3,.10), transparent 55%),
+        radial-gradient(1200px 600px at 50% -10%, rgba(200,30,39,.18), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(245,197,24,.10), transparent 55%),
         var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -58,35 +60,24 @@
     }
 
     /* ── Header ─────────────────────────────────────────── */
-    .header { text-align: center; margin-bottom: 26px; }
+    .header { text-align: center; margin-bottom: 22px; }
 
     .logo {
-      width: 92px; height: 92px;
-      margin: 0 auto 16px;
-      border-radius: 22px;
-      display: grid; place-items: center;
-      background: linear-gradient(150deg, var(--accent), var(--accent-2));
-      box-shadow: var(--shadow), 0 0 0 1px rgba(255,255,255,.06) inset;
-      font-weight: 800;
-      font-size: 34px;
-      letter-spacing: -1px;
-      color: #fff;
+      display: block;
+      width: 100%;
+      max-width: 340px;
+      height: auto;
+      margin: 0 auto 8px;
+      filter: drop-shadow(0 8px 24px rgba(200,30,39,.28));
     }
-    /* Replace the .logo <div> with an <img> once you have the logo file. */
 
-    .brand {
-      font-size: clamp(24px, 6vw, 30px);
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      margin: 0;
-      line-height: 1.15;
-    }
-    .brand .amp { color: var(--accent); }
+    /* accessible name — logo already shows the wordmark */
+    .brand { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
     .tagline {
       color: var(--muted);
       font-size: 15px;
-      margin: 8px 0 0;
+      margin: 4px 0 0;
     }
 
     .welcome {
@@ -227,9 +218,8 @@
 
     <!-- ── Header ──────────────────────────────────────── -->
     <header class="header">
-      <!-- Swap this <div> for <img src="logo.png" alt="Balance Martial Arts & Gaming" class="logo"> once you upload the logo -->
-      <div class="logo" aria-hidden="true">B</div>
-      <h1 class="brand">Balance Martial&nbsp;Arts <span class="amp">&amp;</span> Gaming</h1>
+      <h1 class="brand">Balance Gaming FL — Balance Martial Arts &amp; Gaming</h1>
+      <img class="logo" src="assets/logo.png" alt="Balance Gaming FL" width="340" height="340" />
       <p class="tagline">Your table, your game — Pinellas&nbsp;Park, FL</p>
       <span class="welcome">👋 Welcome! <b>Tap below to explore</b></span>
     </header>
