@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Balance Martial Arts &amp; Gaming</title>
+  <meta name="description" content="Welcome to Balance Martial Arts &amp; Gaming in Pinellas Park, FL. Find upcoming events, shop, search for singles, and follow us on social." />
+  <meta name="theme-color" content="#0e0f13" />
+
+  <!-- Open Graph / share preview -->
+  <meta property="og:title" content="Balance Martial Arts & Gaming" />
+  <meta property="og:description" content="Events, singles, and everything happening at your table. Tap to explore." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://balancegamingfl.com/" />
+
+  <style>
+    /*
+      ─────────────────────────────────────────────────────────────
+      BRAND COLORS — edit these to match balancegamingfl.com exactly.
+      Just change the hex values below; everything updates.
+      ─────────────────────────────────────────────────────────────
+    */
+    :root {
+      --bg:        #0e0f13;   /* page background (deep charcoal)   */
+      --surface:   #191b22;   /* card background                   */
+      --surface-2: #22252e;   /* card hover / borders              */
+      --text:      #f4f5f7;   /* primary text                      */
+      --muted:     #9aa0ad;   /* secondary text                    */
+      --accent:    #e63946;   /* primary brand accent (edit me)    */
+      --accent-2:  #ffb703;   /* secondary accent  (edit me)       */
+      --ring:      rgba(230, 57, 70, .35);
+
+      --radius: 18px;
+      --maxw: 560px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(230,57,70,.14), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(255,183,3,.10), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100dvh;
+      line-height: 1.5;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    .wrap {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    .header { text-align: center; margin-bottom: 26px; }
+
+    .logo {
+      width: 92px; height: 92px;
+      margin: 0 auto 16px;
+      border-radius: 22px;
+      display: grid; place-items: center;
+      background: linear-gradient(150deg, var(--accent), var(--accent-2));
+      box-shadow: var(--shadow), 0 0 0 1px rgba(255,255,255,.06) inset;
+      font-weight: 800;
+      font-size: 34px;
+      letter-spacing: -1px;
+      color: #fff;
+    }
+    /* Replace the .logo <div> with an <img> once you have the logo file. */
+
+    .brand {
+      font-size: clamp(24px, 6vw, 30px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin: 0;
+      line-height: 1.15;
+    }
+    .brand .amp { color: var(--accent); }
+
+    .tagline {
+      color: var(--muted);
+      font-size: 15px;
+      margin: 8px 0 0;
+    }
+
+    .welcome {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--surface-2);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .welcome b { color: var(--text); }
+
+    /* ── Link tiles ─────────────────────────────────────── */
+    .tiles { display: grid; gap: 14px; margin-top: 26px; }
+
+    .tile {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 18px;
+      background: var(--surface);
+      border: 1px solid var(--surface-2);
+      border-radius: var(--radius);
+      color: var(--text);
+      text-decoration: none;
+      box-shadow: var(--shadow);
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+    .tile:active { transform: scale(.985); }
+    @media (hover: hover) {
+      .tile:hover { border-color: var(--accent); background: var(--surface-2); }
+    }
+
+    .tile .icon {
+      flex: 0 0 auto;
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: grid; place-items: center;
+      background: linear-gradient(150deg, var(--accent), var(--accent-2));
+      color: #fff;
+    }
+    .tile .icon svg { width: 24px; height: 24px; }
+
+    .tile .text { flex: 1 1 auto; min-width: 0; }
+    .tile .title { display: block; font-weight: 700; font-size: 17px; }
+    .tile .sub { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+    .tile .chev {
+      flex: 0 0 auto;
+      color: var(--muted);
+      width: 20px; height: 20px;
+    }
+
+    /* Quick chips (under Search) */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: -4px 2px 6px; }
+    .chip {
+      text-decoration: none;
+      font-size: 13px; font-weight: 600;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--surface-2);
+      padding: 8px 12px;
+      border-radius: 999px;
+      transition: border-color .12s ease;
+    }
+    .chip:active { transform: scale(.97); }
+    @media (hover: hover) { .chip:hover { border-color: var(--accent-2); } }
+
+    /* ── Social row ─────────────────────────────────────── */
+    .social-label {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin: 30px 0 14px;
+    }
+    .social { display: flex; justify-content: center; gap: 14px; }
+    .social a {
+      width: 54px; height: 54px;
+      border-radius: 14px;
+      display: grid; place-items: center;
+      background: var(--surface);
+      border: 1px solid var(--surface-2);
+      color: var(--text);
+      transition: transform .12s ease, border-color .12s ease;
+    }
+    .social a:active { transform: scale(.94); }
+    @media (hover: hover) { .social a:hover { border-color: var(--accent); } }
+    .social svg { width: 26px; height: 26px; }
+
+    /* ── Footer / store info ────────────────────────────── */
+    .info {
+      margin-top: 34px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--surface-2);
+      border-radius: var(--radius);
+      text-align: center;
+    }
+    .info .row { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 6px 0; }
+    .info a { color: var(--text); text-decoration: none; }
+    .info a:active { color: var(--accent); }
+    .info svg { width: 16px; height: 16px; color: var(--accent); flex: 0 0 auto; }
+    .info .hours { color: var(--muted); font-size: 13px; margin-top: 10px; line-height: 1.6; }
+
+    .footer-note {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 22px;
+    }
+    .footer-note b { color: var(--text); }
+
+    /* Fade-in */
+    @media (prefers-reduced-motion: no-preference) {
+      .header, .tiles > *, .social-label, .social, .info, .footer-note {
+        animation: rise .5s cubic-bezier(.2,.7,.3,1) both;
+      }
+      .tiles > *:nth-child(1) { animation-delay: .05s; }
+      .tiles > *:nth-child(2) { animation-delay: .10s; }
+      .tiles > *:nth-child(3) { animation-delay: .15s; }
+      .tiles > *:nth-child(4) { animation-delay: .20s; }
+      .tiles > *:nth-child(5) { animation-delay: .25s; }
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+
+    <!-- ── Header ──────────────────────────────────────── -->
+    <header class="header">
+      <!-- Swap this <div> for <img src="logo.png" alt="Balance Martial Arts & Gaming" class="logo"> once you upload the logo -->
+      <div class="logo" aria-hidden="true">B</div>
+      <h1 class="brand">Balance Martial&nbsp;Arts <span class="amp">&amp;</span> Gaming</h1>
+      <p class="tagline">Your table, your game — Pinellas&nbsp;Park, FL</p>
+      <span class="welcome">👋 Welcome! <b>Tap below to explore</b></span>
+    </header>
+
+    <!-- ── Link tiles ──────────────────────────────────── -->
+    <nav class="tiles" aria-label="Main links">
+
+      <!-- Upcoming Events -->
+      <a class="tile" href="https://balancegamingfl.com/pages/events">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </span>
+        <span class="text">
+          <span class="title">Upcoming Events</span>
+          <span class="sub">Tournaments, leagues &amp; game nights</span>
+        </span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+
+      <!-- Search Singles -->
+      <a class="tile" href="https://balancegamingfl.com/search">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </span>
+        <span class="text">
+          <span class="title">Search for Singles</span>
+          <span class="sub">Find that card in our inventory</span>
+        </span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+
+      <!-- quick singles chips -->
+      <div class="chips">
+        <a class="chip" href="https://balancegamingfl.com/collections/all-pokemon-singles">Pokémon Singles</a>
+        <a class="chip" href="https://balancegamingfl.com/collections/all-mtg-singles">Magic Singles</a>
+      </div>
+
+      <!-- Shop / Website -->
+      <a class="tile" href="https://balancegamingfl.com/">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M9 22V12h6v10"/></svg>
+        </span>
+        <span class="text">
+          <span class="title">Shop &amp; Our Website</span>
+          <span class="sub">Browse the full store at balancegamingfl.com</span>
+        </span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+
+      <!-- Follow / Advertising tile -->
+      <a class="tile" href="https://www.facebook.com/balance.martialarts.gaming/">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-8.5C1 9.5 2.5 6 6 6c2 0 3 1 4 2.5C11 7 12 6 14 6c3.5 0 5 3.5 3.5 6.5C19 16.65 12 21 12 21z"/></svg>
+        </span>
+        <span class="text">
+          <span class="title">Follow Us &amp; Stay in the Loop</span>
+          <span class="sub">New drops, events &amp; deals first</span>
+        </span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+    </nav>
+
+    <!-- ── Social row ──────────────────────────────────── -->
+    <p class="social-label">Find us on social</p>
+    <div class="social">
+      <!-- Facebook (confirmed) -->
+      <a href="https://www.facebook.com/balance.martialarts.gaming/" aria-label="Facebook" title="Facebook">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/></svg>
+      </a>
+      <!-- Instagram — TODO: set your exact profile URL -->
+      <a href="https://www.instagram.com/balance.martialarts.gaming/" aria-label="Instagram" title="Instagram">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+      </a>
+      <!-- TikTok — TODO: set your exact profile URL -->
+      <a href="https://www.tiktok.com/@balancemartialartsgaming" aria-label="TikTok" title="TikTok">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 3c.3 2.2 1.6 3.9 3.9 4.2v2.6c-1.4.1-2.7-.3-3.9-1v5.9c0 3.4-2.6 5.7-5.8 5.3-2.6-.3-4.6-2.5-4.6-5.1 0-3.1 2.8-5.4 5.9-4.9v2.7c-.4-.1-.9-.2-1.3-.1-1.2.1-2 1-2 2.2 0 1.3 1 2.3 2.3 2.2 1.3 0 2.2-1 2.2-2.4V3h3.3z"/></svg>
+      </a>
+      <!-- Get Directions -->
+      <a href="https://www.google.com/maps/search/?api=1&query=Balance+Martial+Arts+and+Gaming+6701+49th+St+N+Pinellas+Park+FL+33781" aria-label="Get directions" title="Get directions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </a>
+    </div>
+
+    <!-- ── Store info ──────────────────────────────────── -->
+    <section class="info" aria-label="Store information">
+      <div class="row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <a href="https://www.google.com/maps/search/?api=1&query=Balance+Martial+Arts+and+Gaming+6701+49th+St+N+Pinellas+Park+FL+33781">6701 49th St N, Pinellas Park, FL 33781</a>
+      </div>
+      <div class="row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+        <a href="tel:+17276860864">(727) 686-0864</a>
+      </div>
+      <p class="hours">
+        <b style="color:var(--text)">Hours</b><br>
+        Mon–Fri: 4:00 PM – 10:00 PM<br>
+        Sat: 11:00 AM – 10:00 PM &nbsp;·&nbsp; Sun: 12:00 PM – 10:00 PM
+      </p>
+    </section>
+
+    <p class="footer-note">
+      Thanks for scanning at your table — enjoy the game! <br>
+      <b>Balance Martial Arts &amp; Gaming</b>
+    </p>
+
+  </main>
+</body>
+</html>
