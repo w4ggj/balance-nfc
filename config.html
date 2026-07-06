@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Table Landing — Control Panel</title>
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+</head>
+<body>
+  <main class="wrap">
+
+    <header class="header">
+      <h1 class="brand">Table Landing Control Panel</h1>
+      <img class="logo sm" src="assets/logo.png" alt="Balance Gaming FL" width="190" height="190" />
+      <p class="tagline">Table landing — control panel</p>
+      <span class="welcome">🔒 <b>Keep this link private</b> — staff only</span>
+    </header>
+
+    <!-- What's live right now -->
+    <div class="status">
+      <span class="live-dot" id="liveDot"></span>
+      <span class="txt">
+        <span class="k">Live right now</span>
+        <span class="v" id="liveName">…</span>
+      </span>
+    </div>
+
+    <p class="section-label">Turn on an event page</p>
+    <p style="color:var(--muted);font-size:13px;margin:-6px 2px 14px;">
+      Turning one on makes it the page customers land on when they scan a table tag —
+      the tag shows their table number. Turn it back off and the normal store hub returns.
+      Only one can be live at a time.
+    </p>
+
+    <!-- Pokémon -->
+    <div class="switch-row" style="--rowc:#ffcb05" data-on="false">
+      <span class="swatch"></span>
+      <span class="name">Pokémon TCG <small>pokemon.html</small></span>
+      <a class="prev" href="pokemon.html?tbl=7" target="_blank" rel="noopener">Preview</a>
+      <label class="toggle"><input type="checkbox" data-page="pokemon" aria-label="Pokémon TCG"><span class="track"></span><span class="knob"></span></label>
+    </div>
+
+    <!-- One Piece -->
+    <div class="switch-row" style="--rowc:#ff5a5f" data-on="false">
+      <span class="swatch"></span>
+      <span class="name">One Piece TCG <small>onepiece.html</small></span>
+      <a class="prev" href="onepiece.html?tbl=7" target="_blank" rel="noopener">Preview</a>
+      <label class="toggle"><input type="checkbox" data-page="onepiece" aria-label="One Piece TCG"><span class="track"></span><span class="knob"></span></label>
+    </div>
+
+    <!-- Riftbound -->
+    <div class="switch-row" style="--rowc:#17c0d6" data-on="false">
+      <span class="swatch"></span>
+      <span class="name">Riftbound <small>riftbound.html</small></span>
+      <a class="prev" href="riftbound.html?tbl=7" target="_blank" rel="noopener">Preview</a>
+      <label class="toggle"><input type="checkbox" data-page="riftbound" aria-label="Riftbound"><span class="track"></span><span class="knob"></span></label>
+    </div>
+
+    <!-- Magic -->
+    <div class="switch-row" style="--rowc:#a07bff" data-on="false">
+      <span class="swatch"></span>
+      <span class="name">Magic: The Gathering <small>mtg.html</small></span>
+      <a class="prev" href="mtg.html?tbl=7" target="_blank" rel="noopener">Preview</a>
+      <label class="toggle"><input type="checkbox" data-page="mtg" aria-label="Magic: The Gathering"><span class="track"></span><span class="knob"></span></label>
+    </div>
+
+    <p class="section-label">Publish your change</p>
+
+    <div class="publish hidden" id="publish">
+      <p class="lead">Copy this, then paste it into <b>config.json</b> and commit. Goes live in about a minute.</p>
+      <div class="codebox" id="codebox">{"active":"main"}</div>
+      <div class="btn-row">
+        <button class="btn game" id="copyBtn" style="--game:#f5c518">Copy config.json</button>
+        <a class="btn ghost" href="https://github.com/w4ggj/balance-nfc/edit/main/config.json" target="_blank" rel="noopener">Open GitHub editor ↗</a>
+      </div>
+      <ol class="steps">
+        <li><b>Copy</b> the line above.</li>
+        <li><b>Open the GitHub editor</b>, select all, paste over the file.</li>
+        <li><b>Commit</b> to <code>main</code>. Live in ~1 min — no re-tagging.</li>
+      </ol>
+    </div>
+
+    <div class="notice" id="noChange" style="display:none">
+      Nothing to publish — the switches match what's already live.
+    </div>
+
+    <p class="section-label">Preview the store hub</p>
+    <div class="event-actions">
+      <a class="btn ghost" href="./?hub=1" target="_blank" rel="noopener">Open the normal hub ↗</a>
+    </div>
+
+    <p class="footer-note" style="margin-top:26px">
+      Static hosting means a toggle has to be committed to take effect for customers.<br>
+      Want one-tap toggling with no commits? That's the Cloudflare Worker upgrade — ask Claude.
+    </p>
+
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    BGF.initConfig();
+    // show/hide the "nothing to publish" note alongside the publish box
+    (function () {
+      var pub = document.getElementById("publish");
+      var none = document.getElementById("noChange");
+      new MutationObserver(function () {
+        none.style.display = pub.classList.contains("hidden") ? "" : "none";
+      }).observe(pub, { attributes: true, attributeFilter: ["class"] });
+    })();
+  </script>
+</body>
+</html>

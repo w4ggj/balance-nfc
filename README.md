@@ -1,86 +1,65 @@
-# Balance Gaming FL — NFC Table Landing Page
+# Balance Gaming FL — NFC Table Landing
 
-A mobile landing page for the NFC tags placed on every table in the store.
-Customers tap a tag with their phone and land on a hub linking to the store's
-key destinations.
+Mobile landing system for the NFC tags on every table. One base URL is written to
+all tags; a small config file decides what customers see when they scan.
 
-**Status:** ✅ Live and print-ready.
-
-## Live URL
-
-Write this to the NFC tags:
-
+**Live URL written to every tag:**
 ```
-https://w4ggj.github.io/balance-nfc/
+https://w4ggj.github.io/balance-nfc/?tbl=N      (N = table number, 1–16)
 ```
+The `?tbl=N` never changes per tag — table 7's tag is always `...?tbl=7`.
 
-## What it is
+## How it works
 
-- Single self-contained `index.html` — no dependencies, loads instantly, mobile-first.
-- Branded with the store's dragon logo (white background knocked out so it sits
-  cleanly on the dark theme) and brand colors pulled from the logo.
-- Logo also set as the favicon / home-screen icon.
+`index.html` is a router. On every scan it reads **`config.json`** and decides:
 
-### Brand colors
+- **`{"active":"main"}`** → shows the normal store hub. `tbl` is ignored.
+- **`{"active":"pokemon"}`** (or `onepiece` / `riftbound` / `mtg`) → forwards to that
+  event page, carrying the table number, which the page shows as a big **TABLE N** badge.
 
-| Token        | Value      | Source              |
-| ------------ | ---------- | ------------------- |
-| `--accent`   | `#c81e27`  | dragon red          |
-| `--accent-2` | `#f5c518`  | flame gold          |
+Because the tags all point at the same base URL, you switch what they show by
+changing one line in `config.json` — **no re-tagging, ever**.
 
-Colors live as CSS variables at the top of `index.html` — edit there to restyle.
+## Files
 
-## Page contents
+| File | What it is |
+|------|------------|
+| `index.html` | Router + the store hub (the default landing) |
+| `pokemon.html`, `onepiece.html`, `riftbound.html`, `mtg.html` | Event pages (one per game) |
+| `config.json` | **Source of truth** — which page is live. One line. |
+| `config.html` | Private staff control panel (pick the active page, get the JSON to commit) |
+| `assets/brand.css` | Shared design system — edit brand colors here once |
+| `assets/app.js` | Shared logic: reads config, parses `tbl`, routing, control panel |
+| `assets/logo.png` | Dragon logo (favicon + header). Already in the repo. |
 
-**Link tiles**
+## Turning an event on / off
 
-| Tile                  | Destination                                          |
-| --------------------- | ---------------------------------------------------- |
-| Upcoming Events       | `balancegamingfl.com/collections/events`             |
-| Search for Singles    | `balancegamingfl.com/search`                         |
-| Shop & Our Website    | `balancegamingfl.com`                                |
-| Follow Us             | Facebook                                             |
+1. Open **`config.html`** on your phone (bookmark it — keep it private).
+2. Flip the switch for the game that's running. Turn all off for the normal hub.
+3. Tap **Copy config.json**, then **Open GitHub editor**, paste over the file, commit to `main`.
+4. Live in ~1 minute. The router fetches `config.json` fresh (cache-busted) on every scan.
 
-**Singles quick chips:** Pokémon · Magic · One Piece
+`?hub=1` on the base URL always shows the hub, even during an event (handy for testing).
 
-**Social row:** Facebook · Instagram (`/balancegamingfl`) · TikTok
-(`@balancegamingfl.com`) · Get Directions
+## Adding event features later (registration / match results)
 
-**Store info:** address (taps to maps) · phone (taps to dial) · hours
-
-## Hosting & updates
-
-- Hosted free on **GitHub Pages**, repo `w4ggj/balance-nfc` (public), served from
-  the `main` branch root.
-- Any change pushed to `main` auto-redeploys to the same URL — **the NFC tags
-  never need to be re-written** for future edits.
-
-## Local preview
-
-It's a static file — open `index.html` in any browser, or serve the folder:
-
+Each event page has a marked placeholder:
+```html
+<div class="panel placeholder" id="eventContent"> … </div>
 ```
-python3 -m http.server 8000   # then visit http://localhost:8000
+Replace it with the real feature. The table number is available two ways:
+- in the URL as `?tbl=N`
+- already rendered in `#tableBadge`
+
+Add `data-carry-tbl` to any **internal** link and `app.js` appends the table number
+to it automatically (e.g. a link to a registration form that needs the table).
+
+## Optional upgrade: one-tap toggling (no commits)
+
+Static hosting means a toggle has to be committed to take effect. To flip events
+instantly with no commit, stand up a small **Cloudflare Worker** (you already run one)
+that stores `active` and returns `{"active":"…"}`. Then change one line in `app.js`:
+```js
+var CONFIG_URL = "https://<your-worker>.workers.dev/";
 ```
-
-Assets:
-
-- `assets/logo.png` — processed logo (transparent background), used on the page.
-- `assets/logo-original.png` — original logo source file.
-
-## Open items / to verify
-
-- Confirm the **TikTok** link (`@balancegamingfl.com`) lands on the correct
-  profile — the `.com` in the handle is unusual.
-- **Store hours** were sourced from public listings — verify they're accurate.
-- Possible additions: Yu-Gi-Oh! / other singles, karate/dojo link, Google review
-  button.
-
-## Changelog
-
-- **2026-07-05** — Set Instagram and TikTok profile links.
-- **2026-07-05** — Add One Piece singles quick link.
-- **2026-07-05** — Point Upcoming Events tile to `/collections/events`.
-- **2026-07-05** — Add dragon logo and apply brand colors (red/gold).
-- **2026-07-05** — Initial NFC landing page: events, singles search, shop, social,
-  store info.
+Nothing else changes.

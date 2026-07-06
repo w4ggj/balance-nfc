@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Pokémon TCG — Balance Martial Arts &amp; Gaming</title>
+  <meta name="description" content="Pokémon TCG event at Balance Martial Arts &amp; Gaming, Pinellas Park, FL. Find your table and check in." />
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+</head>
+<body data-game="pokemon">
+  <main class="wrap">
+
+    <header class="header">
+      <h1 class="brand">Balance Martial Arts &amp; Gaming — Pokémon TCG</h1>
+      <img class="logo sm" src="assets/logo.png" alt="Balance Gaming FL" width="190" height="190" />
+    </header>
+
+    <section class="event-hero">
+      <span class="event-kicker"><span class="dot"></span> Event happening now</span>
+      <h2 class="event-title">Pokémon TCG</h2>
+      <p class="event-sub">Welcome! Here's your table for tonight.</p>
+      <div class="table-badge unknown" id="tableBadge" aria-live="polite">
+        <span class="lbl">Your table</span><span class="num">—</span>
+      </div>
+    </section>
+
+    <section class="event-body">
+      <!-- ── Future event tools go here (registration / check-in / results) ──
+           Replace this placeholder panel when we decide how this page works.
+           The current table number is available in the URL as ?tbl=N, and the
+           filled #tableBadge above. Add data-carry-tbl to any internal link to
+           pass the table number along. ──────────────────────────────────── -->
+      <div class="panel placeholder" id="eventContent">
+        <span class="tag">Coming soon</span>
+        <h2>Event tools will live here</h2>
+        <p>Registration, check-in, or match results for Pokémon TCG — we'll build this out next.</p>
+      </div>
+    </section>
+
+    <div class="event-actions">
+      <a class="btn primary" href="https://balancegamingfl.com/collections/events">Event details &amp; standings</a>
+      <a class="btn ghost" href="https://balancegamingfl.com/">Shop &amp; store info</a>
+    </div>
+
+    <div class="notice warn" id="inactiveNotice" hidden>
+      This event isn't running right now. <a href="./?hub=1">Go to the store hub →</a>
+    </div>
+
+    <p class="footer-note">
+      Enjoy the game! <br>
+      <b>Balance Martial Arts &amp; Gaming</b>
+    </p>
+
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script>BGF.initEvent("pokemon");</script>
+</body>
+</html>
