@@ -5,9 +5,11 @@ all tags; a small config file decides what customers see when they scan.
 
 **Live URL written to every tag:**
 ```
-https://w4ggj.github.io/balance-nfc/?tbl=N      (N = table number, 1–16)
+https://nfc.balancegamingfl.com/?tbl=N      (N = table number, 1–16)
 ```
 The `?tbl=N` never changes per tag — table 7's tag is always `...?tbl=7`.
+(Served via GitHub Pages; the `CNAME` file in this repo binds the custom domain.
+The old `https://w4ggj.github.io/balance-nfc/?tbl=N` URLs still redirect here.)
 
 ## How it works
 
