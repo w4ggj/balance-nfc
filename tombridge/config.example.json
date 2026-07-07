@@ -1,0 +1,10 @@
+{
+  "firebase": {
+    "serviceAccountPath": "./serviceAccount.json",
+    "databaseURL": "https://balance-nfc-default-rtdb.firebaseio.com"
+  },
+  "tournamentId": "",
+  "displayName": "",
+  "reportsDir": "",
+  "cutSizes": { "default": 0 }
+}
