@@ -20,8 +20,10 @@
     tiktok:      "https://www.tiktok.com/@balancegamingfl.com"
   };
 
-  // Per-game config. `eventsHandle` = the Shopify collection of that game's
-  // event products (confirm these handles). `app` = the official pairings app.
+  // Each game has its own Shopify events collection. The game name isn't always
+  // in the title, so we filter by COLLECTION (reliable), not keyword. Titles are
+  // "YYYY/MM/DD <Event Name>"; we match today's date. `app` = the pairings app.
+  // ── Confirm each eventsHandle against the store's collection URLs. ──
   var GAMES = {
     pokemon:   { label: "Pokémon TCG",         short: "Pokémon",  singles: SHOP + "/collections/all-pokemon-singles", eventsHandle: "pokemon-events",   app: null, deck: true },
     mtg:       { label: "Magic: The Gathering", short: "Magic",    singles: SHOP + "/collections/all-mtg-singles",     eventsHandle: "mtg-events",       app: { name: "Magic Companion", url: "https://magic.wizards.com/en/companion-app" }, deck: true },
@@ -70,7 +72,7 @@
   function loadTonight(game, host) {
     var G = GAMES[game];
     host.appendChild(loadingCard());
-    var url = SHOP + "/collections/" + G.eventsHandle + "/products.json?limit=100";
+    var url = SHOP + "/collections/" + G.eventsHandle + "/products.json?limit=250";
     fetch(url, { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function (data) {
