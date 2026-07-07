@@ -159,3 +159,9 @@ body.tap { padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
 }
 .tap-btn:active { transform: scale(.99); }
 .tap-foot { text-align: center; color: var(--muted); font-size: 12px; margin-top: 18px; }
+
+/* Rotating board idle slate (DakBoard / signage, no live event) */
+.idle { min-height: 70vh; display: grid; place-content: center; justify-items: center; text-align: center; gap: 10px; }
+.idle-logo { height: 140px; width: auto; opacity: .96; filter: drop-shadow(0 8px 24px rgba(200,30,39,.28)); }
+.idle-title { font-size: clamp(24px, 3vw, 40px); font-weight: 800; margin-top: 8px; }
+.idle-sub { color: var(--muted); font-size: clamp(14px, 1.5vw, 18px); }

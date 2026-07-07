@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tournament Board — Balance Gaming FL</title>
+  <meta name="theme-color" content="#0b0d10" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/tom.css" />
+</head>
+<body class="tom wall">
+  <!-- Auto-rotating pairings ↔ standings for DakBoard / wall signage.
+       ?rotate=N sets seconds per view (default 20). ?demo=1 previews the sample. -->
+  <header class="tom-header" id="hdr"></header>
+  <main class="board" id="board"></main>
+  <footer class="tom-foot" id="foot"></footer>
+
+  <script src="assets/app.js"></script>
+  <script src="assets/tom.js"></script>
+  <script>TOM.initBoard();</script>
+</body>
+</html>

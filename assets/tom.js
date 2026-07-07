@@ -348,6 +348,40 @@
     return isNaN(n) ? null : n;
   }
 
+  // ---- Rotating board (DakBoard / signage) -----------------------------
+  // Alternates pairings ↔ standings on a timer, and shows a branded idle slate
+  // when no tournament is fresh — safe to leave running 24/7 on an ad display.
+  function renderIdle() {
+    var hdr = document.getElementById("hdr"), board = document.getElementById("board"), foot = document.getElementById("foot");
+    if (hdr) hdr.innerHTML = ""; if (foot) foot.innerHTML = "";
+    board.innerHTML = "";
+    var wrap = h("div", "idle");
+    var img = h("img", "idle-logo"); img.src = "assets/logo.png"; img.alt = "Balance Gaming FL";
+    wrap.appendChild(img);
+    wrap.appendChild(h("div", "idle-title", "Tournament Boards"));
+    wrap.appendChild(h("div", "idle-sub", "Live pairings & standings show here during events."));
+    board.appendChild(wrap);
+  }
+
+  function initBoard() {
+    var secs = parseInt(qp("rotate"), 10); if (!secs || secs < 5) secs = 20;
+    var demo = qp("demo") != null;
+    var views = [renderPairings, renderStandings];
+    var idx = 0;
+
+    function fresh(snap) {
+      if (demo) return true;                       // demo always shows the sample
+      if (!snap || !snap.meta) return false;
+      return (Date.now() - (snap.meta.updatedMs || 0)) < LIVE_WINDOW_MS;
+    }
+    function draw() {
+      fetchSnapshot().then(function (snap) { if (fresh(snap)) views[idx](snap); else renderIdle(); });
+    }
+    draw();
+    setInterval(draw, POLL_MS);
+    setInterval(function () { idx = (idx + 1) % views.length; draw(); }, secs * 1000);
+  }
+
   // ---- public inits ----------------------------------------------------
   function initPairings() { poll(renderPairings); }
   function initStandings() { poll(renderStandings); }
@@ -356,7 +390,7 @@
   global.TOM = {
     TAG_TO_TABLE: TAG_TO_TABLE, LIVE_WINDOW_MS: LIVE_WINDOW_MS,
     initPairings: initPairings, initStandings: initStandings, initTable: initTable,
-    loadLatest: loadLatest
+    initBoard: initBoard, loadLatest: loadLatest
   };
   if (typeof module !== "undefined" && module.exports) module.exports = global.TOM;
 
