@@ -189,6 +189,26 @@ Notes:
 - Preview the "on" look: `overlay.html?demo=1`. Standalone rotating board (its own
   screen, not an overlay): `board.html` (idle slate when nothing is live).
 
+## Game info pages (mtg / onepiece / riftbound / casual pokemon)
+
+Each game's tap page (`mtg.html`, `onepiece.html`, `riftbound.html`, and
+`pokemon.html` when no sanctioned event is live) is an info hub for a player
+seated at a table — not a scoreboard (the official apps do that better).
+
+Each page shows:
+- **Tonight's event** — pulled live from that game's Shopify events collection
+  (`{game}-events`) via `products.json`; matches any product whose title starts
+  with today's date (`YYYY/MM/DD`), shows name + entry price + a Register button,
+  or "no event today". No token needed (public `products.json`, CORS-open).
+- **Pairings app pointer** — Magic → Magic Companion, One Piece → Bandai TCG+
+  (their apps handle pairings; we just point players to them).
+- **Quick links** — game singles, Deck Builder, Buylist, Upcoming Events, Discord,
+  Elite Membership, and socials.
+
+Config lives in `assets/games.js` (`GAMES` = per-game collection handle, singles
+URL, app; `LINKS` = shared store links). To retire the events pull to a static
+link, the fetch already degrades to a "See all events" button on any failure.
+
 ## Adding event features later (registration / match results)
 
 Each event page has a marked placeholder:
