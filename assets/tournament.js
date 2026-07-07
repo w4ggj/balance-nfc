@@ -332,7 +332,18 @@
       runningView(T);
     }
 
-    function load() { return BGF.fbGet("tournament").then(render); }
+    // Re-render only when the data actually changed, and never while the player
+    // is typing in the check-in box (otherwise the 4s poll wipes their input).
+    var lastSig = null;
+    function apply(T) {
+      var ae = document.activeElement;
+      if (ae && root.contains(ae) && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA")) return;
+      var sig = JSON.stringify(T);
+      if (sig === lastSig) return;
+      lastSig = sig;
+      render(T);
+    }
+    function load() { return BGF.fbGet("tournament").then(apply); }
     load();
     setInterval(function () { if (!busy) load(); }, 4000);
   }
