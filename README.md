@@ -78,14 +78,21 @@ The control page has **no password** by design — keep its URL off anything pub
 A full Swiss-pairing tournament runs on the same tags — no extra hardware.
 
 **Run one (staff):**
-1. Open **`admin.html`** (private link). Type player names → **Start tournament**
-   (round count is auto-calculated: 8 players = 3 rounds, 16 = 4, etc.).
-2. On the **control panel**, turn on the **Tournament** toggle so the tags show it.
-3. Tap **Pair round 1** — the engine seats each match at a table (T1, T2, …) and
+1. Open **`admin.html`** (private link). Build the roster two ways (mix freely):
+   - Type names (one per line) → **Add players**, and/or
+   - **Self check-in:** turn on the **Tournament** toggle on the control panel and
+     have players scan any table — they enter their name and appear on the roster
+     live. Their device remembers them, so they later see *their* match even if
+     they scan the wrong table, and byes are shown to them automatically.
+2. (Optional) **Seed** players: set a seed number per player (1 = top) or tap
+   **Auto-seed (list order)**. If any seeds are set, round 1 pairs **top half vs
+   bottom half**; otherwise round 1 is random. Seed is also a deep tiebreaker.
+3. **Start tournament** (round count auto-calculated: 8 players = 3 rounds, 16 = 4).
+4. Tap **Pair round 1** — the engine seats each match at a table (T1, T2, …) and
    handles a bye automatically if the count is odd.
-4. Players scan their table tag → see *"Round 1 · Table 3 — Alice vs Bob"* → tap
+5. Players scan their table tag → see *"Round 1 · Table 3 — Alice vs Bob"* → tap
    the winner (or draw). Results appear on the admin console live.
-5. When all results are in, **Pair round 2** (avoids rematches). Repeat, then
+6. When all results are in, **Pair round 2** (avoids rematches). Repeat, then
    **Finish** for final standings.
 
 **Scoring & standings:** win = 3, draw = 1, loss = 0; ranked by points then

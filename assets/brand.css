@@ -388,3 +388,30 @@ body[data-game="tournament"]{ --game: #34d399; }
   border-radius: 8px; font-size: 11px; padding: 4px 7px; cursor: pointer;
 }
 .dropbtn:active { border-color: var(--accent); color: var(--accent); }
+
+/* Tournament — check-in + seeding UI */
+.checked-name { font-size: 26px; font-weight: 800; color: var(--game); margin: 8px 0 4px; }
+.setup-players { display: grid; gap: 8px; margin-top: 4px; }
+.setup-player {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg); border: 1px solid var(--surface-2); border-radius: 12px; padding: 8px 10px;
+}
+.setup-player .nm { flex: 1 1 auto; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.setup-player .seed-in {
+  width: 52px; padding: 8px 6px; text-align: center; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--surface-2); color: var(--text);
+  font-size: 14px; font-weight: 700; font-family: inherit; flex: 0 0 auto;
+}
+.setup-player .seed-in:focus { outline: none; border-color: var(--game); }
+.setup-player .x {
+  border: none; background: var(--surface-2); color: var(--muted); border-radius: 50%;
+  width: 24px; height: 24px; flex: 0 0 auto; cursor: pointer; font-size: 11px;
+}
+.setup-player .x:active { background: var(--accent); color: #fff; }
+.seed-actions { display: flex; gap: 8px; margin: 2px 0 10px; }
+.seed-actions .mini {
+  flex: 1 1 0; padding: 9px; border-radius: 10px; cursor: pointer;
+  background: var(--surface-2); border: 1px solid var(--surface-2); color: var(--text);
+  font-weight: 700; font-size: 12px;
+}
+.seed-actions .mini:active { border-color: var(--game); }
