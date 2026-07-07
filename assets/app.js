@@ -310,7 +310,7 @@
       input.checked = on;
       var row = input.closest(".switch-row");
       if (row) row.setAttribute("data-on", on ? "true" : "false");
-      if (state) state.textContent = on ? "showing tournament board" : "showing your normal display";
+      if (state) state.textContent = on ? "mirroring the live event" : "showing your normal display";
     }
     fbGet("display/board").then(function (v) { paint(v === true); });
     input.addEventListener("change", function () {
@@ -318,7 +318,7 @@
       var on = input.checked;
       busy = true; paint(on);
       fbSet("display/board", on)
-        .then(function () { showToast(on ? "Tournament board is on the display" : "Display back to your normal screen"); })
+        .then(function () { showToast(on ? "The live event is on the display" : "Display back to your normal screen"); })
         .catch(function () { paint(!on); showToast("Couldn't switch the display — try again"); })
         .then(function () { busy = false; });
     });
@@ -330,6 +330,64 @@
     getTable: getTable, getConfig: getConfig, setActive: setActive,
     fbGet: fbGet, fbSet: fbSet, fbUpdate: fbUpdate,
     routeHome: routeHome, initEvent: initEvent, initConfig: initConfig,
-    initBigScreen: initBigScreen
+    initBigScreen: initBigScreen, latestLiveTournament: latestLiveTournament,
+    initDisplay: initDisplay
   };
+
+  // ---- Big-screen dispatcher (overlay.html) ---------------------------
+  // The DakBoard web frame loads overlay.html. When staff turn the big-screen
+  // toggle ON, the TV mirrors whatever event is live: the matching board/info
+  // page fills the screen. OFF (or nothing live) = transparent, so the normal
+  // DakBoard design shows through. ?demo=1 forces it on for previewing.
+  function initDisplay() {
+    var frame = document.getElementById("screen");
+    if (!frame) return;
+    var demo = new URLSearchParams(location.search).get("demo") != null;
+    var passQuery = location.search || "";
+    var current = null;
+
+    // Choose the fullscreen page for an active event (null = stay transparent).
+    function targetFor(active, live) {
+      switch (active) {
+        case "commander-league": return "commander-board.html";
+        case "tournament":       return "board.html" + passQuery;
+        case "pokemon":          return (live ? "board.html" + passQuery : "pokemon.html");
+        case "onepiece":         return "onepiece.html";
+        case "riftbound":        return "riftbound.html";
+        case "mtg":              return "mtg.html";
+        default:                 return null; // main / unknown
+      }
+    }
+
+    function apply(src) {
+      if (src === current) return;
+      current = src;
+      if (!src) {
+        frame.style.display = "none";
+        if (frame.src && !/about:blank$/.test(frame.src)) frame.src = "about:blank";
+        document.body.classList.remove("on");
+        return;
+      }
+      frame.style.display = "block";
+      if (frame.getAttribute("src") !== src) frame.src = src;
+      document.body.classList.add("on");
+    }
+
+    function tick() {
+      var onP = demo ? Promise.resolve(true) : fbGet("display/board");
+      onP.then(function (on) {
+        if (on !== true && !demo) { apply(null); return; }
+        getConfig().then(function (cfg) {
+          var active = cfg.active || "main";
+          if (active === "pokemon") {
+            latestLiveTournament().then(function (live) { apply(targetFor("pokemon", !!live)); });
+          } else {
+            apply(targetFor(active, false));
+          }
+        });
+      });
+    }
+    tick();
+    setInterval(tick, 5000);
+  }
 })();
