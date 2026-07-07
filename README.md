@@ -142,16 +142,45 @@ into Firebase at `tournaments/{tournamentId}`. Three display pages read that dat
   pages read it as-is and hardcode no division names or table counts.
 
 **Firebase rule** — add public read on `tournaments` (writes stay locked to the
-watcher's service account, which bypasses rules):
+watcher's service account, which bypasses rules). The full ruleset, including the
+`display` node used by the big-screen toggle below:
 ```json
 {
   "rules": {
     "active":      { ".read": true, ".write": "newData.isString() && newData.val().matches(/^(main|pokemon|onepiece|riftbound|mtg|tournament)$/)" },
     "tournament":  { ".read": true, ".write": true },
-    "tournaments": { ".read": true }
+    "tournaments": { ".read": true },
+    "display":     { ".read": true, ".write": true }
   }
 }
 ```
+
+## Tournament board on the advertising display (DakBoard)
+
+Put the live tournament board on the store's advertising TV without disturbing the
+normal DakBoard design — driven by a control-panel toggle, no DakBoard API.
+
+**How it works:** `overlay.html` is a **transparent** full-screen page. Embedded as
+a DakBoard **Web Frame** on top of the existing design, it stays see-through until
+staff flip the **"Tournament board on TV"** toggle on `config.html` (which writes
+`/display/board` in Firebase) *and* a tournament is live — then the rotating board
+covers the screen. Flip it off and the DakBoard design instantly returns.
+
+**Setup (once):**
+1. Publish the Firebase rule above (adds the `display` node).
+2. In your DakBoard screen, add a **Web Frame** block → URL
+   `https://nfc.balancegamingfl.com/overlay.html`, sized to **cover the whole
+   screen** and brought to the **front**. Leave that screen assigned to the display.
+3. Done — control it from `config.html` → **Tournament board on TV**.
+
+Notes:
+- The overlay only draws when the toggle is on **and** a tournament was updated
+  within the live window (~12h), so turning it on early is harmless.
+- Requires **DakBoard Plus** (Web Frame) and DakBoard allowing a transparent Web
+  Frame overlay. If the frame shows an opaque background instead of your design,
+  fall back to DakBoard's screen-swap API (Plus/Pro) with a small bridge.
+- Preview the "on" look: `overlay.html?demo=1`. Standalone rotating board (its own
+  screen, not an overlay): `board.html` (idle slate when nothing is live).
 
 ## Adding event features later (registration / match results)
 
