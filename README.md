@@ -171,7 +171,14 @@ covers the screen. Flip it off and the DakBoard design instantly returns.
 2. In your DakBoard screen, add a **Web Frame** block → URL
    `https://nfc.balancegamingfl.com/overlay.html`, sized to **cover the whole
    screen** and brought to the **front**. Leave that screen assigned to the display.
-3. Done — control it from `config.html` → **Tournament board on TV**.
+3. **Transparency on the device:** DakBoard's device player paints an opaque
+   backdrop behind a Web Frame even though the editor shows it transparent. Fix it
+   in the screen's **Add Custom CSS Rules**:
+   ```css
+   iframe { background: transparent !important; }
+   ```
+   (Safe when your design uses native blocks — it only affects the overlay frame.)
+4. Done — control it from `config.html` → **Tournament board on TV**.
 
 Notes:
 - The overlay only draws when the toggle is on **and** a tournament was updated
