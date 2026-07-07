@@ -31,9 +31,9 @@
 
     <p class="section-label">Turn on an event page</p>
     <p style="color:var(--muted);font-size:13px;margin:-6px 2px 14px;">
-      Turning one on makes it the page customers land on when they scan a table tag —
-      the tag shows their table number. Turn it back off and the normal store hub returns.
-      Only one can be live at a time.
+      Tap a game to make it the page customers see when they scan a table tag —
+      the tag shows their table number. It goes live for every table instantly.
+      Turn it back off for the normal store hub. Only one can be live at a time.
     </p>
 
     <!-- Pokémon -->
@@ -68,24 +68,9 @@
       <label class="toggle"><input type="checkbox" data-page="mtg" aria-label="Magic: The Gathering"><span class="track"></span><span class="knob"></span></label>
     </div>
 
-    <p class="section-label">Publish your change</p>
-
-    <div class="publish hidden" id="publish">
-      <p class="lead">Copy this, then paste it into <b>config.json</b> and commit. Goes live in about a minute.</p>
-      <div class="codebox" id="codebox">{"active":"main"}</div>
-      <div class="btn-row">
-        <button class="btn game" id="copyBtn" style="--game:#f5c518">Copy config.json</button>
-        <a class="btn ghost" href="https://github.com/w4ggj/balance-nfc/edit/main/config.json" target="_blank" rel="noopener">Open GitHub editor ↗</a>
-      </div>
-      <ol class="steps">
-        <li><b>Copy</b> the line above.</li>
-        <li><b>Open the GitHub editor</b>, select all, paste over the file.</li>
-        <li><b>Commit</b> to <code>main</code>. Live in ~1 min — no re-tagging.</li>
-      </ol>
-    </div>
-
-    <div class="notice" id="noChange" style="display:none">
-      Nothing to publish — the switches match what's already live.
+    <div class="notice" style="margin-top:20px">
+      Changes are <b style="color:var(--text)">instant</b> — every table updates on their next scan.
+      No apps, no logins. Just tap.
     </div>
 
     <p class="section-label">Preview the store hub</p>
@@ -94,8 +79,8 @@
     </div>
 
     <p class="footer-note" style="margin-top:26px">
-      Static hosting means a toggle has to be committed to take effect for customers.<br>
-      Want one-tap toggling with no commits? That's the Cloudflare Worker upgrade — ask Claude.
+      Event state is stored in Firebase and updates live for every tag.<br>
+      <b>Balance Martial Arts &amp; Gaming</b>
     </p>
 
   </main>
@@ -103,16 +88,6 @@
   <div class="toast" id="toast"></div>
 
   <script src="assets/app.js"></script>
-  <script>
-    BGF.initConfig();
-    // show/hide the "nothing to publish" note alongside the publish box
-    (function () {
-      var pub = document.getElementById("publish");
-      var none = document.getElementById("noChange");
-      new MutationObserver(function () {
-        none.style.display = pub.classList.contains("hidden") ? "" : "none";
-      }).observe(pub, { attributes: true, attributeFilter: ["class"] });
-    })();
-  </script>
+  <script>BGF.initConfig();</script>
 </body>
 </html>

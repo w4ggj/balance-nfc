@@ -6,13 +6,20 @@
   "use strict";
 
   // ---- Config source of truth ------------------------------------------
-  // Right now this is a small file in the repo (config.json). To change what
-  // customers see, you edit that file and commit — GitHub Pages redeploys.
+  // Live event state is stored in a Firebase Realtime Database. The tag pages
+  // READ it on every scan; the staff control panel (config.html) WRITES it with
+  // one tap — no commits, no editing files.
   //
-  // LATER (optional): to get instant one-tap toggling with no commits, point
-  // CONFIG_URL at a Cloudflare Worker that returns { "active": "..." }.
-  // Nothing else in the code has to change.
-  var CONFIG_URL = "config.json";
+  // This URL points at the single `active` value in the database. Database rules
+  // allow anyone to read it and to set it only to one of the five valid values
+  // (main / pokemon / onepiece / riftbound / mtg).
+  //
+  // To move to a different backend later, change only this URL — if it ends in
+  // a plain JSON file the code still works for reading (writes need Firebase).
+  var CONFIG_URL = "https://balance-nfc-default-rtdb.firebaseio.com/active.json";
+
+  // Is the config backend a Firebase Realtime Database (writable) or a static file?
+  function isFirebase() { return /firebaseio|firebasedatabase/.test(CONFIG_URL); }
 
   var EVENTS = ["pokemon", "onepiece", "riftbound", "mtg"];
 
@@ -43,17 +50,45 @@
     return n;
   }
 
-  // Always fetch fresh (cache-busted) so a scanning phone never sees a stale toggle.
+  // Always fetch fresh (no-store) so a scanning phone never sees a stale toggle.
+  // Firebase returns the raw value at /active ("pokemon", or null if never set).
+  // A static JSON file would return an object like {"active":"pokemon"} — both
+  // shapes are handled. Anything unexpected or unreachable falls back to "main"
+  // (the store hub), which is always the safe default.
   function getConfig() {
-    var url = CONFIG_URL + (CONFIG_URL.indexOf("?") === -1 ? "?" : "&") + "ts=" + Date.now();
+    // Cache-bust static files; Firebase rejects unknown query params, so skip it there.
+    var url = isFirebase()
+      ? CONFIG_URL
+      : CONFIG_URL + (CONFIG_URL.indexOf("?") === -1 ? "?" : "&") + "ts=" + Date.now();
     return fetch(url, { cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (cfg) {
-        var active = cfg && cfg.active;
+      .then(function (data) {
+        var active = null;
+        if (typeof data === "string") active = data;                 // Firebase raw value
+        else if (data && typeof data.active === "string") active = data.active; // JSON file
         if (active !== "main" && EVENTS.indexOf(active) === -1) active = "main";
         return { active: active };
       })
       .catch(function () { return { active: "main" }; });
+  }
+
+  // Write the active event to Firebase (used by the staff control panel).
+  // Body is a bare JSON string, e.g. "pokemon", matching the database rule.
+  function setActive(page) {
+    if (!isFirebase()) {
+      return Promise.reject(new Error("Config backend is read-only (not Firebase)."));
+    }
+    if (page !== "main" && EVENTS.indexOf(page) === -1) {
+      return Promise.reject(new Error("Invalid event: " + page));
+    }
+    return fetch(CONFIG_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(page)
+    }).then(function (r) {
+      if (!r.ok) throw new Error("Save failed (" + r.status + ")");
+      return r.json();
+    });
   }
 
   function tblQuery(tbl) { return tbl ? ("?tbl=" + tbl) : ""; }
@@ -120,74 +155,68 @@
   }
 
   // ---- Control panel (config.html) ------------------------------------
+  // One tap = instantly live for every table. Writes straight to Firebase.
   function initConfig() {
-    var current = "main";          // what's actually live (from config.json)
-    var selected = "main";         // what the operator has picked in the UI
+    var current = "main";     // what's actually live right now
+    var pending = null;       // target being saved (optimistic display)
+    var busy = false;         // guard against overlapping writes
 
     var dot = document.getElementById("liveDot");
     var liveName = document.getElementById("liveName");
-    var publish = document.getElementById("publish");
-    var codebox = document.getElementById("codebox");
     var toggles = Array.prototype.slice.call(document.querySelectorAll(".toggle input"));
 
-    function render() {
-      // toggles reflect the selection (single-active)
+    // While saving, show the tapped choice optimistically; otherwise what's live.
+    function shown() { return busy ? pending : current; }
+
+    function paint() {
+      var eff = shown();
       toggles.forEach(function (input) {
         var page = input.getAttribute("data-page");
-        var on = (selected === page);
+        var on = (eff === page);
         input.checked = on;
         var row = input.closest(".switch-row");
         if (row) row.setAttribute("data-on", on ? "true" : "false");
       });
-
-      // live status card = what's really published right now
-      if (dot) dot.style.setProperty("--dot", COLORS[current]);
-      if (liveName) liveName.textContent = LABELS[current];
-
-      // publish box only when the pick differs from what's live
-      if (selected === current) {
-        publish.classList.add("hidden");
-      } else {
-        publish.classList.remove("hidden");
-        codebox.textContent = JSON.stringify({ active: selected });
-      }
+      if (dot) dot.style.setProperty("--dot", COLORS[eff]);
+      if (liveName) liveName.textContent = busy ? "Saving…" : LABELS[current];
     }
 
-    // Wire the switches — turning one on turns the others off (single landing).
+    // Turning one on turns the others off (only one landing at a time).
+    // Turning the active one off returns to the store hub.
+    function apply(page) {
+      if (busy || page === current) { paint(); return; }
+      busy = true;
+      pending = page;
+      paint();
+      setActive(page).then(function () {
+        current = page;
+        busy = false;
+        pending = null;
+        paint();
+        showToast(page === "main"
+          ? "Store hub is now live"
+          : LABELS[page] + " is now live for every table");
+      }).catch(function (err) {
+        busy = false;
+        pending = null;
+        paint(); // revert switches to the real live state
+        showToast("Couldn't save — check your connection and try again");
+        if (window.console) console.error(err);
+      });
+    }
+
     toggles.forEach(function (input) {
       input.addEventListener("change", function () {
         var page = input.getAttribute("data-page");
-        selected = input.checked ? page : "main";
-        render();
+        apply(input.checked ? page : "main");
       });
     });
-
-    // Copy button
-    var copyBtn = document.getElementById("copyBtn");
-    if (copyBtn) {
-      copyBtn.addEventListener("click", function () {
-        var text = codebox.textContent;
-        var done = function () { showToast("Copied — now paste it in the GitHub editor"); };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(done, function () { legacyCopy(text); done(); });
-        } else { legacyCopy(text); done(); }
-      });
-    }
 
     // Load what's currently live
     getConfig().then(function (cfg) {
       current = cfg.active;
-      selected = cfg.active;
-      render();
+      paint();
     });
-  }
-
-  function legacyCopy(text) {
-    var ta = document.createElement("textarea");
-    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand("copy"); } catch (e) {}
-    document.body.removeChild(ta);
   }
 
   var toastTimer;
@@ -202,7 +231,7 @@
   // ---- Expose ----------------------------------------------------------
   window.BGF = {
     EVENTS: EVENTS, LABELS: LABELS, COLORS: COLORS, MAX_TABLES: MAX_TABLES,
-    getTable: getTable, getConfig: getConfig,
+    getTable: getTable, getConfig: getConfig, setActive: setActive,
     routeHome: routeHome, initEvent: initEvent, initConfig: initConfig
   };
 })();
