@@ -415,3 +415,47 @@ body[data-game="tournament"]{ --game: #34d399; }
   font-weight: 700; font-size: 12px;
 }
 .seed-actions .mini:active { border-color: var(--game); }
+
+/* ============================================================
+   GAME INFO PAGES (mtg / onepiece / riftbound / pokemon casual)
+   ============================================================ */
+.event-card {
+  background: var(--surface); border: 1px solid var(--surface-2);
+  border-top: 3px solid var(--game); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 18px; text-align: center; margin-top: 4px;
+}
+.event-card.muted { border-top-color: var(--surface-2); opacity: .8; }
+.event-card .ec-tag {
+  display: inline-block; margin-bottom: 8px; padding: 4px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  color: #0b1220; background: var(--game);
+}
+.event-card .ec-title { margin: 0; font-size: 20px; font-weight: 800; line-height: 1.15; }
+.event-card .ec-sub { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+.event-card .gl { margin-top: 14px; }
+
+/* Quick-link buttons */
+.glinks { display: grid; gap: 10px; margin-top: 10px; }
+.gl {
+  display: flex; flex-direction: column; text-decoration: none; text-align: left;
+  padding: 14px 16px; border-radius: 14px; background: var(--surface);
+  border: 1px solid var(--surface-2); color: var(--text);
+  transition: transform .12s ease, border-color .12s ease;
+}
+.gl:active { transform: scale(.99); }
+@media (hover: hover) { .gl:hover { border-color: var(--game); } }
+.gl .gl-t { font-weight: 700; font-size: 16px; }
+.gl .gl-s { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.gl.wide { text-align: center; align-items: center; }
+.gl.primary { background: linear-gradient(150deg, var(--accent), var(--accent-2)); color: #fff; border-color: transparent; }
+.gl.primary .gl-t { color: #fff; }
+
+/* Socials row */
+.gsocial { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 8px; }
+.gsoc {
+  text-decoration: none; font-weight: 700; font-size: 14px; color: var(--text);
+  background: var(--surface); border: 1px solid var(--surface-2);
+  padding: 10px 16px; border-radius: 999px;
+}
+.gsoc:active { transform: scale(.97); }
+@media (hover: hover) { .gsoc:hover { border-color: var(--game); } }
