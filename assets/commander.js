@@ -312,7 +312,7 @@
     function renderDanger() {
       var card = el("div", "cl-card");
       var reset = el("button", "btn ghost", "End league / reset");
-      reset.addEventListener("click", function () { if (confirm("This clears the whole Commander League (players, nights, standings). Continue?")) commit(BGF.fbSet("commander", null)); });
+      reset.addEventListener("click", function () { if (confirm("This clears the whole Commander League (players, nights, standings). Continue?")) commit(Promise.all([set("league", null), set("nights", null), set("players", null)])); });
       card.appendChild(reset); root.appendChild(card);
     }
 
