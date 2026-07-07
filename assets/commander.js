@@ -159,6 +159,16 @@
     var C = null;
     function load() { return BGF.fbGet("commander").then(function (c) { C = c || {}; render(); }); }
     function set(path, val) { return BGF.fbSet("commander/" + path, val); }
+    // Surface write failures instead of silently doing nothing. A denied write
+    // (HTTP 401) almost always means the Firebase rules don't allow the staff
+    // console to write /commander — see the ruleset in the setup notes.
+    function oops(e) {
+      var msg = (e && e.message) || "Couldn't save";
+      if (/401/.test(msg)) msg = "Firebase blocked the write — update the /commander database rules (staff console needs write access).";
+      showToast(msg);
+      if (window.console) console.error("[commander-admin]", e);
+    }
+    function commit(p) { return p.then(load).catch(oops); }
 
     function render() {
       root.innerHTML = "";
@@ -180,7 +190,7 @@
           startDate: start.querySelector("input").value || todayId(),
           weeks: parseInt(weeks.querySelector("input").value, 10) || 8,
           tables: [1, 2, 3, 4, 5, 6, 7, 8], podSize: 4, status: "active" };
-        Promise.all([set("league/meta", meta), set("league/scoring", DEFAULT_SCORING)]).then(load);
+        commit(Promise.all([set("league/meta", meta), set("league/scoring", DEFAULT_SCORING)]));
       });
       card.appendChild(btn); root.appendChild(card);
     }
@@ -199,7 +209,7 @@
         sc.appendChild(el("p", "hint", "No session started for tonight (" + today + ")."));
         var start = el("button", "btn primary", "Start tonight's session");
         start.addEventListener("click", function () {
-          set("nights/" + today, { status: "checkin", currentGame: 0 }).then(load);
+          commit(Promise.all([set("nights/" + today + "/status", "checkin"), set("nights/" + today + "/currentGame", 0)]));
         });
         sc.appendChild(start); root.appendChild(sc);
         renderStandings(); renderDanger(); return;
@@ -221,25 +231,25 @@
           var assigned = Engine.assignPods(uids, meta.tables, meta.podSize);
           var podsObj = {};
           assigned.forEach(function (p) { var m = {}; p.members.forEach(function (u) { m[u] = true; }); podsObj[p.podNo] = { table: p.table, members: m }; });
-          set("nights/" + today + "/pods", podsObj).then(load);
+          commit(set("nights/" + today + "/pods", podsObj));
         });
         actions.appendChild(assign);
         if (Object.keys(pods).length) {
           var toG1 = el("button", "btn primary", "Start Game 1");
-          toG1.addEventListener("click", function () { Promise.all([set("nights/" + today + "/status", "game1"), set("nights/" + today + "/currentGame", 1)]).then(load); });
+          toG1.addEventListener("click", function () { commit(Promise.all([set("nights/" + today + "/status", "game1"), set("nights/" + today + "/currentGame", 1)])); });
           actions.appendChild(toG1);
         }
       } else if (/^game(\d+)$/.test(night.status)) {
         var g = +night.status.match(/^game(\d+)$/)[1];
         var next = el("button", "btn primary", "Start Game " + (g + 1));
-        next.addEventListener("click", function () { Promise.all([set("nights/" + today + "/status", "game" + (g + 1)), set("nights/" + today + "/currentGame", g + 1)]).then(load); });
+        next.addEventListener("click", function () { commit(Promise.all([set("nights/" + today + "/status", "game" + (g + 1)), set("nights/" + today + "/currentGame", g + 1)])); });
         actions.appendChild(next);
         var toQ = el("button", "btn game", "End games → Questionnaire");
-        toQ.addEventListener("click", function () { set("nights/" + today + "/status", "questionnaire").then(load); });
+        toQ.addEventListener("click", function () { commit(set("nights/" + today + "/status", "questionnaire")); });
         actions.appendChild(toQ);
       } else if (night.status === "questionnaire") {
         var close = el("button", "btn primary", "Close the night");
-        close.addEventListener("click", function () { set("nights/" + today + "/status", "closed").then(load); });
+        close.addEventListener("click", function () { commit(set("nights/" + today + "/status", "closed")); });
         actions.appendChild(close);
       } else if (night.status === "closed") {
         sc2.appendChild(el("p", "hint", "Session closed. Standings carry to the season."));
@@ -302,7 +312,7 @@
     function renderDanger() {
       var card = el("div", "cl-card");
       var reset = el("button", "btn ghost", "End league / reset");
-      reset.addEventListener("click", function () { if (confirm("This clears the whole Commander League (players, nights, standings). Continue?")) BGF.fbSet("commander", null).then(load); });
+      reset.addEventListener("click", function () { if (confirm("This clears the whole Commander League (players, nights, standings). Continue?")) commit(BGF.fbSet("commander", null)); });
       card.appendChild(reset); root.appendChild(card);
     }
 
