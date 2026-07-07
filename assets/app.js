@@ -139,6 +139,15 @@
     }
 
     getConfig().then(function (cfg) {
+      // While a live TOM Pokémon tournament is running, the Pokémon toggle sends
+      // scanners to the live table view (their real pairing) instead of the
+      // generic event page. Falls back to pokemon.html when no fresh tournament.
+      if (cfg.active === "pokemon") {
+        latestLiveTournament().then(function (live) {
+          location.replace((live ? "table.html" : "pokemon.html") + tblQuery(tbl));
+        });
+        return;
+      }
       if (cfg.active !== "main") {
         location.replace(cfg.active + ".html" + tblQuery(tbl));
         return;
@@ -148,6 +157,23 @@
       if (boot) boot.hidden = true;
       if (hub) hub.hidden = false;
     });
+  }
+
+  // Returns the most-recently-updated tournament if it was posted within the
+  // live window (default 12h), else null. Used to decide Pokémon routing.
+  var TOM_LIVE_WINDOW_MS = 12 * 3600 * 1000;
+  function latestLiveTournament() {
+    return fbGet("tournaments").then(function (all) {
+      if (!all) return null;
+      var best = null;
+      Object.keys(all).forEach(function (k) {
+        var t = all[k];
+        if (t && t.meta && (!best || (t.meta.updatedMs || 0) > (best.meta.updatedMs || 0))) best = t;
+      });
+      if (!best || !best.meta) return null;
+      var age = Date.now() - (best.meta.updatedMs || 0);
+      return age < TOM_LIVE_WINDOW_MS ? best : null;
+    }).catch(function () { return null; });
   }
 
   // ---- Event page init (pokemon.html, etc.) ---------------------------

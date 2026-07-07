@@ -1,0 +1,1318 @@
+{
+  "meta": {
+    "name": "Pitch Black Prerelease",
+    "tournamentId": "26-07-002866",
+    "gameType": "Trading Card Game",
+    "mode": "Prerelease Mode",
+    "pairingType": "Swiss",
+    "organizer": {
+      "name": "Joe Leone",
+      "id": "4388452"
+    },
+    "location": "FL, United States",
+    "round": 3,
+    "generatedAt": "07/06/2026 20:30:42",
+    "updatedMs": 1783425955858
+  },
+  "divisions": [
+    {
+      "id": "MA",
+      "label": "Masters Division",
+      "totalPlayers": 19,
+      "swissRounds": 7,
+      "cutSize": 0,
+      "totalRounds": 7,
+      "startingTable": 5
+    },
+    {
+      "id": "SR",
+      "label": "Senior Division",
+      "totalPlayers": 3,
+      "swissRounds": 5,
+      "cutSize": 0,
+      "totalRounds": 5,
+      "startingTable": 1
+    },
+    {
+      "id": "JR",
+      "label": "Junior Division",
+      "totalPlayers": 4,
+      "swissRounds": 5,
+      "cutSize": 0,
+      "totalRounds": 5,
+      "startingTable": 1
+    }
+  ],
+  "standings": {
+    "JR": {
+      "label": "Junior Division",
+      "round": 3,
+      "totalRounds": 5,
+      "cutSize": 0,
+      "rows": [
+        {
+          "rank": 1,
+          "name": "Benjamin Mussett",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 2,
+            "l": 1,
+            "t": 0,
+            "points": 6,
+            "text": "2/1/0 (6)"
+          },
+          "points": 6,
+          "omw": 63.89,
+          "oomw": 52.78,
+          "cut": false
+        },
+        {
+          "rank": 2,
+          "name": "Kai Gerke",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 2,
+            "l": 1,
+            "t": 0,
+            "points": 6,
+            "text": "2/1/0 (6)"
+          },
+          "points": 6,
+          "omw": 38.89,
+          "oomw": 65.74,
+          "cut": false
+        },
+        {
+          "rank": 3,
+          "name": "Lincoln Trump",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 1,
+            "l": 2,
+            "t": 0,
+            "points": 3,
+            "text": "1/2/0 (3)"
+          },
+          "points": 3,
+          "omw": 66.67,
+          "oomw": 51.39,
+          "cut": false
+        },
+        {
+          "rank": 4,
+          "name": "Kayden Gerke",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 1,
+            "l": 2,
+            "t": 0,
+            "points": 3,
+            "text": "1/2/0 (3)"
+          },
+          "points": 3,
+          "omw": 66.67,
+          "oomw": 44.44,
+          "cut": false
+        }
+      ]
+    },
+    "SR": {
+      "label": "Senior Division",
+      "round": 3,
+      "totalRounds": 5,
+      "cutSize": 0,
+      "rows": [
+        {
+          "rank": 1,
+          "name": "Zachary Mussett",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 3,
+            "l": 0,
+            "t": 0,
+            "points": 9,
+            "text": "3/0/0 (9)"
+          },
+          "points": 9,
+          "omw": 52.78,
+          "oomw": 65.74,
+          "cut": false
+        },
+        {
+          "rank": 2,
+          "name": "Thorodin Schwenk",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 2,
+            "l": 1,
+            "t": 0,
+            "points": 6,
+            "text": "2/1/0 (6)"
+          },
+          "points": 6,
+          "omw": 50,
+          "oomw": 67.59,
+          "cut": false
+        },
+        {
+          "rank": 3,
+          "name": "Franklin Popper",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 1,
+            "l": 2,
+            "t": 0,
+            "points": 3,
+            "text": "1/2/0 (3)"
+          },
+          "points": 3,
+          "omw": 83.33,
+          "oomw": 51.39,
+          "cut": false
+        }
+      ]
+    },
+    "MA": {
+      "label": "Masters Division",
+      "round": 3,
+      "totalRounds": 3,
+      "cutSize": 0,
+      "rows": [
+        {
+          "rank": 1,
+          "name": "Christopher Stoup",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 3,
+            "l": 0,
+            "t": 0,
+            "points": 9,
+            "text": "3/0/0 (9)"
+          },
+          "points": 9,
+          "omw": 66.67,
+          "oomw": 56.48,
+          "cut": false
+        },
+        {
+          "rank": 2,
+          "name": "Tyler Palmieri",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 3,
+            "l": 0,
+            "t": 0,
+            "points": 9,
+            "text": "3/0/0 (9)"
+          },
+          "points": 9,
+          "omw": 55.56,
+          "oomw": 59.26,
+          "cut": false
+        },
+        {
+          "rank": 3,
+          "name": "Camden Schaneville",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 3,
+            "l": 0,
+            "t": 0,
+            "points": 9,
+            "text": "3/0/0 (9)"
+          },
+          "points": 9,
+          "omw": 30.56,
+          "oomw": 65.74,
+          "cut": false
+        },
+        {
+          "rank": 4,
+          "name": "Mai Laborde",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 2,
+            "l": 1,
+            "t": 0,
+            "points": 6,
+            "text": "2/1/0 (6)"
+          },
+          "points": 6,
+          "omw": 63.89,
+          "oomw": 58.34,
+          "cut": false
+        },
+        {
+          "rank": 5,
+          "name": "Duncan Wynja",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 2,
+            "l": 1,
+            "t": 0,
+            "points": 6,
+            "text": "2/1/0 (6)"
+          },
+          "points": 6,
+          "omw": 61.11,
+          "oomw": 52.32,
+          "cut": false
+        },
+        {
+          "rank": 6,
+          "name": "Lucas Laborde",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 2,
+            "l": 1,
+            "t": 0,
+            "points": 6,
+            "text": "2/1/0 (6)"
+          },
+          "points": 6,
+          "omw": 52.78,
+          "oomw": 63.89,
+          "cut": false
+        },
+        {
+          "rank": 7,
+          "name": "Mario Lopez",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 2,
+            "l": 1,
+            "t": 0,
+            "points": 6,
+            "text": "2/1/0 (6)"
+          },
+          "points": 6,
+          "omw": 52.78,
+          "oomw": 59.26,
+          "cut": false
+        },
+        {
+          "rank": 8,
+          "name": "Timothy Gordon",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 2,
+            "l": 1,
+            "t": 0,
+            "points": 6,
+            "text": "2/1/0 (6)"
+          },
+          "points": 6,
+          "omw": 52.78,
+          "oomw": 57.41,
+          "cut": false
+        },
+        {
+          "rank": 9,
+          "name": "Perry Fisher",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 2,
+            "l": 1,
+            "t": 0,
+            "points": 6,
+            "text": "2/1/0 (6)"
+          },
+          "points": 6,
+          "omw": 45.83,
+          "oomw": 61.11,
+          "cut": false
+        },
+        {
+          "rank": 10,
+          "name": "Kamil Ahmad",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 2,
+            "l": 1,
+            "t": 0,
+            "points": 6,
+            "text": "2/1/0 (6)"
+          },
+          "points": 6,
+          "omw": 41.67,
+          "oomw": 64.82,
+          "cut": false
+        },
+        {
+          "rank": 11,
+          "name": "Ethan Puffer",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 1,
+            "l": 2,
+            "t": 0,
+            "points": 3,
+            "text": "1/2/0 (3)"
+          },
+          "points": 3,
+          "omw": 66.67,
+          "oomw": 52.78,
+          "cut": false
+        },
+        {
+          "rank": 12,
+          "name": "Jacob Minnick",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 1,
+            "l": 2,
+            "t": 0,
+            "points": 3,
+            "text": "1/2/0 (3)"
+          },
+          "points": 3,
+          "omw": 66.67,
+          "oomw": 47.22,
+          "cut": false
+        },
+        {
+          "rank": 13,
+          "name": "Colton Walker",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 1,
+            "l": 2,
+            "t": 0,
+            "points": 3,
+            "text": "1/2/0 (3)"
+          },
+          "points": 3,
+          "omw": 66.67,
+          "oomw": 37.97,
+          "cut": false
+        },
+        {
+          "rank": 14,
+          "name": "David Howell",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 1,
+            "l": 2,
+            "t": 0,
+            "points": 3,
+            "text": "1/2/0 (3)"
+          },
+          "points": 3,
+          "omw": 63.89,
+          "oomw": 50.93,
+          "cut": false
+        },
+        {
+          "rank": 15,
+          "name": "Kevin Arputharaj",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 1,
+            "l": 2,
+            "t": 0,
+            "points": 3,
+            "text": "1/2/0 (3)"
+          },
+          "points": 3,
+          "omw": 63.89,
+          "oomw": 46.3,
+          "cut": false
+        },
+        {
+          "rank": 16,
+          "name": "Mark Mussett",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 1,
+            "l": 2,
+            "t": 0,
+            "points": 3,
+            "text": "1/2/0 (3)"
+          },
+          "points": 3,
+          "omw": 55.56,
+          "oomw": 48.15,
+          "cut": false
+        },
+        {
+          "rank": 17,
+          "name": "Walt Davis",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 1,
+            "l": 2,
+            "t": 0,
+            "points": 3,
+            "text": "1/2/0 (3)"
+          },
+          "points": 3,
+          "omw": 30.56,
+          "oomw": 55.56,
+          "cut": false
+        },
+        {
+          "rank": 18,
+          "name": "Cliff Trump",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 0,
+            "l": 3,
+            "t": 0,
+            "points": 0,
+            "text": "0/3/0 (0)"
+          },
+          "points": 0,
+          "omw": 61.11,
+          "oomw": 50.46,
+          "cut": false
+        },
+        {
+          "rank": 19,
+          "name": "Gabe Hodgkin",
+          "flight": "1",
+          "dropRound": null,
+          "record": {
+            "w": 0,
+            "l": 3,
+            "t": 0,
+            "points": 0,
+            "text": "0/3/0 (0)"
+          },
+          "points": 0,
+          "omw": 44.44,
+          "oomw": 49.08,
+          "cut": false
+        }
+      ]
+    }
+  },
+  "pairings": {
+    "round": 3,
+    "groups": {
+      "JR_SR": {
+        "label": "Junior/Senior Divisions",
+        "tables": [
+          {
+            "table": 1,
+            "group": "JR_SR",
+            "status": "paired",
+            "players": [
+              {
+                "name": "Franklin Popper",
+                "division": "SR",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              },
+              {
+                "name": "Thorodin Schwenk",
+                "division": "SR",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              }
+            ]
+          },
+          {
+            "table": 2,
+            "group": "JR_SR",
+            "status": "paired",
+            "players": [
+              {
+                "name": "Benjamin Mussett",
+                "division": "JR",
+                "record": {
+                  "w": 2,
+                  "l": 0,
+                  "t": 0,
+                  "points": 6,
+                  "text": "2/0/0 (6)"
+                },
+                "points": 6
+              },
+              {
+                "name": "Zachary Mussett",
+                "division": "SR",
+                "record": {
+                  "w": 2,
+                  "l": 0,
+                  "t": 0,
+                  "points": 6,
+                  "text": "2/0/0 (6)"
+                },
+                "points": 6
+              }
+            ]
+          },
+          {
+            "table": 3,
+            "group": "JR_SR",
+            "status": "paired",
+            "players": [
+              {
+                "name": "Kai Gerke",
+                "division": "JR",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              },
+              {
+                "name": "Lincoln Trump",
+                "division": "JR",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              }
+            ]
+          }
+        ],
+        "byes": [
+          {
+            "name": "Kayden Gerke",
+            "division": "JR",
+            "record": {
+              "w": 1,
+              "l": 2,
+              "t": 0,
+              "points": 3,
+              "text": "1/2/0 (3)"
+            }
+          }
+        ]
+      },
+      "MA": {
+        "label": "Masters Division",
+        "tables": [
+          {
+            "table": 4,
+            "group": "MA",
+            "status": "paired",
+            "players": [
+              {
+                "name": "Duncan Wynja",
+                "division": "MA",
+                "record": {
+                  "w": 2,
+                  "l": 0,
+                  "t": 0,
+                  "points": 6,
+                  "text": "2/0/0 (6)"
+                },
+                "points": 6
+              },
+              {
+                "name": "Tyler Palmieri",
+                "division": "MA",
+                "record": {
+                  "w": 2,
+                  "l": 0,
+                  "t": 0,
+                  "points": 6,
+                  "text": "2/0/0 (6)"
+                },
+                "points": 6
+              }
+            ]
+          },
+          {
+            "table": 5,
+            "group": "MA",
+            "status": "paired",
+            "players": [
+              {
+                "name": "Christopher Stoup",
+                "division": "MA",
+                "record": {
+                  "w": 2,
+                  "l": 0,
+                  "t": 0,
+                  "points": 6,
+                  "text": "2/0/0 (6)"
+                },
+                "points": 6
+              },
+              {
+                "name": "Mai Laborde",
+                "division": "MA",
+                "record": {
+                  "w": 2,
+                  "l": 0,
+                  "t": 0,
+                  "points": 6,
+                  "text": "2/0/0 (6)"
+                },
+                "points": 6
+              }
+            ]
+          },
+          {
+            "table": 6,
+            "group": "MA",
+            "status": "paired",
+            "players": [
+              {
+                "name": "Camden Schaneville",
+                "division": "MA",
+                "record": {
+                  "w": 2,
+                  "l": 0,
+                  "t": 0,
+                  "points": 6,
+                  "text": "2/0/0 (6)"
+                },
+                "points": 6
+              },
+              {
+                "name": "Kevin Arputharaj",
+                "division": "MA",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              }
+            ]
+          },
+          {
+            "table": 7,
+            "group": "MA",
+            "status": "paired",
+            "players": [
+              {
+                "name": "Ethan Puffer",
+                "division": "MA",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              },
+              {
+                "name": "Kamil Ahmad",
+                "division": "MA",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              }
+            ]
+          },
+          {
+            "table": 8,
+            "group": "MA",
+            "status": "paired",
+            "players": [
+              {
+                "name": "David Howell",
+                "division": "MA",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              },
+              {
+                "name": "Lucas Laborde",
+                "division": "MA",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              }
+            ]
+          },
+          {
+            "table": 9,
+            "group": "MA",
+            "status": "paired",
+            "players": [
+              {
+                "name": "Colton Walker",
+                "division": "MA",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              },
+              {
+                "name": "Mario Lopez",
+                "division": "MA",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              }
+            ]
+          },
+          {
+            "table": 10,
+            "group": "MA",
+            "status": "paired",
+            "players": [
+              {
+                "name": "Mark Mussett",
+                "division": "MA",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              },
+              {
+                "name": "Timothy Gordon",
+                "division": "MA",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              }
+            ]
+          },
+          {
+            "table": 11,
+            "group": "MA",
+            "status": "paired",
+            "players": [
+              {
+                "name": "Cliff Trump",
+                "division": "MA",
+                "record": {
+                  "w": 0,
+                  "l": 2,
+                  "t": 0,
+                  "points": 0,
+                  "text": "0/2/0 (0)"
+                },
+                "points": 0
+              },
+              {
+                "name": "Perry Fisher",
+                "division": "MA",
+                "record": {
+                  "w": 1,
+                  "l": 1,
+                  "t": 0,
+                  "points": 3,
+                  "text": "1/1/0 (3)"
+                },
+                "points": 3
+              }
+            ]
+          },
+          {
+            "table": 12,
+            "group": "MA",
+            "status": "paired",
+            "players": [
+              {
+                "name": "Gabe Hodgkin",
+                "division": "MA",
+                "record": {
+                  "w": 0,
+                  "l": 2,
+                  "t": 0,
+                  "points": 0,
+                  "text": "0/2/0 (0)"
+                },
+                "points": 0
+              },
+              {
+                "name": "Walt Davis",
+                "division": "MA",
+                "record": {
+                  "w": 0,
+                  "l": 2,
+                  "t": 0,
+                  "points": 0,
+                  "text": "0/2/0 (0)"
+                },
+                "points": 0
+              }
+            ]
+          }
+        ],
+        "byes": [
+          {
+            "name": "Jacob Minnick",
+            "division": null,
+            "record": {
+              "w": 1,
+              "l": 2,
+              "t": 0,
+              "points": 3,
+              "text": "1/2/0 (3)"
+            }
+          }
+        ]
+      }
+    },
+    "byTable": {
+      "1": {
+        "table": 1,
+        "group": "JR_SR",
+        "status": "paired",
+        "players": [
+          {
+            "name": "Franklin Popper",
+            "division": "SR",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          },
+          {
+            "name": "Thorodin Schwenk",
+            "division": "SR",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          }
+        ]
+      },
+      "2": {
+        "table": 2,
+        "group": "JR_SR",
+        "status": "paired",
+        "players": [
+          {
+            "name": "Benjamin Mussett",
+            "division": "JR",
+            "record": {
+              "w": 2,
+              "l": 0,
+              "t": 0,
+              "points": 6,
+              "text": "2/0/0 (6)"
+            },
+            "points": 6
+          },
+          {
+            "name": "Zachary Mussett",
+            "division": "SR",
+            "record": {
+              "w": 2,
+              "l": 0,
+              "t": 0,
+              "points": 6,
+              "text": "2/0/0 (6)"
+            },
+            "points": 6
+          }
+        ]
+      },
+      "3": {
+        "table": 3,
+        "group": "JR_SR",
+        "status": "paired",
+        "players": [
+          {
+            "name": "Kai Gerke",
+            "division": "JR",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          },
+          {
+            "name": "Lincoln Trump",
+            "division": "JR",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          }
+        ]
+      },
+      "4": {
+        "table": 4,
+        "group": "MA",
+        "status": "paired",
+        "players": [
+          {
+            "name": "Duncan Wynja",
+            "division": "MA",
+            "record": {
+              "w": 2,
+              "l": 0,
+              "t": 0,
+              "points": 6,
+              "text": "2/0/0 (6)"
+            },
+            "points": 6
+          },
+          {
+            "name": "Tyler Palmieri",
+            "division": "MA",
+            "record": {
+              "w": 2,
+              "l": 0,
+              "t": 0,
+              "points": 6,
+              "text": "2/0/0 (6)"
+            },
+            "points": 6
+          }
+        ]
+      },
+      "5": {
+        "table": 5,
+        "group": "MA",
+        "status": "paired",
+        "players": [
+          {
+            "name": "Christopher Stoup",
+            "division": "MA",
+            "record": {
+              "w": 2,
+              "l": 0,
+              "t": 0,
+              "points": 6,
+              "text": "2/0/0 (6)"
+            },
+            "points": 6
+          },
+          {
+            "name": "Mai Laborde",
+            "division": "MA",
+            "record": {
+              "w": 2,
+              "l": 0,
+              "t": 0,
+              "points": 6,
+              "text": "2/0/0 (6)"
+            },
+            "points": 6
+          }
+        ]
+      },
+      "6": {
+        "table": 6,
+        "group": "MA",
+        "status": "paired",
+        "players": [
+          {
+            "name": "Camden Schaneville",
+            "division": "MA",
+            "record": {
+              "w": 2,
+              "l": 0,
+              "t": 0,
+              "points": 6,
+              "text": "2/0/0 (6)"
+            },
+            "points": 6
+          },
+          {
+            "name": "Kevin Arputharaj",
+            "division": "MA",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          }
+        ]
+      },
+      "7": {
+        "table": 7,
+        "group": "MA",
+        "status": "paired",
+        "players": [
+          {
+            "name": "Ethan Puffer",
+            "division": "MA",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          },
+          {
+            "name": "Kamil Ahmad",
+            "division": "MA",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          }
+        ]
+      },
+      "8": {
+        "table": 8,
+        "group": "MA",
+        "status": "paired",
+        "players": [
+          {
+            "name": "David Howell",
+            "division": "MA",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          },
+          {
+            "name": "Lucas Laborde",
+            "division": "MA",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          }
+        ]
+      },
+      "9": {
+        "table": 9,
+        "group": "MA",
+        "status": "paired",
+        "players": [
+          {
+            "name": "Colton Walker",
+            "division": "MA",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          },
+          {
+            "name": "Mario Lopez",
+            "division": "MA",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          }
+        ]
+      },
+      "10": {
+        "table": 10,
+        "group": "MA",
+        "status": "paired",
+        "players": [
+          {
+            "name": "Mark Mussett",
+            "division": "MA",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          },
+          {
+            "name": "Timothy Gordon",
+            "division": "MA",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          }
+        ]
+      },
+      "11": {
+        "table": 11,
+        "group": "MA",
+        "status": "paired",
+        "players": [
+          {
+            "name": "Cliff Trump",
+            "division": "MA",
+            "record": {
+              "w": 0,
+              "l": 2,
+              "t": 0,
+              "points": 0,
+              "text": "0/2/0 (0)"
+            },
+            "points": 0
+          },
+          {
+            "name": "Perry Fisher",
+            "division": "MA",
+            "record": {
+              "w": 1,
+              "l": 1,
+              "t": 0,
+              "points": 3,
+              "text": "1/1/0 (3)"
+            },
+            "points": 3
+          }
+        ]
+      },
+      "12": {
+        "table": 12,
+        "group": "MA",
+        "status": "paired",
+        "players": [
+          {
+            "name": "Gabe Hodgkin",
+            "division": "MA",
+            "record": {
+              "w": 0,
+              "l": 2,
+              "t": 0,
+              "points": 0,
+              "text": "0/2/0 (0)"
+            },
+            "points": 0
+          },
+          {
+            "name": "Walt Davis",
+            "division": "MA",
+            "record": {
+              "w": 0,
+              "l": 2,
+              "t": 0,
+              "points": 0,
+              "text": "0/2/0 (0)"
+            },
+            "points": 0
+          }
+        ]
+      }
+    }
+  },
+  "roster": [
+    {
+      "id": "JR",
+      "label": "Junior Division",
+      "entered": 4
+    },
+    {
+      "id": "SR",
+      "label": "Senior Division",
+      "entered": 3
+    },
+    {
+      "id": "MA",
+      "label": "Masters Division",
+      "entered": 19
+    }
+  ]
+}

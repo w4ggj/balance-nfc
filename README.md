@@ -119,6 +119,40 @@ current rules are:
 }
 ```
 
+## Live tournament boards (TOM / Pokémon sanctioned events)
+
+For Pokémon events run in **Tournament Operations Manager (TOM)**, a separate
+pipeline (`tombridge/`, runs on the TOM Windows machine) mirrors TOM's reports
+into Firebase at `tournaments/{tournamentId}`. Three display pages read that data:
+
+| Page | Use |
+|------|-----|
+| `pairings.html` | Wall board — pairings by group (JR/SR combined, Masters separate), byes, status dots |
+| `standings.html` | Wall board — standings per division (JR, SR, MA separate), points, OMW/OOMW, cut line when a cut applies |
+| `table.html` | Phone tap view — a table's pairing + a standings peek scoped to that table's division(s) |
+
+- **Reaching the tap view:** the **Pokémon** toggle on the control panel is
+  TOM-aware. While a tournament is live (updated within 12h), scanning a table
+  (`?tbl=N`) shows that table's live pairing (`table.html`); with no live
+  tournament it shows the normal Pokémon event page. Tags map `tbl` → TOM table 1:1.
+- **Boards** auto-select the most recently updated tournament (or pin one with
+  `?t={tournamentId}`), and poll for updates. Add `?demo=1` to any page to render
+  the bundled `tombridge/sample-snapshot.json` offline (no Firebase).
+- **The snapshot is the contract** (`tombridge/sample-snapshot.json`). The display
+  pages read it as-is and hardcode no division names or table counts.
+
+**Firebase rule** — add public read on `tournaments` (writes stay locked to the
+watcher's service account, which bypasses rules):
+```json
+{
+  "rules": {
+    "active":      { ".read": true, ".write": "newData.isString() && newData.val().matches(/^(main|pokemon|onepiece|riftbound|mtg|tournament)$/)" },
+    "tournament":  { ".read": true, ".write": true },
+    "tournaments": { ".read": true }
+  }
+}
+```
+
 ## Adding event features later (registration / match results)
 
 Each event page has a marked placeholder:
