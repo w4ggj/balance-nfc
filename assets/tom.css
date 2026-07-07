@@ -171,3 +171,8 @@ body.overlay { background: transparent; }
 body.overlay:not(.showing) .tom-header,
 body.overlay:not(.showing) .tom-foot { display: none; }
 body.overlay.showing { background: var(--bg); }
+
+/* Designer credit (shared) */
+.credit { text-align: center; color: var(--muted); font-size: 11px; padding: 4px 0 16px; opacity: .85; }
+.credit a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+@media (hover: hover) { .credit a:hover { color: var(--text); } }

@@ -459,3 +459,9 @@ body[data-game="tournament"]{ --game: #34d399; }
 }
 .gsoc:active { transform: scale(.97); }
 @media (hover: hover) { .gsoc:hover { border-color: var(--game); } }
+
+/* Designer credit (shared) */
+.credit { text-align: center; color: var(--muted); font-size: 11px; margin-top: 14px; opacity: .85; }
+.credit a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+.credit a:active { color: var(--text); }
+@media (hover: hover) { .credit a:hover { color: var(--text); } }
