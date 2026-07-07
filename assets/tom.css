@@ -165,3 +165,9 @@ body.tap { padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
 .idle-logo { height: 140px; width: auto; opacity: .96; filter: drop-shadow(0 8px 24px rgba(200,30,39,.28)); }
 .idle-title { font-size: clamp(24px, 3vw, 40px); font-weight: 800; margin-top: 8px; }
 .idle-sub { color: var(--muted); font-size: clamp(14px, 1.5vw, 18px); }
+
+/* Overlay mode (DakBoard Web Frame): transparent unless actively showing the board */
+body.overlay { background: transparent; }
+body.overlay:not(.showing) .tom-header,
+body.overlay:not(.showing) .tom-foot { display: none; }
+body.overlay.showing { background: var(--bg); }

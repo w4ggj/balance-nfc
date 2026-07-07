@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Display Overlay — Balance Gaming FL</title>
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="assets/tom.css" />
+  <style>html,body{background:transparent;}</style>
+</head>
+<body class="tom wall overlay">
+  <!-- Drop this into your DakBoard design as a full-screen Web Frame.
+       Transparent by default (your DakBoard design shows through). When staff
+       flip the "Tournament board on TV" toggle on the control panel AND a
+       tournament is live, the board covers the screen. ?demo=1 to preview. -->
+  <header class="tom-header" id="hdr"></header>
+  <main class="board" id="board"></main>
+  <footer class="tom-foot" id="foot"></footer>
+
+  <script src="assets/app.js"></script>
+  <script src="assets/tom.js"></script>
+  <script>TOM.initOverlay();</script>
+</body>
+</html>

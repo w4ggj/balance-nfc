@@ -218,7 +218,7 @@
 
     var dot = document.getElementById("liveDot");
     var liveName = document.getElementById("liveName");
-    var toggles = Array.prototype.slice.call(document.querySelectorAll(".toggle input"));
+    var toggles = Array.prototype.slice.call(document.querySelectorAll(".toggle input[data-page]"));
 
     // While saving, show the tapped choice optimistically; otherwise what's live.
     function shown() { return busy ? pending : current; }
@@ -283,11 +283,38 @@
     toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2400);
   }
 
+  // ---- Big-screen (DakBoard) toggle -----------------------------------
+  // Writes /display/board (bool). The overlay page on the ad display reads it:
+  // on = show the tournament board over the DakBoard design, off = see-through.
+  function initBigScreen() {
+    var input = document.getElementById("bigScreenToggle");
+    if (!input) return;
+    var state = document.getElementById("bigScreenState");
+    var busy = false;
+    function paint(on) {
+      input.checked = on;
+      var row = input.closest(".switch-row");
+      if (row) row.setAttribute("data-on", on ? "true" : "false");
+      if (state) state.textContent = on ? "showing tournament board" : "showing your normal display";
+    }
+    fbGet("display/board").then(function (v) { paint(v === true); });
+    input.addEventListener("change", function () {
+      if (busy) { return; }
+      var on = input.checked;
+      busy = true; paint(on);
+      fbSet("display/board", on)
+        .then(function () { showToast(on ? "Tournament board is on the display" : "Display back to your normal screen"); })
+        .catch(function () { paint(!on); showToast("Couldn't switch the display — try again"); })
+        .then(function () { busy = false; });
+    });
+  }
+
   // ---- Expose ----------------------------------------------------------
   window.BGF = {
     EVENTS: EVENTS, LABELS: LABELS, COLORS: COLORS, MAX_TABLES: MAX_TABLES,
     getTable: getTable, getConfig: getConfig, setActive: setActive,
     fbGet: fbGet, fbSet: fbSet, fbUpdate: fbUpdate,
-    routeHome: routeHome, initEvent: initEvent, initConfig: initConfig
+    routeHome: routeHome, initEvent: initEvent, initConfig: initConfig,
+    initBigScreen: initBigScreen
   };
 })();

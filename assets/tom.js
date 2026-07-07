@@ -382,6 +382,43 @@
     setInterval(function () { idx = (idx + 1) % views.length; draw(); }, secs * 1000);
   }
 
+  // ---- Overlay for DakBoard (transparent when off) ---------------------
+  // Embedded as a full-screen Web Frame ON TOP of the store's DakBoard design.
+  // Shows the rotating board only when the staff toggle (/display/board) is on
+  // AND a tournament is live; otherwise the page is fully transparent so the
+  // DakBoard design shows through. Instant switch, no DakBoard API.
+  function initOverlay() {
+    var secs = parseInt(qp("rotate"), 10); if (!secs || secs < 5) secs = 20;
+    var demo = qp("demo") != null;
+    var views = [renderPairings, renderStandings];
+    var idx = 0;
+
+    function fresh(snap) {
+      if (demo) return true;
+      if (!snap || !snap.meta) return false;
+      return (Date.now() - (snap.meta.updatedMs || 0)) < LIVE_WINDOW_MS;
+    }
+    function clear() {
+      document.body.classList.remove("showing");
+      var hd = document.getElementById("hdr"), bd = document.getElementById("board"), ft = document.getElementById("foot");
+      if (hd) hd.innerHTML = ""; if (ft) ft.innerHTML = ""; if (bd) bd.innerHTML = "";
+    }
+    function draw() {
+      var wanted = demo ? Promise.resolve(true) : BGF.fbGet("display/board");
+      wanted.then(function (on) {
+        if (on !== true) { clear(); return; }
+        fetchSnapshot().then(function (snap) {
+          if (!fresh(snap)) { clear(); return; }   // armed, but nothing live yet → stay see-through
+          document.body.classList.add("showing");
+          views[idx](snap);
+        });
+      });
+    }
+    draw();
+    setInterval(draw, POLL_MS);
+    setInterval(function () { idx = (idx + 1) % views.length; draw(); }, secs * 1000);
+  }
+
   // ---- public inits ----------------------------------------------------
   function initPairings() { poll(renderPairings); }
   function initStandings() { poll(renderStandings); }
@@ -390,7 +427,7 @@
   global.TOM = {
     TAG_TO_TABLE: TAG_TO_TABLE, LIVE_WINDOW_MS: LIVE_WINDOW_MS,
     initPairings: initPairings, initStandings: initStandings, initTable: initTable,
-    initBoard: initBoard, loadLatest: loadLatest
+    initBoard: initBoard, initOverlay: initOverlay, loadLatest: loadLatest
   };
   if (typeof module !== "undefined" && module.exports) module.exports = global.TOM;
 
