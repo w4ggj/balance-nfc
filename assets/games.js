@@ -72,12 +72,12 @@
     host.appendChild(loadingCard());
     var url = SHOP + "/collections/" + G.eventsHandle + "/products.json?limit=100";
     fetch(url, { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function (data) {
         var list = (data && data.products) || [];
         renderTonight(game, host, list.filter(function (p) { return isTonight(p.title); }));
       })
-      .catch(function () { renderTonight(game, host, null); }); // network/CORS → graceful fallback
+      .catch(function () { renderTonight(game, host, null); }); // network/CORS/404 → graceful fallback
   }
   function loadingCard() { var c = el("div", "event-card muted"); c.appendChild(el("div", "ec-title", "Checking tonight's event…")); return c; }
   function renderTonight(game, host, events) {
