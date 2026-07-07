@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Tournament — Balance Martial Arts &amp; Gaming</title>
+  <meta name="description" content="Swiss tournament at Balance Martial Arts &amp; Gaming. Scan your table to see your match and report the result." />
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+</head>
+<body data-game="tournament">
+  <main class="wrap">
+
+    <header class="header">
+      <h1 class="brand">Balance Martial Arts &amp; Gaming — Tournament</h1>
+      <img class="logo sm" src="assets/logo.png" alt="Balance Gaming FL" width="190" height="190" />
+    </header>
+
+    <section class="event-hero">
+      <span class="event-kicker"><span class="dot"></span> Tournament</span>
+      <h2 class="event-title">Your Match</h2>
+      <p class="event-sub">Scan updates automatically — no need to refresh.</p>
+    </section>
+
+    <section id="tourPlayer" class="event-body" aria-live="polite">
+      <!-- filled by tournament.js -->
+    </section>
+
+    <div class="event-actions">
+      <a class="btn ghost" href="https://balancegamingfl.com/collections/events">Event details &amp; standings</a>
+    </div>
+
+    <p class="footer-note">
+      Good luck! <br>
+      <b>Balance Martial Arts &amp; Gaming</b>
+    </p>
+
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="assets/app.js"></script>
+  <script src="assets/tournament.js"></script>
+  <script>BGFT.initPlayer();</script>
+</body>
+</html>

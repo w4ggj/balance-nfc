@@ -123,6 +123,7 @@ body[data-game="pokemon"]  { --game: #ffcb05; }
 body[data-game="onepiece"] { --game: #ff5a5f; }
 body[data-game="riftbound"]{ --game: #17c0d6; }
 body[data-game="mtg"]      { --game: #a07bff; }
+body[data-game="tournament"]{ --game: #34d399; }
 
 .event-hero {
   position: relative; margin-top: 6px; padding: 26px 22px 24px;
@@ -287,3 +288,103 @@ body[data-game="mtg"]      { --game: #a07bff; }
   .tiles > *:nth-child(5) { animation-delay: .25s; }
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 }
+
+/* ============================================================
+   TOURNAMENT — player match card + reporting
+   ============================================================ */
+.match-card {
+  background: var(--surface); border: 1px solid var(--surface-2);
+  border-top: 3px solid var(--game); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 20px 18px; text-align: center;
+}
+.match-card .round-tag {
+  font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--game); margin-bottom: 14px;
+}
+.vs-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 6px; }
+.vs-row .pname {
+  flex: 1 1 0; min-width: 0; font-size: 19px; font-weight: 800; line-height: 1.2;
+  padding: 12px 8px; border-radius: 12px; background: var(--bg); border: 1px solid var(--surface-2);
+}
+.vs-row .pname.won { border-color: var(--game); color: var(--game); }
+.vs-row .vs { flex: 0 0 auto; color: var(--muted); font-weight: 700; font-size: 13px; }
+.report-label { color: var(--muted); font-size: 13px; margin: 16px 0 10px; }
+.rbtns { display: grid; gap: 10px; }
+.rbtn {
+  padding: 15px 14px; border-radius: 14px; font-weight: 700; font-size: 15px;
+  color: var(--text); background: var(--surface-2); border: 1px solid transparent; cursor: pointer;
+  transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+.rbtn:active { transform: scale(.985); }
+.rbtn.sel { background: color-mix(in srgb, var(--game) 88%, black 12%); color: #0b1220; }
+.rbtn.saving { opacity: .6; }
+.reported-note { margin: 12px 0 0; color: var(--game); font-weight: 700; font-size: 14px; }
+
+/* ============================================================
+   TOURNAMENT — admin console
+   ============================================================ */
+.savestate { color: var(--game); font-weight: 700; font-size: 12px; margin-left: 6px; }
+.admin-card {
+  background: var(--surface); border: 1px solid var(--surface-2); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 16px 16px; margin-bottom: 14px;
+}
+.admin-card .section-label { margin: 0 0 12px; }
+.admin-card .hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+
+.field {
+  width: 100%; padding: 12px 14px; border-radius: 12px; margin-bottom: 12px;
+  background: var(--bg); border: 1px solid var(--surface-2); color: var(--text);
+  font-size: 15px; font-family: inherit;
+}
+.field:focus { outline: none; border-color: var(--game); }
+.field.area { min-height: 92px; resize: vertical; }
+
+.player-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.player-chip {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 8px 7px 12px;
+  background: var(--bg); border: 1px solid var(--surface-2); border-radius: 999px; font-size: 14px; font-weight: 600;
+}
+.player-chip .x {
+  border: none; background: var(--surface-2); color: var(--muted); border-radius: 50%;
+  width: 20px; height: 20px; line-height: 1; cursor: pointer; font-size: 11px;
+}
+.player-chip .x:active { background: var(--accent); color: #fff; }
+
+.match-row {
+  display: flex; align-items: center; gap: 10px; padding: 11px 4px;
+  border-bottom: 1px solid var(--surface-2); font-size: 14px;
+}
+.match-row:last-of-type { border-bottom: none; }
+.match-row .tnum {
+  flex: 0 0 auto; min-width: 34px; text-align: center; font-weight: 800; font-size: 12px;
+  color: var(--game); background: var(--bg); border: 1px solid var(--surface-2);
+  border-radius: 8px; padding: 4px 6px;
+}
+.match-row .who { flex: 1 1 auto; min-width: 0; }
+.match-row .who b { font-weight: 700; }
+.match-row .byeflag { color: var(--muted); font-size: 12px; font-style: italic; }
+.seg { flex: 0 0 auto; display: inline-flex; border: 1px solid var(--surface-2); border-radius: 10px; overflow: hidden; }
+.segbtn {
+  width: 34px; height: 34px; border: none; background: var(--surface-2); color: var(--text);
+  font-weight: 800; font-size: 13px; cursor: pointer; border-left: 1px solid var(--bg);
+}
+.segbtn:first-child { border-left: none; }
+.segbtn.on { background: var(--game); color: #0b1220; }
+
+.standings { display: block; }
+.srow {
+  display: grid; grid-template-columns: 28px 1fr 56px 34px 48px auto; gap: 8px; align-items: center;
+  padding: 9px 2px; border-bottom: 1px solid var(--surface-2); font-size: 14px;
+}
+.srow.shead { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.srow:last-child { border-bottom: none; }
+.srow.dropped { opacity: .5; }
+.srow .c0 { text-align: center; font-weight: 800; color: var(--game); }
+.srow .c1 { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.srow .c2, .srow .c3, .srow .c4 { text-align: center; color: var(--muted); }
+.srow .c3 { color: var(--text); font-weight: 800; }
+.dropbtn {
+  border: 1px solid var(--surface-2); background: var(--bg); color: var(--muted);
+  border-radius: 8px; font-size: 11px; padding: 4px 7px; cursor: pointer;
+}
+.dropbtn:active { border-color: var(--accent); color: var(--accent); }

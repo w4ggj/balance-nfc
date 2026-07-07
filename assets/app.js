@@ -21,14 +21,17 @@
   // Is the config backend a Firebase Realtime Database (writable) or a static file?
   function isFirebase() { return /firebaseio|firebasedatabase/.test(CONFIG_URL); }
 
-  var EVENTS = ["pokemon", "onepiece", "riftbound", "mtg"];
+  // "tournament" is a special landing (Swiss tournament) that behaves like an
+  // event for routing purposes — active="tournament" forwards to tournament.html.
+  var EVENTS = ["pokemon", "onepiece", "riftbound", "mtg", "tournament"];
 
   var LABELS = {
     main:      "Store hub",
     pokemon:   "Pokémon TCG",
     onepiece:  "One Piece TCG",
     riftbound: "Riftbound",
-    mtg:       "Magic: The Gathering"
+    mtg:       "Magic: The Gathering",
+    tournament:"Tournament"
   };
 
   var COLORS = {
@@ -36,7 +39,8 @@
     pokemon:   "#ffcb05",
     onepiece:  "#ff5a5f",
     riftbound: "#17c0d6",
-    mtg:       "#a07bff"
+    mtg:       "#a07bff",
+    tournament:"#34d399"
   };
 
   var MAX_TABLES = 16;
@@ -89,6 +93,31 @@
       if (!r.ok) throw new Error("Save failed (" + r.status + ")");
       return r.json();
     });
+  }
+
+  // ---- Generic Firebase Realtime Database helpers ----------------------
+  // Used by the tournament pages. Paths are relative to the database root,
+  // e.g. fbGet("tournament"), fbSet("tournament/currentRound", 2).
+  function dbBase() { return CONFIG_URL.replace(/active\.json.*$/, ""); }
+
+  function fbGet(path) {
+    return fetch(dbBase() + path + ".json", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+  }
+  function fbSet(path, value) {
+    return fetch(dbBase() + path + ".json", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(value)
+    }).then(function (r) { if (!r.ok) throw new Error("Save failed (" + r.status + ")"); return r.json(); });
+  }
+  function fbUpdate(path, obj) {
+    return fetch(dbBase() + path + ".json", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(obj)
+    }).then(function (r) { if (!r.ok) throw new Error("Update failed (" + r.status + ")"); return r.json(); });
   }
 
   function tblQuery(tbl) { return tbl ? ("?tbl=" + tbl) : ""; }
@@ -232,6 +261,7 @@
   window.BGF = {
     EVENTS: EVENTS, LABELS: LABELS, COLORS: COLORS, MAX_TABLES: MAX_TABLES,
     getTable: getTable, getConfig: getConfig, setActive: setActive,
+    fbGet: fbGet, fbSet: fbSet, fbUpdate: fbUpdate,
     routeHome: routeHome, initEvent: initEvent, initConfig: initConfig
   };
 })();

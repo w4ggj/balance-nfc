@@ -38,9 +38,12 @@ the hub, even during an event (handy for testing).
 |------|------------|
 | `index.html` | Router + the store hub (the default landing) |
 | `pokemon.html`, `onepiece.html`, `riftbound.html`, `mtg.html` | Event pages (one per game) |
+| `tournament.html` | Player tournament page — scan a table → see your match → report the winner |
+| `admin.html` | Private tournament organizer console (Swiss pairings, results, standings) |
 | `config.html` | Private staff control panel — one-tap instant toggle |
 | `assets/brand.css` | Shared design system — edit brand colors here once |
-| `assets/app.js` | Shared logic: reads/writes the active event, parses `tbl`, routing |
+| `assets/app.js` | Shared logic: reads/writes the active event, parses `tbl`, routing, Firebase helpers |
+| `assets/tournament.js` | Swiss engine (pairings/byes/standings) + player & admin logic |
 | `assets/logo.png` | Dragon logo (favicon + header) |
 | `config.json` | Legacy/manual fallback file — **no longer the live source** (Firebase is) |
 | `CNAME` | Binds the custom domain `nfc.balancegamingfl.com` |
@@ -69,6 +72,45 @@ control panel can change it instantly without any deploy.
 
 The control page has **no password** by design — keep its URL off anything public
 (it isn't linked from the customer-facing pages).
+
+## Swiss tournaments
+
+A full Swiss-pairing tournament runs on the same tags — no extra hardware.
+
+**Run one (staff):**
+1. Open **`admin.html`** (private link). Type player names → **Start tournament**
+   (round count is auto-calculated: 8 players = 3 rounds, 16 = 4, etc.).
+2. On the **control panel**, turn on the **Tournament** toggle so the tags show it.
+3. Tap **Pair round 1** — the engine seats each match at a table (T1, T2, …) and
+   handles a bye automatically if the count is odd.
+4. Players scan their table tag → see *"Round 1 · Table 3 — Alice vs Bob"* → tap
+   the winner (or draw). Results appear on the admin console live.
+5. When all results are in, **Pair round 2** (avoids rematches). Repeat, then
+   **Finish** for final standings.
+
+**Scoring & standings:** win = 3, draw = 1, loss = 0; ranked by points then
+Opponents' Match-Win % (OMW, standard TCG tiebreaker). The TO can edit any result
+or drop a player from the console.
+
+**Data:** stored in Firebase at `/tournament` (players, rounds, results). Player
+devices poll every few seconds, so everything stays in sync with no refresh.
+
+**Firebase rules** must allow the tournament node and the `tournament` value — the
+current rules are:
+```json
+{
+  "rules": {
+    "active": {
+      ".read": true,
+      ".write": "newData.isString() && newData.val().matches(/^(main|pokemon|onepiece|riftbound|mtg|tournament)$/)"
+    },
+    "tournament": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
+```
 
 ## Adding event features later (registration / match results)
 

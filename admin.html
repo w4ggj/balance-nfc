@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Tournament Admin — Balance Martial Arts &amp; Gaming</title>
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+</head>
+<body data-game="tournament">
+  <main class="wrap">
+
+    <header class="header">
+      <h1 class="brand">Tournament Admin</h1>
+      <img class="logo sm" src="assets/logo.png" alt="Balance Gaming FL" width="150" height="150" />
+      <p class="tagline">Swiss tournament organizer</p>
+      <span class="welcome">🔒 <b>Keep this link private</b> — staff only</span>
+    </header>
+
+    <div class="notice" style="margin-bottom:6px">
+      To send players here: open the <a href="config.html">control panel</a> and turn on
+      <b style="color:var(--text)">Tournament</b>. Then pair round 1 below.
+      <span id="saveState" class="savestate"></span>
+    </div>
+
+    <div id="adminRoot"><!-- filled by tournament.js --></div>
+
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="assets/app.js"></script>
+  <script src="assets/tournament.js"></script>
+  <script>BGFT.initAdmin();</script>
+</body>
+</html>
