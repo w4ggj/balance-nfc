@@ -1,0 +1,121 @@
+/* ============================================================
+   Balance Commander League — subsystem styles
+   Layers on brand.css. Reuses --game/--accent tokens; the
+   league themes --game to its own gold-orange.
+   ============================================================ */
+body.commander { --game: #e0902a; }
+
+/* Player + admin shared card */
+.cl-card {
+  background: var(--surface); border: 1px solid var(--surface-2);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 18px; margin-bottom: 14px;
+}
+.cl-h { font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
+.cl-sub { color: var(--muted); font-size: 14px; margin: 6px 0 0; }
+.cl-hello { color: var(--muted); font-size: 13px; margin: 2px 2px 14px; }
+.cl-hello b { color: var(--text); }
+
+/* Pod / seating */
+.cl-podbadge {
+  display: inline-block; padding: 6px 14px; border-radius: 999px;
+  font-size: 13px; font-weight: 800; letter-spacing: .04em;
+  color: #0b1220; background: var(--game);
+}
+.cl-pod { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.cl-podname {
+  font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--surface-2);
+}
+
+/* Choice buttons (vote target / reason) */
+.cl-choices { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+.cl-choice {
+  padding: 12px 14px; border-radius: 12px; font-weight: 700; font-size: 15px;
+  color: var(--text); background: var(--bg); border: 1px solid var(--surface-2);
+  cursor: pointer; transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+.cl-choice.sm { padding: 10px 12px; font-size: 14px; }
+.cl-choice:active { transform: scale(.98); }
+.cl-choice.on { background: color-mix(in srgb, var(--game) 88%, black 12%); color: #0b1220; border-color: var(--game); }
+.cl-choice.abstain { color: var(--muted); }
+.cl-choice.abstain.on { background: var(--surface-2); color: var(--text); border-color: var(--muted); }
+
+/* Questionnaire scale */
+.cl-q { margin: 14px 0; }
+.cl-qlabel { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.cl-scale { display: flex; gap: 8px; }
+.cl-dot {
+  flex: 1 1 0; height: 46px; border-radius: 12px; font-weight: 800; font-size: 16px;
+  color: var(--text); background: var(--bg); border: 1px solid var(--surface-2); cursor: pointer;
+  transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+.cl-dot:active { transform: scale(.96); }
+.cl-dot.on { background: color-mix(in srgb, var(--game) 88%, black 12%); color: #0b1220; border-color: var(--game); }
+
+/* Player stats */
+.cl-statbig { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0 6px; }
+.cl-stat { text-align: center; padding: 14px 6px; border-radius: 14px; background: var(--bg); border: 1px solid var(--surface-2); }
+.cl-statv { font-size: 30px; font-weight: 800; line-height: 1; color: var(--game); }
+.cl-statl { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-top: 6px; }
+.cl-reasons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.cl-reason {
+  font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--surface-2); color: var(--muted);
+}
+.cl-reason b { color: var(--game); margin-right: 4px; }
+
+/* Admin — form field wrapper + pod/feedback rows */
+.cl-field { margin-bottom: 12px; }
+.cl-flabel { display: block; font-size: 12px; letter-spacing: .04em; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+.cl-field .field { margin-bottom: 0; }
+.cl-actions { display: grid; gap: 10px; margin-top: 14px; }
+.cl-podrow { display: flex; align-items: center; gap: 12px; padding: 10px 2px; border-bottom: 1px solid var(--surface-2); font-size: 14px; }
+.cl-podrow:last-child { border-bottom: none; }
+.cl-podt {
+  flex: 0 0 auto; min-width: 38px; text-align: center; font-weight: 800; font-size: 12px;
+  color: var(--game); background: var(--bg); border: 1px solid var(--surface-2); border-radius: 8px; padding: 5px 6px;
+}
+.cl-podm { flex: 1 1 auto; min-width: 0; }
+.cl-frow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--surface-2); font-size: 14px; }
+.cl-frow:last-child { border-bottom: none; }
+.cl-frow b { color: var(--game); }
+.cl-comment { color: var(--muted); font-size: 14px; font-style: italic; margin: 6px 0 0; }
+
+/* Season standings list (admin + board) */
+.cl-slist { display: block; margin-top: 4px; }
+.cl-srow { display: grid; grid-template-columns: 34px 1fr 60px; gap: 8px; align-items: center; padding: 9px 2px; border-bottom: 1px solid var(--surface-2); font-size: 15px; }
+.cl-srow:last-child { border-bottom: none; }
+.cl-rk { text-align: center; font-weight: 800; color: var(--game); }
+.cl-nm { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-pts { text-align: right; font-weight: 800; }
+
+/* ============================================================
+   TV LEADERBOARD (commander-board.html) — big wall display
+   ============================================================ */
+body.cl-wall {
+  --game: #e0902a;
+  display: flex; align-items: center; justify-content: center; min-height: 100dvh;
+}
+#clBoard { width: min(1100px, 94vw); margin: 0 auto; }
+.cl-bhead { text-align: center; margin-bottom: 3vh; }
+.cl-btitle { font-size: clamp(30px, 5vw, 64px); font-weight: 900; letter-spacing: -.02em; }
+.cl-bsub {
+  font-size: clamp(14px, 1.6vw, 22px); font-weight: 800; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--game); margin-top: 6px;
+}
+.cl-lb { display: grid; gap: 1.4vh; }
+.cl-lbrow {
+  display: grid; grid-template-columns: clamp(48px,6vw,90px) 1fr auto; gap: 2vw; align-items: center;
+  padding: 1.6vh 2.4vw; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--surface-2);
+}
+.cl-lbrow.top { border-color: var(--game); background: color-mix(in srgb, var(--game) 12%, var(--surface)); }
+.cl-lbrow .cl-rk { font-size: clamp(24px, 3.4vw, 46px); font-weight: 900; }
+.cl-lbrow .cl-nm { font-size: clamp(20px, 3vw, 42px); font-weight: 800; }
+.cl-lbrow .cl-pts { font-size: clamp(24px, 3.4vw, 48px); font-weight: 900; color: var(--game); }
+
+/* Empty state (board + player) */
+.cl-empty { text-align: center; padding: 6vh 20px; color: var(--muted); }
+.cl-empty h2 { color: var(--text); font-size: clamp(22px, 3vw, 40px); margin: 0 0 8px; }
+.cl-empty p { margin: 0; font-size: clamp(14px, 1.6vw, 20px); }

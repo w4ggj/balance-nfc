@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Commander League — Balance Martial Arts &amp; Gaming</title>
+  <meta name="description" content="Balance Commander League — Friday-night Magic: The Gathering Commander at Balance Martial Arts &amp; Gaming, Pinellas Park, FL." />
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+  <link rel="stylesheet" href="assets/commander.css" />
+</head>
+<body class="commander">
+  <main class="wrap">
+
+    <header class="header">
+      <h1 class="brand">Balance Martial Arts &amp; Gaming — Commander League</h1>
+      <img class="logo sm" src="assets/logo.png" alt="Balance Gaming FL" width="190" height="190" />
+    </header>
+
+    <section class="event-hero">
+      <span class="event-kicker"><span class="dot"></span> Commander League</span>
+      <h2 class="event-title">Balance Commander League</h2>
+      <p class="event-sub">Friday-night EDH — check in, play, vote, climb the season board.</p>
+    </section>
+
+    <section id="clPlayer" class="event-body" aria-live="polite"></section>
+
+    <p class="credit">Designed by <a href="https://tavaone.com" target="_blank" rel="noopener">Tava One LLC</a></p>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase (compat) — auth email-link + realtime database -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="assets/commander.js"></script>
+  <script>BGFCL.initPlayer();</script>
+</body>
+</html>

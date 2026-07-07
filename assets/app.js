@@ -25,23 +25,34 @@
   // event for routing purposes — active="tournament" forwards to tournament.html.
   var EVENTS = ["pokemon", "onepiece", "riftbound", "mtg", "tournament"];
 
+  // "commander-league" is a special landing whose page name doesn't match the
+  // value (forwards to commander.html, not commander-league.html), so it's kept
+  // out of EVENTS and handled explicitly in the router.
+  var SPECIAL = { "commander-league": "commander" };
+
   var LABELS = {
-    main:      "Store hub",
-    pokemon:   "Pokémon TCG",
-    onepiece:  "One Piece TCG",
-    riftbound: "Riftbound",
-    mtg:       "Magic: The Gathering",
-    tournament:"Tournament"
+    main:               "Store hub",
+    pokemon:            "Pokémon TCG",
+    onepiece:           "One Piece TCG",
+    riftbound:          "Riftbound",
+    mtg:                "Magic: The Gathering",
+    tournament:         "Tournament",
+    "commander-league": "Commander League"
   };
 
   var COLORS = {
-    main:      "#c81e27",
-    pokemon:   "#ffcb05",
-    onepiece:  "#ff5a5f",
-    riftbound: "#17c0d6",
-    mtg:       "#a07bff",
-    tournament:"#34d399"
+    main:               "#c81e27",
+    pokemon:            "#ffcb05",
+    onepiece:           "#ff5a5f",
+    riftbound:          "#17c0d6",
+    mtg:                "#a07bff",
+    tournament:         "#34d399",
+    "commander-league": "#e0902a"
   };
+
+  function isValidActive(a) {
+    return a === "main" || EVENTS.indexOf(a) !== -1 || Object.prototype.hasOwnProperty.call(SPECIAL, a);
+  }
 
   var MAX_TABLES = 16;
 
@@ -70,7 +81,7 @@
         var active = null;
         if (typeof data === "string") active = data;                 // Firebase raw value
         else if (data && typeof data.active === "string") active = data.active; // JSON file
-        if (active !== "main" && EVENTS.indexOf(active) === -1) active = "main";
+        if (!isValidActive(active)) active = "main";
         return { active: active };
       })
       .catch(function () { return { active: "main" }; });
@@ -82,7 +93,7 @@
     if (!isFirebase()) {
       return Promise.reject(new Error("Config backend is read-only (not Firebase)."));
     }
-    if (page !== "main" && EVENTS.indexOf(page) === -1) {
+    if (!isValidActive(page)) {
       return Promise.reject(new Error("Invalid event: " + page));
     }
     return fetch(CONFIG_URL, {
@@ -146,6 +157,10 @@
         latestLiveTournament().then(function (live) {
           location.replace((live ? "table.html" : "pokemon.html") + tblQuery(tbl));
         });
+        return;
+      }
+      if (SPECIAL[cfg.active]) {
+        location.replace(SPECIAL[cfg.active] + ".html" + tblQuery(tbl));
         return;
       }
       if (cfg.active !== "main") {

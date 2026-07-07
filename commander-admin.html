@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Commander League — Staff Console</title>
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+  <link rel="stylesheet" href="assets/commander.css" />
+</head>
+<body class="commander">
+  <main class="wrap">
+
+    <header class="header">
+      <h1 class="brand">Commander League — Staff Console</h1>
+      <img class="logo sm" src="assets/logo.png" alt="Balance Gaming FL" width="190" height="190" />
+      <p class="tagline">Commander League — staff console</p>
+      <span class="welcome">🔒 <b>Keep this link private</b> — staff only</span>
+    </header>
+
+    <section id="clAdmin" class="event-body" aria-live="polite"></section>
+
+    <p class="footer-note" style="margin-top:26px">
+      League state is stored in Firebase and updates live for players &amp; the wall board.<br>
+      <b>Balance Martial Arts &amp; Gaming</b>
+    </p>
+
+    <p class="credit">Designed by <a href="https://tavaone.com" target="_blank" rel="noopener">Tava One LLC</a></p>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="assets/app.js"></script>
+  <script src="assets/commander.js"></script>
+  <script>BGFCL.initAdmin();</script>
+</body>
+</html>
