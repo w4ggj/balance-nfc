@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tournament Board — Balance Gaming FL</title>
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+</head>
+<body class="swiss-wall">
+  <!-- Rotating pairings ↔ standings for the Swiss tournament (data at
+       /tournament). ?rotate=N sets seconds per view (default 18). -->
+  <header class="sw-head" id="swHead"></header>
+  <main class="sw-body" id="swBody"></main>
+  <footer class="sw-foot" id="swFoot"></footer>
+
+  <script src="assets/app.js"></script>
+  <script src="assets/tournament.js"></script>
+  <script>BGFT.initBoard();</script>
+</body>
+</html>

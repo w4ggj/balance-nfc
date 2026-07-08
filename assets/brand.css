@@ -502,6 +502,62 @@ body.evtv {
 }
 .evtv-foot b { color: var(--text); }
 
+/* ============================================================
+   SWISS TOURNAMENT — wall board (swiss-board.html)
+   ============================================================ */
+body.swiss-wall {
+  --game: #34d399;
+  min-height: 100dvh; display: flex; flex-direction: column;
+  padding: 3vh 3vw; text-align: center;
+}
+.sw-head { flex: 0 0 auto; margin-bottom: 2.4vh; }
+.sw-title { font-size: clamp(28px, 4.6vw, 66px); font-weight: 900; letter-spacing: -.02em; line-height: 1.02; }
+.sw-sub {
+  font-size: clamp(14px, 1.7vw, 26px); font-weight: 800; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--game); margin-top: 1vh;
+}
+.sw-body { flex: 1 1 auto; width: min(1200px, 94vw); margin: 0 auto; overflow: hidden; }
+.sw-foot { flex: 0 0 auto; margin-top: 2vh; color: var(--muted); font-size: clamp(12px, 1.3vw, 18px); font-weight: 700; }
+
+/* Pairings — two columns on wide screens */
+.sw-pairs { display: grid; grid-template-columns: 1fr; gap: 1.4vh; }
+@media (min-width: 900px) { .sw-pairs { grid-template-columns: 1fr 1fr; gap: 1.4vh 2vw; } }
+.sw-prow {
+  display: flex; align-items: center; gap: 1.4vw; text-align: left;
+  padding: 1.4vh 1.6vw; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--surface-2);
+}
+.sw-tnum {
+  flex: 0 0 auto; min-width: clamp(48px, 4vw, 74px); text-align: center;
+  font-size: clamp(16px, 1.8vw, 26px); font-weight: 900; color: var(--game);
+  background: var(--bg); border: 1px solid var(--surface-2); border-radius: 10px; padding: .8vh .6vw;
+}
+.sw-vs { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 1vw; }
+.sw-pn { flex: 1 1 0; min-width: 0; font-size: clamp(17px, 2vw, 30px); font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sw-pn.won { color: var(--game); }
+.sw-pn.bye { color: var(--muted); font-weight: 700; }
+.sw-vsx { flex: 0 0 auto; color: var(--muted); font-weight: 700; font-size: clamp(12px, 1.2vw, 18px); }
+
+/* Standings */
+.sw-stand { display: block; }
+.sw-srow {
+  display: grid; grid-template-columns: clamp(44px,5vw,72px) 1fr clamp(90px,10vw,150px) clamp(56px,6vw,90px);
+  gap: 1vw; align-items: center; text-align: left;
+  padding: 1.1vh 1.4vw; border-bottom: 1px solid var(--surface-2);
+  font-size: clamp(16px, 2vw, 30px);
+}
+.sw-srow.head { color: var(--muted); font-size: clamp(11px,1.2vw,16px); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; border-bottom: 2px solid var(--surface-2); }
+.sw-srow.top { background: color-mix(in srgb, var(--game) 12%, transparent); }
+.sw-srow.dropped { opacity: .5; }
+.sw-rk { text-align: center; font-weight: 900; color: var(--game); }
+.sw-nm { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sw-rec { color: var(--muted); text-align: center; }
+.sw-pt { text-align: right; font-weight: 900; }
+
+.sw-empty { text-align: center; padding: 8vh 20px; color: var(--muted); }
+.sw-empty h2 { color: var(--text); font-size: clamp(22px,3vw,40px); margin: 0 0 8px; }
+.sw-empty p { margin: 0; font-size: clamp(14px,1.6vw,20px); }
+
 /* Designer credit (shared) */
 .credit { text-align: center; color: var(--muted); font-size: 11px; margin-top: 14px; opacity: .85; }
 .credit a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }

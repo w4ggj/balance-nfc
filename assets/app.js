@@ -350,7 +350,7 @@
     function targetFor(active, live) {
       switch (active) {
         case "commander-league": return "commander-board.html";
-        case "tournament":       return "board.html" + passQuery;
+        case "tournament":       return "swiss-board.html" + passQuery;
         case "pokemon":          return (live ? "board.html" + passQuery : "event-tv.html?game=pokemon");
         case "onepiece":         return "event-tv.html?game=onepiece";
         case "riftbound":        return "event-tv.html?game=riftbound";

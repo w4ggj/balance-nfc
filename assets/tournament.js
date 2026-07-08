@@ -623,7 +623,91 @@
     toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2400);
   }
 
-  var api = { Engine: Engine, initPlayer: initPlayer, initAdmin: initAdmin };
+  // ---- Wall board (swiss-board.html) — rotating pairings ↔ standings ---
+  // Read-only TV display for the Swiss tournament (data at /tournament).
+  function initBoard() {
+    var head = document.getElementById("swHead");
+    var body = document.getElementById("swBody");
+    var foot = document.getElementById("swFoot");
+    var q = new URLSearchParams(location.search);
+    var secs = parseInt(q.get("rotate"), 10); if (!secs || secs < 5) secs = 18;
+    var views = ["pairings", "standings"], idx = 0;
+    var T = null;
+
+    function draw() { BGF.fbGet("tournament").then(function (t) { T = t; render(); }); }
+
+    function render() {
+      if (!T || T.status === "setup" || !T.players || !Object.keys(T.players).length) {
+        head.innerHTML = ""; head.appendChild(el("div", "sw-title", (T && T.name) || "Swiss Tournament"));
+        body.innerHTML = ""; body.appendChild(msg("Tournament starting soon", "Pairings and standings appear here once round 1 is paired."));
+        foot.textContent = "Balance Martial Arts & Gaming"; return;
+      }
+      var view = views[idx];
+      var haveRound = T.currentRound && T.rounds && T.rounds[T.currentRound];
+      if (view === "pairings" && !haveRound) view = "standings";
+      head.innerHTML = "";
+      head.appendChild(el("div", "sw-title", T.name || "Swiss Tournament"));
+      head.appendChild(el("div", "sw-sub", T.status === "final" ? "Final Standings"
+        : (view === "pairings" ? ("Round " + T.currentRound + " Pairings")
+        : ("Standings" + (T.currentRound ? " · after round " + T.currentRound : "")))));
+      body.innerHTML = "";
+      if (view === "pairings") renderPairingsBoard(); else renderStandingsBoard();
+      foot.textContent = "Balance Martial Arts & Gaming";
+    }
+
+    function renderPairingsBoard() {
+      var matches = T.rounds[T.currentRound] || {};
+      var keys = Object.keys(matches).sort(function (a, b) {
+        var ta = matches[a].table, tb = matches[b].table;
+        if (ta == null) return 1; if (tb == null) return -1; return ta - tb;
+      });
+      var grid = el("div", "sw-pairs");
+      keys.forEach(function (k) {
+        var m = matches[k], row = el("div", "sw-prow");
+        row.appendChild(el("span", "sw-tnum", m.table != null ? ("T" + m.table) : "BYE"));
+        var vs = el("div", "sw-vs");
+        vs.appendChild(el("span", "sw-pn" + (m.winner === "p1" ? " won" : ""), nameOf(T, m.p1)));
+        if (m.p2 != null) {
+          vs.appendChild(el("span", "sw-vsx", "vs"));
+          vs.appendChild(el("span", "sw-pn" + (m.winner === "p2" ? " won" : ""), nameOf(T, m.p2)));
+        } else {
+          vs.appendChild(el("span", "sw-vsx", "·"));
+          vs.appendChild(el("span", "sw-pn bye", "Bye"));
+        }
+        row.appendChild(vs);
+        grid.appendChild(row);
+      });
+      body.appendChild(grid);
+    }
+
+    function renderStandingsBoard() {
+      var st = Engine.standings(T.players, T.rounds || {});
+      var list = el("div", "sw-stand");
+      var headRow = el("div", "sw-srow head");
+      headRow.appendChild(el("span", "sw-rk", "#"));
+      headRow.appendChild(el("span", "sw-nm", "Player"));
+      headRow.appendChild(el("span", "sw-rec", "Record"));
+      headRow.appendChild(el("span", "sw-pt", "Pts"));
+      list.appendChild(headRow);
+      st.forEach(function (s) {
+        var row = el("div", "sw-srow" + (s.rank <= 3 ? " top" : "") + (s.dropped ? " dropped" : ""));
+        row.appendChild(el("span", "sw-rk", String(s.rank)));
+        row.appendChild(el("span", "sw-nm", s.name + (s.dropped ? " (drop)" : "")));
+        row.appendChild(el("span", "sw-rec", s.w + "-" + s.l + (s.d ? "-" + s.d : "")));
+        row.appendChild(el("span", "sw-pt", String(s.points)));
+        list.appendChild(row);
+      });
+      body.appendChild(list);
+    }
+
+    function msg(t, b) { var c = el("div", "sw-empty"); c.appendChild(el("h2", null, t)); c.appendChild(el("p", null, b)); return c; }
+
+    draw();
+    setInterval(draw, 5000);
+    setInterval(function () { idx = (idx + 1) % views.length; render(); }, secs * 1000);
+  }
+
+  var api = { Engine: Engine, initPlayer: initPlayer, initAdmin: initAdmin, initBoard: initBoard };
   global.BGFT = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 
