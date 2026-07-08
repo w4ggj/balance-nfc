@@ -71,6 +71,16 @@ body.signage {
 .sg-st-nm { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sg-st-pt { text-align: right; font-weight: 900; }
 
+/* Right: pairings / pods list */
+.sg-plist { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-auto-rows: max-content; gap: 1.1vh; align-content: start; }
+.sg-prow { display: flex; align-items: center; gap: 1.2vw; padding: 1.1vh 1vw; border-radius: 10px; background: var(--surface); border: 1px solid var(--surface-2); }
+.sg-p-tbl { flex: 0 0 auto; min-width: clamp(42px, 3.6vw, 64px); text-align: center; font-size: clamp(14px, 1.4vw, 22px); font-weight: 900; color: var(--ev); background: var(--bg); border: 1px solid var(--surface-2); border-radius: 8px; padding: .6vh .5vw; }
+.sg-p-vs { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: .8vw; font-size: clamp(15px, 1.5vw, 26px); }
+.sg-p-name { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg-p-name.won { color: var(--ev); }
+.sg-p-name.bye { color: var(--muted); font-weight: 700; }
+.sg-p-x { flex: 0 0 auto; color: var(--muted); font-weight: 700; font-size: clamp(11px, 1vw, 16px); }
+
 /* Right: game-event card (no standings) + welcome */
 .sg-r-event { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
 .sg-re-kick { font-size: clamp(14px, 1.6vw, 26px); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ev); }

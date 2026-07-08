@@ -124,18 +124,41 @@
     var p = document.getElementById("sgLive");
     if (p) p.hidden = !on;
   }
+  // The right panel rotates between two views for league/tournament nights:
+  //   view 0 = standings, view 1 = pairings (Swiss) / pods (Commander).
+  var rightActive = "main";
+  var rightData = null;
+  var rightView = 0;
   function loadRight() {
     var right = document.getElementById("sgRight");
     if (!right || !global.BGF) return;
     BGF.getConfig().then(function (cfg) {
       var active = (cfg && cfg.active) || "main";
+      if (active !== rightActive) { rightActive = active; rightView = 0; } // reset to standings on change
       setLive(active !== "main");
       right.style.setProperty("--ev", (BGF.COLORS && BGF.COLORS[active]) || "#a07bff");
-      if (active === "commander-league") { BGF.fbGet("commander").then(function (c) { paintStandings(right, commanderView(c || {}), active); }); }
-      else if (active === "tournament") { BGF.fbGet("tournament").then(function (t) { paintStandings(right, swissView(t || {}), active); }); }
-      else if (["pokemon", "onepiece", "riftbound", "mtg"].indexOf(active) !== -1) { paintEventCard(right, active); }
-      else { paintWelcome(right); }
+      if (active === "commander-league") { BGF.fbGet("commander").then(function (c) { rightData = c || {}; renderRight(); }); }
+      else if (active === "tournament") { BGF.fbGet("tournament").then(function (t) { rightData = t || {}; renderRight(); }); }
+      else if (["pokemon", "onepiece", "riftbound", "mtg"].indexOf(active) !== -1) { rightData = null; paintEventCard(right, active); }
+      else { rightData = null; paintWelcome(right); }
     });
+  }
+  function renderRight() {
+    var right = document.getElementById("sgRight");
+    if (!right) return;
+    if (rightActive === "commander-league") {
+      if (rightView === 1) paintPods(right, rightData || {});
+      else paintStandings(right, commanderView(rightData || {}), rightActive);
+    } else if (rightActive === "tournament") {
+      if (rightView === 1) paintPairings(right, rightData || {});
+      else paintStandings(right, swissView(rightData || {}), rightActive);
+    }
+  }
+  function rotateRight() {
+    if (rightActive === "commander-league" || rightActive === "tournament") {
+      rightView = rightView ? 0 : 1;
+      renderRight();
+    }
   }
 
   function commanderView(c) {
@@ -177,6 +200,65 @@
     });
     right.appendChild(tbl);
     addCornerQR(right, active);
+  }
+
+  // Swiss pairings for the current round.
+  function paintPairings(right, t) {
+    right.innerHTML = "";
+    var round = t.currentRound || 0;
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", (t.name || "Tournament") + (round ? " — Round " + round : "")));
+    head.appendChild(el("div", "sg-r-sub", "Pairings"));
+    right.appendChild(head);
+
+    var matches = (t.rounds && t.rounds[round]) || null;
+    if (!matches || !Object.keys(matches).length) {
+      right.appendChild(centerMsg("Pairings not posted yet", "They'll appear here when the round is paired."));
+      addCornerQR(right, "tournament"); return;
+    }
+    var name = function (id) { return (t.players && t.players[id] && t.players[id].name) || "—"; };
+    var keys = Object.keys(matches).sort(function (a, b) { var ta = matches[a].table, tb = matches[b].table; if (ta == null) return 1; if (tb == null) return -1; return ta - tb; });
+    var list = el("div", "sg-plist");
+    keys.forEach(function (k) {
+      var m = matches[k], row = el("div", "sg-prow");
+      row.appendChild(el("span", "sg-p-tbl", m.table != null ? ("T" + m.table) : "BYE"));
+      var vs = el("div", "sg-p-vs");
+      vs.appendChild(el("span", "sg-p-name" + (m.winner === "p1" ? " won" : ""), name(m.p1)));
+      if (m.p2 != null) { vs.appendChild(el("span", "sg-p-x", "vs")); vs.appendChild(el("span", "sg-p-name" + (m.winner === "p2" ? " won" : ""), name(m.p2))); }
+      else { vs.appendChild(el("span", "sg-p-x", "·")); vs.appendChild(el("span", "sg-p-name bye", "Bye")); }
+      row.appendChild(vs);
+      list.appendChild(row);
+    });
+    right.appendChild(list);
+    addCornerQR(right, "tournament");
+  }
+
+  // Commander pods for tonight.
+  function paintPods(right, c) {
+    right.innerHTML = "";
+    var night = (c.nights || {})[todayId()];
+    var round = night ? (night.currentGame || 0) : 0;
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", "Commander League" + (round ? " — Round " + round : "")));
+    head.appendChild(el("div", "sg-r-sub", "Tonight's Pods"));
+    right.appendChild(head);
+
+    var pods = (night && night.pods) || null;
+    if (!pods || !Object.keys(pods).length) {
+      right.appendChild(centerMsg("Pods not assigned yet", "Seating shows here once the organizer assigns pods."));
+      addCornerQR(right, "commander-league"); return;
+    }
+    var name = function (uid) { return (c.players && c.players[uid] && c.players[uid].name) || "Player"; };
+    var list = el("div", "sg-plist");
+    Object.keys(pods).sort(function (a, b) { return (pods[a].table || 0) - (pods[b].table || 0); }).forEach(function (pn) {
+      var p = pods[pn], row = el("div", "sg-prow");
+      row.appendChild(el("span", "sg-p-tbl", "T" + (p.table != null ? p.table : "?")));
+      var names = Object.keys(p.members || {}).map(name).join(" · ");
+      row.appendChild(el("div", "sg-p-vs", names));
+      list.appendChild(row);
+    });
+    right.appendChild(list);
+    addCornerQR(right, "commander-league");
   }
 
   // A game event is active but has no standings — show its next event card.
@@ -333,6 +415,7 @@
       renderEntranceQR(); setInterval(renderEntranceQR, POLL_FB_MS);
     } else {
       loadRight(); setInterval(loadRight, POLL_RIGHT_MS);
+      setInterval(rotateRight, 15000); // alternate standings ↔ pairings/pods
     }
 
     setTimeout(function () { location.reload(); }, 60 * 60 * 1000);
