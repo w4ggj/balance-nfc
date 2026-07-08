@@ -7,13 +7,13 @@
 .signage [hidden] { display: none !important; }
 
 body.signage {
-  margin: 0; height: 100dvh; width: 100vw; overflow: hidden;
+  margin: 0; padding: 0; height: 100vh; width: 100vw; max-width: 100%; overflow: hidden;
   background:
     radial-gradient(1400px 800px at 20% -10%, rgba(160,123,255,.10), transparent 60%),
     radial-gradient(1200px 700px at 100% 0%, rgba(200,30,39,.10), transparent 55%),
     var(--bg);
 }
-.sg-design { height: 100dvh; width: 100vw; display: flex; flex-direction: column; padding: 2.2vh 2vw; }
+.sg-design { height: 100vh; width: 100%; display: flex; flex-direction: column; padding: 2.2vh 2vw; overflow: hidden; }
 
 /* ── Header ─────────────────────────────────────────── */
 .sg-header { flex: 0 0 auto; display: flex; align-items: center; gap: 2vw; margin-bottom: 2vh; }
