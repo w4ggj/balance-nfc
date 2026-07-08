@@ -441,7 +441,8 @@
     if (!items.length) { host.hidden = true; return; }
     host.hidden = false;
     var track = el("div", "sg-ticker-track");
-    for (var rep = 0; rep < 2; rep++) {
+    host.appendChild(track);
+    function appendSeq() {
       items.forEach(function (it) {
         if (it.special) {
           var s = el("span", "sg-ticker-item sg-ticker-special");
@@ -454,10 +455,24 @@
         track.appendChild(el("span", "sg-ticker-dot", "•"));
       });
     }
-    host.appendChild(track);
+    appendSeq(); // one sequence, to measure
     requestAnimationFrame(function () {
-      var half = track.scrollWidth / 2;
-      track.style.animationDuration = Math.max(6, half / tickerPxPerSec) + "s";
+      var base = track.scrollWidth;
+      if (base <= 0) return;
+      var vw = host.clientWidth || window.innerWidth || base;
+      // Repeat enough that the strip always fills the screen (no gap/pop), then
+      // loop by exactly ONE sequence width so the start seamlessly follows the end.
+      var repeats = Math.max(2, Math.ceil(vw / base) + 1);
+      track.innerHTML = "";
+      for (var i = 0; i < repeats; i++) appendSeq();
+      var name = "sgmarq_" + Math.floor(base);
+      if (!kfMade[name]) {
+        kfMade[name] = true;
+        var css = "@keyframes " + name + "{from{transform:translateX(0)}to{transform:translateX(-" + base + "px)}}";
+        var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+      }
+      var dur = Math.max(6, base / tickerPxPerSec);
+      track.style.animation = name + " " + dur + "s linear infinite";
     });
   }
 

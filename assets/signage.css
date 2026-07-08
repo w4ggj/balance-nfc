@@ -112,13 +112,12 @@ body.signage {
 .sg-empty h2 { color: var(--text); font-size: clamp(18px, 2vw, 32px); margin: 0 0 1vh; }
 .sg-empty p { margin: 0; font-size: clamp(13px, 1.4vw, 20px); }
 
-/* ── Ticker ─────────────────────────────────────────── */
-.sg-ticker { flex: 0 0 auto; overflow: hidden; white-space: nowrap; border-top: 1px solid var(--surface-2); padding-top: 1.4vh; margin-top: 1.6vh; }
-.sg-ticker-track { display: inline-block; white-space: nowrap; will-change: transform; animation: sg-marquee 40s linear infinite; }
+/* ── Ticker (full-bleed, edge to edge) ──────────────── */
+.sg-ticker { flex: 0 0 auto; overflow: hidden; white-space: nowrap; border-top: 1px solid var(--surface-2); padding: 1.4vh 2vw 0; margin: 1.6vh -2vw 0; width: 100vw; }
+.sg-ticker-track { display: inline-block; white-space: nowrap; will-change: transform; }
 .sg-ticker-item { font-size: clamp(14px, 1.5vw, 24px); font-weight: 700; color: var(--text); }
 .sg-ticker-special b { color: var(--accent-2); }
 .sg-ticker-dot { color: var(--accent-2); margin: 0 1.4vw; font-weight: 900; }
-@keyframes sg-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* ── main vs entrance ───────────────────────────────── */
 body[data-screen="main"] .sg-qr-col { display: none; }
@@ -133,9 +132,9 @@ body[data-screen="entrance"] .sg-h { font-size: clamp(18px, 2.6vw, 34px); margin
 body[data-screen="entrance"] .sg-brandname { font-size: clamp(22px, 3vw, 40px); }
 body[data-screen="entrance"] .sg-clock { font-size: clamp(26px, 3.4vw, 48px); }
 body[data-screen="entrance"] .sg-etrack { gap: 2vh; }
-body[data-screen="entrance"] .sg-ev { padding: 2.2vh 4vw; border-left-width: 5px; }
-body[data-screen="entrance"] .sg-ev-when { font-size: clamp(18px, 2.6vw, 34px); }
-body[data-screen="entrance"] .sg-ev-name { font-size: clamp(28px, 4.2vw, 54px); margin: .8vh 0; white-space: normal; }
-body[data-screen="entrance"] .sg-ev-meta { font-size: clamp(18px, 2.6vw, 34px); }
-body[data-screen="entrance"] .sg-qr { width: clamp(260px, 34vw, 520px); }
-body[data-screen="entrance"] .sg-qr-sub { font-size: clamp(16px, 2.2vw, 30px); }
+body[data-screen="entrance"] .sg-ev { padding: 1.7vh 4vw; border-left-width: 5px; }
+body[data-screen="entrance"] .sg-ev-when { font-size: clamp(15px, 2vw, 27px); }
+body[data-screen="entrance"] .sg-ev-name { font-size: clamp(23px, 3.4vw, 44px); margin: .6vh 0; white-space: normal; }
+body[data-screen="entrance"] .sg-ev-meta { font-size: clamp(15px, 2vw, 27px); }
+body[data-screen="entrance"] .sg-qr { width: clamp(190px, 22vw, 340px); }
+body[data-screen="entrance"] .sg-qr-sub { font-size: clamp(14px, 1.9vw, 26px); }
