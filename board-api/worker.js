@@ -203,9 +203,13 @@ function merge(calEvents, shopEvents, env, tz) {
     if (explicit && byHandle[explicit]) {
       match = byHandle[explicit];
     } else {
+      // Fallback match: require the SAME calendar day, then a fuzzy name match.
+      // Requiring a real matching date stops stale/undated products (e.g. an old
+      // "…League Cup Q2 May" listing) from attaching their price to a recurring
+      // calendar event that has no product of its own.
       const key = normalize(ev.name);
       match = shopEvents.find(function (s) {
-        if (s.date && evDate && s.date !== evDate) return false;
+        if (!s.date || !evDate || s.date !== evDate) return false;
         const sn = normalize(stripDate(s.title));
         return sn && key && (sn.indexOf(key) !== -1 || key.indexOf(sn) !== -1);
       }) || null;

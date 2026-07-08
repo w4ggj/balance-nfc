@@ -123,3 +123,15 @@ body[data-screen="entrance"] .sg-right { display: none; }
 body[data-screen="entrance"] .sg-body { flex-direction: column; }
 body[data-screen="entrance"] .sg-left { flex: 1 1 auto; }
 body[data-screen="entrance"] .sg-qr-col { width: 100%; }
+
+/* Portrait screen: much larger event text, fills the space. */
+body[data-screen="entrance"] .sg-h { font-size: clamp(18px, 2.6vw, 34px); margin-bottom: 2vh; }
+body[data-screen="entrance"] .sg-brandname { font-size: clamp(22px, 3vw, 40px); }
+body[data-screen="entrance"] .sg-clock { font-size: clamp(26px, 3.4vw, 48px); }
+body[data-screen="entrance"] .sg-etrack { gap: 2vh; }
+body[data-screen="entrance"] .sg-ev { padding: 2.2vh 4vw; border-left-width: 5px; }
+body[data-screen="entrance"] .sg-ev-when { font-size: clamp(18px, 2.6vw, 34px); }
+body[data-screen="entrance"] .sg-ev-name { font-size: clamp(28px, 4.2vw, 54px); margin: .8vh 0; white-space: normal; }
+body[data-screen="entrance"] .sg-ev-meta { font-size: clamp(18px, 2.6vw, 34px); }
+body[data-screen="entrance"] .sg-qr { width: clamp(260px, 34vw, 520px); }
+body[data-screen="entrance"] .sg-qr-sub { font-size: clamp(16px, 2.2vw, 30px); }
