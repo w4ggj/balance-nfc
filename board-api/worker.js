@@ -116,16 +116,49 @@ async function fetchCalendar(id, apiKey, timeMin, timeMax) {
 }
 
 /* ---- Shopify Admin ----------------------------------------------------
-   Pulls the "Events" collection with per-variant inventory + price.
-   Requires a custom app Admin token with read_products + read_inventory. */
+   Pulls the "Events" collection with per-variant price + inventory.
+
+   Works with ANY offline Admin token (shpat_…) for this store — you can
+   reuse the token from another of your apps. Scopes:
+     • read_products  → price + Open/Sold-out (availableForSale)
+     • read_inventory → EXACT seats-left ("3 seats left")
+   If the token lacks read_inventory, the first query is denied and we
+   automatically retry without the inventory field (price + availability
+   only), so the board still works — just without exact counts. */
 async function loadShopify(env) {
   if (!env.SHOPIFY_SHOP || !env.SHOPIFY_ADMIN_TOKEN) return [];
+
+  let res = await shopifyFetch(env, true);       // try with exact inventory
+  if (res.denied) res = await shopifyFetch(env, false); // token has no read_inventory → fall back
+  const nodes = res.nodes || [];
+
+  return nodes.map(function (p) {
+    let seats = 0, tracked = false, price = null, available = false;
+    (p.variants.nodes || []).forEach(function (v) {
+      if (typeof v.inventoryQuantity === "number") { tracked = true; seats += Math.max(0, v.inventoryQuantity); }
+      if (v.availableForSale) available = true;
+      if (price == null && v.price != null) price = v.price;
+    });
+    return {
+      title: p.title,
+      handle: p.handle,
+      url: p.onlineStoreUrl || ("https://balancegamingfl.com/products/" + p.handle),
+      price: price,
+      seatsLeft: tracked ? seats : null,   // null = not tracked / no read_inventory
+      available: available,                // fallback signal for Open/Sold-out
+      date: dateFromTitle(p.title)         // "YYYY-MM-DD" or null
+    };
+  });
+}
+
+async function shopifyFetch(env, withInventory) {
   const ver = env.SHOPIFY_API_VERSION || "2024-10";
   const handle = env.EVENTS_COLLECTION_HANDLE || "events";
+  const invField = withInventory ? " inventoryQuantity" : "";
   const query =
     "query($handle:String!){collectionByHandle(handle:$handle){products(first:120,sortKey:CREATED,reverse:true){nodes{" +
     "title handle onlineStoreUrl " +
-    "variants(first:10){nodes{title price inventoryQuantity availableForSale}}}}}}";
+    "variants(first:10){nodes{title price availableForSale" + invField + "}}}}}}";
 
   const r = await fetch("https://" + env.SHOPIFY_SHOP + "/admin/api/" + ver + "/graphql.json", {
     method: "POST",
@@ -137,24 +170,16 @@ async function loadShopify(env) {
   });
   if (!r.ok) throw new Error("Shopify Admin " + r.status);
   const data = await r.json();
+
+  if (data.errors && data.errors.length) {
+    // A missing read_inventory scope denies the inventoryQuantity field —
+    // signal a retry without it rather than failing the whole board.
+    if (withInventory) return { denied: true };
+    throw new Error("Shopify GraphQL: " + JSON.stringify(data.errors).slice(0, 200));
+  }
   const nodes = (data && data.data && data.data.collectionByHandle &&
     data.data.collectionByHandle.products && data.data.collectionByHandle.products.nodes) || [];
-
-  return nodes.map(function (p) {
-    let seats = 0, tracked = false, price = null;
-    (p.variants.nodes || []).forEach(function (v) {
-      if (typeof v.inventoryQuantity === "number") { tracked = true; seats += Math.max(0, v.inventoryQuantity); }
-      if (price == null && v.price != null) price = v.price;
-    });
-    return {
-      title: p.title,
-      handle: p.handle,
-      url: p.onlineStoreUrl || ("https://balancegamingfl.com/products/" + p.handle),
-      price: price,
-      seatsLeft: tracked ? seats : null,
-      date: dateFromTitle(p.title)     // "YYYY-MM-DD" or null
-    };
-  });
+  return { nodes: nodes };
 }
 
 /* ---- Merge ------------------------------------------------------------
@@ -187,6 +212,13 @@ function merge(calEvents, shopEvents, env, tz) {
     }
 
     const seatsLeft = match ? match.seatsLeft : null;
+    // Exact count when we have inventory; otherwise Open/Sold-out from availability.
+    let status = null;
+    if (match) {
+      if (seatsLeft != null) status = statusFor(seatsLeft, almost);
+      else if (match.available === true) status = "open";
+      else if (match.available === false) status = "sold-out";
+    }
     return {
       name: ev.name,
       game: ev.game || null,          // which per-game calendar it came from
@@ -197,7 +229,7 @@ function merge(calEvents, shopEvents, env, tz) {
       price: match ? match.price : null,
       registerUrl: match ? match.url : null,
       seatsLeft: seatsLeft,
-      status: statusFor(seatsLeft, almost)
+      status: status
     };
   });
 

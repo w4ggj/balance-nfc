@@ -44,13 +44,23 @@ The board reads this Worker's URL. Nothing else needs a server.
 
 ## 2. Shopify Admin token
 
-1. Shopify admin → **Settings → Apps and sales channels → Develop apps** →
-   **Create an app** (name it e.g. "Board API").
-2. **Configure Admin API scopes** → enable **`read_products`** and
-   **`read_inventory`**. Save.
-3. **Install app** → then **Reveal the Admin API access token** once and copy
-   it. → this is `SHOPIFY_ADMIN_TOKEN` (starts with `shpat_`).
-4. Your `SHOPIFY_SHOP` is the `*.myshopify.com` domain (Settings → Domains).
+You need an **offline Admin API token** (`shpat_…`) for this store. Any app's
+token works — **you can reuse the `shpat_` from another of your apps** (e.g. the
+booking / orchestrator app). Scopes it needs:
+
+- **`read_products`** → event price + Open/Sold-out. Required.
+- **`read_inventory`** → EXACT seats-left ("3 seats left"). Optional — if the
+  token's app doesn't have it, the Worker automatically falls back to price +
+  Open/Sold-out (no error, no blank board).
+
+Set it as a secret: `wrangler secret put SHOPIFY_ADMIN_TOKEN` (or, in the
+Cloudflare dashboard, Worker → Settings → Variables and Secrets → add as an
+**encrypted** secret). Never put it in `wrangler.toml` or commit it.
+
+Your `SHOPIFY_SHOP` is the `*.myshopify.com` domain (`d94663-4.myshopify.com`).
+
+> Events must live in a collection whose handle is `events` (default) — or set
+> `EVENTS_COLLECTION_HANDLE` to match.
 
 > Events must be in a collection whose handle is `events` (default) — or set
 > `EVENTS_COLLECTION_HANDLE` to match. Seats-left = the event product's tracked
