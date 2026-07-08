@@ -26,6 +26,11 @@ The board reads this Worker's URL. Nothing else needs a server.
    (set to "See only free/busy"? No — choose **See all event details**).
 2. On the same page, copy the **Calendar ID** (looks like
    `abc123@group.calendar.google.com`). → this is `GCAL_CALENDAR_ID`.
+
+> **Multiple calendars (one per game)?** Do step 1 (make public) for **each**
+> game calendar, then set `GCAL_CALENDAR_ID` to all their IDs **comma-separated**
+> — the Worker merges them into one schedule and tags each event with its
+> calendar name (shown on the board). One API key covers them all.
 3. Get an API key: [console.cloud.google.com](https://console.cloud.google.com)
    → create/select a project → **APIs & Services** → enable **Google Calendar
    API** → **Credentials** → **Create credentials → API key**. Restrict it to

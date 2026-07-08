@@ -64,24 +64,41 @@ export default {
 /* ---- Google Calendar --------------------------------------------------
    Uses the Calendar API with singleEvents=true so weekly/recurring game
    nights are expanded into individual dated instances automatically.
-   Requires: calendar set to public, and an API key restricted to the
-   Google Calendar API. */
+   Requires: each calendar set to public, and an API key restricted to the
+   Google Calendar API.
+
+   GCAL_CALENDAR_ID may be a COMMA-SEPARATED list — the store keeps one
+   calendar per game, so we fetch them all and merge. Each event is tagged
+   with its calendar name (`game`) for optional display. One unreachable
+   calendar (e.g. not public) is skipped, not fatal. */
 async function loadCalendar(env, days) {
   if (!env.GCAL_CALENDAR_ID || !env.GCAL_API_KEY) return [];
+  const ids = String(env.GCAL_CALENDAR_ID).split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+  if (!ids.length) return [];
+
   const now = Date.now();
   const timeMin = new Date(now - 6 * 3600 * 1000).toISOString();          // include earlier-today
   const timeMax = new Date(now + days * 24 * 3600 * 1000).toISOString();
+
+  const lists = await Promise.all(ids.map(function (id) {
+    return fetchCalendar(id, env.GCAL_API_KEY, timeMin, timeMax).catch(function () { return []; });
+  }));
+  return [].concat.apply([], lists);
+}
+
+async function fetchCalendar(id, apiKey, timeMin, timeMax) {
   const url =
     "https://www.googleapis.com/calendar/v3/calendars/" +
-    encodeURIComponent(env.GCAL_CALENDAR_ID) + "/events" +
-    "?key=" + encodeURIComponent(env.GCAL_API_KEY) +
+    encodeURIComponent(id) + "/events" +
+    "?key=" + encodeURIComponent(apiKey) +
     "&singleEvents=true&orderBy=startTime&maxResults=60" +
     "&timeMin=" + encodeURIComponent(timeMin) +
     "&timeMax=" + encodeURIComponent(timeMax);
 
   const r = await fetch(url);
-  if (!r.ok) throw new Error("Calendar API " + r.status);
+  if (!r.ok) throw new Error("Calendar API " + r.status + " for " + id);
   const data = await r.json();
+  const calName = (data.summary || "").trim();   // the calendar's title = the game
 
   return (data.items || []).map(function (ev) {
     const s = ev.start || {}, e = ev.end || {};
@@ -92,7 +109,8 @@ async function loadCalendar(env, days) {
       end: e.dateTime || e.date || null,
       allDay: allDay,
       description: ev.description || "",
-      location: ev.location || ""
+      location: ev.location || "",
+      game: calName
     };
   }).filter(function (e) { return e.start; });
 }
@@ -171,6 +189,7 @@ function merge(calEvents, shopEvents, env, tz) {
     const seatsLeft = match ? match.seatsLeft : null;
     return {
       name: ev.name,
+      game: ev.game || null,          // which per-game calendar it came from
       start: ev.start,
       end: ev.end,
       allDay: ev.allDay,

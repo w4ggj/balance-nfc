@@ -72,6 +72,7 @@
       card.appendChild(when);
 
       var mid = el("div", "sg-emid");
+      if (ev.game) mid.appendChild(el("div", "sg-egame", ev.game));
       mid.appendChild(el("div", "sg-ename", ev.name || "Event"));
       var meta = el("div", "sg-emeta");
       if (ev.ticketed) {
