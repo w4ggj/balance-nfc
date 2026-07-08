@@ -183,25 +183,39 @@
       showcaseIdx++; renderShowcase();
     }
   }
-  // Fun rotation (dad jokes / one-liners) mixed into the showcase.
-  var funOn = false, funLines = [];
+  // Fun rotation (dad jokes / one-liners) mixed into the showcase. Pool =
+  // control-panel list (/signage/fun) + the bundled assets/jokes.txt (optional).
+  var funOn = false, funLines = [], funFileOn = true, fileJokes = [];
+  function shuffleArr(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function loadJokeFile() {
+    fetch("assets/jokes.txt", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.text() : ""; })
+      .then(function (t) {
+        var lines = t.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(function (s) { return s && s.charAt(0) !== "#"; });
+        fileJokes = shuffleArr(lines);   // shuffle once per load for variety
+      }).catch(function () { fileJokes = []; });
+  }
   function loadFun() {
-    Promise.all([BGF.fbGet("signage/funOn"), BGF.fbGet("signage/fun")]).then(function (r) {
+    Promise.all([BGF.fbGet("signage/funOn"), BGF.fbGet("signage/fun"), BGF.fbGet("signage/funFile")]).then(function (r) {
       funOn = r[0] === true;
       funLines = Array.isArray(r[1]) ? r[1].filter(Boolean) : [];
+      funFileOn = r[2] !== false;        // default on
     });
   }
+  function funPool() { return funLines.concat(funFileOn ? fileJokes : []); }
+
   // Combined spotlight list: events, with a fun card slipped in after every 3rd
   // event when the fun toggle is on.
   function buildShowcase() {
     var items = lastEvents.map(function (ev) { return { kind: "event", ev: ev }; });
-    if (funOn && funLines.length && items.length) {
+    var pool = funPool();
+    if (funOn && pool.length && items.length) {
       var out = [], fi = 0;
       for (var i = 0; i < items.length; i++) {
         out.push(items[i]);
-        if ((i + 1) % 3 === 0) { out.push({ kind: "fun", text: funLines[fi % funLines.length] }); fi++; }
+        if ((i + 1) % 3 === 0) { out.push({ kind: "fun", text: pool[fi % pool.length] }); fi++; }
       }
-      if (out.length === items.length) out.push({ kind: "fun", text: funLines[0] }); // few events → still show one
+      if (out.length === items.length) out.push({ kind: "fun", text: pool[0] }); // few events → still show one
       return out;
     }
     return items;
@@ -521,7 +535,7 @@
 
     startClock();
     loadEvents(); setInterval(loadEvents, POLL_EVENTS_MS);
-    loadTicker(); loadFun();
+    loadTicker(); loadFun(); loadJokeFile();
     setInterval(function () { loadTicker(); loadFun(); }, POLL_FB_MS);
 
     if (screen === "entrance") {

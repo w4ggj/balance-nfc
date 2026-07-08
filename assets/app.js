@@ -449,6 +449,15 @@
           .catch(function () { funToggle.checked = !on; if (row) row.setAttribute("data-on", !on ? "true" : "false"); showToast("Couldn't save — try again"); });
       });
     }
+    var funFile = document.getElementById("sgFunFile");
+    if (funFile) {
+      fbGet("signage/funFile").then(function (v) { funFile.checked = v !== false; }); // default on
+      funFile.addEventListener("change", function () {
+        fbSet("signage/funFile", funFile.checked)
+          .then(function () { showToast(funFile.checked ? "Joke pack on" : "Joke pack off"); })
+          .catch(function () { funFile.checked = !funFile.checked; showToast("Couldn't save — try again"); });
+      });
+    }
     var funList = document.getElementById("sgFunList"), funInput = document.getElementById("sgFunInput"), funAdd = document.getElementById("sgFunAdd");
     if (funList && funInput && funAdd) wireListEditor(funList, funInput, funAdd, "signage/fun");
 
