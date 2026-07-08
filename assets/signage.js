@@ -196,17 +196,32 @@
     head.appendChild(el("div", "sg-r-title", isToday(d) ? "Happening Today" : "Upcoming Event"));
     head.appendChild(el("div", "sg-r-sub", (idx + 1) + " / " + lastEvents.length));
     right.appendChild(head);
-    var card = el("div", "sg-r-event");
-    if (ev.game) card.appendChild(el("div", "sg-re-kick", ev.game));
-    card.appendChild(el("div", "sg-re-name", ev.name || "Event"));
-    card.appendChild(el("div", "sg-re-when", whenLine(ev, d)));
+    right.appendChild(eventCardEls(ev, d, ev.game));
+    addCornerQRUrl(right, ev.registerUrl || MAIN_SITE, ev.registerUrl ? "Scan to register" : "Scan to visit");
+  }
+
+  // Big event card (image + details) for the showcase and live game view. The
+  // image comes from the Shopify product (Worker feed); it's hidden if missing
+  // or broken so the text still reads.
+  function eventCardEls(ev, d, kick) {
+    var card = el("div", "sg-r-event" + (ev.image ? " has-img" : ""));
+    if (ev.image) {
+      var box = el("div", "sg-re-img");
+      var img = new Image(); img.src = ev.image; img.alt = "";
+      img.onerror = function () { box.style.display = "none"; card.classList.remove("has-img"); };
+      box.appendChild(img); card.appendChild(box);
+    }
+    var info = el("div", "sg-re-info");
+    if (kick) info.appendChild(el("div", "sg-re-kick", kick));
+    info.appendChild(el("div", "sg-re-name", ev.name || "Event"));
+    info.appendChild(el("div", "sg-re-when", whenLine(ev, d)));
     var meta = el("div", "sg-re-meta");
     meta.appendChild(el("span", "sg-ev-price", priceWord(ev)));
     meta.appendChild(document.createTextNode(" · "));
     meta.appendChild(el("span", "sg-ev-status " + statusCls(ev), statusWord(ev)));
-    card.appendChild(meta);
-    right.appendChild(card);
-    addCornerQRUrl(right, ev.registerUrl || MAIN_SITE, ev.registerUrl ? "Scan to register" : "Scan to visit");
+    info.appendChild(meta);
+    card.appendChild(info);
+    return card;
   }
 
   function commanderView(c) {
@@ -323,21 +338,14 @@
     head.appendChild(el("div", "sg-r-sub", "Now Playing"));
     right.appendChild(head);
 
-    var card = el("div", "sg-r-event");
     if (match) {
-      var d = new Date(match.start);
-      card.appendChild(el("div", "sg-re-kick", whenLine(match, d)));
-      card.appendChild(el("div", "sg-re-name", match.name));
-      var meta = el("div", "sg-re-meta");
-      meta.appendChild(el("span", "sg-ev-price", priceWord(match)));
-      meta.appendChild(document.createTextNode(" · "));
-      meta.appendChild(el("span", "sg-ev-status " + statusCls(match), statusWord(match)));
-      card.appendChild(meta);
+      right.appendChild(eventCardEls(match, new Date(match.start), match.game));
     } else {
+      var card = el("div", "sg-r-event");
       card.appendChild(el("div", "sg-re-name", "See the upcoming events"));
       card.appendChild(el("div", "sg-re-kick", "No scheduled event for this game right now."));
+      right.appendChild(card);
     }
-    right.appendChild(card);
     addCornerQR(right, active);
   }
 

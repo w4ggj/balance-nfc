@@ -146,6 +146,7 @@ async function loadShopify(env) {
       price: price,
       seatsLeft: tracked ? seats : null,   // null = not tracked / no read_inventory
       available: available,                // fallback signal for Open/Sold-out
+      image: (p.featuredImage && p.featuredImage.url) || null,
       date: dateFromTitle(p.title)         // "YYYY-MM-DD" or null
     };
   });
@@ -157,7 +158,7 @@ async function shopifyFetch(env, withInventory) {
   const invField = withInventory ? " inventoryQuantity" : "";
   const query =
     "query($handle:String!){collectionByHandle(handle:$handle){products(first:120,sortKey:CREATED,reverse:true){nodes{" +
-    "title handle onlineStoreUrl " +
+    "title handle onlineStoreUrl featuredImage{url} " +
     "variants(first:10){nodes{title price availableForSale" + invField + "}}}}}}";
 
   const r = await fetch("https://" + env.SHOPIFY_SHOP + "/admin/api/" + ver + "/graphql.json", {
