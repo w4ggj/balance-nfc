@@ -146,12 +146,15 @@
 
   // ---- ticker ----------------------------------------------------------
   var lastTickerSig = "";
+  var tickerPxPerSec = 80; // scroll speed; staff-set via /signage/tickerSpeed
   function loadTicker() {
-    BGF.fbGet("signage/ticker").then(function (t) {
-      var lines = Array.isArray(t) ? t.filter(Boolean) : [];
-      var sig = JSON.stringify(lines);
+    Promise.all([BGF.fbGet("signage/ticker"), BGF.fbGet("signage/tickerSpeed")]).then(function (r) {
+      var lines = Array.isArray(r[0]) ? r[0].filter(Boolean) : [];
+      var speed = Number(r[1]); if (!speed || speed < 10) speed = 80;
+      var sig = JSON.stringify(lines) + "|" + speed;
       if (sig === lastTickerSig) return; // don't restart the animation if unchanged
       lastTickerSig = sig;
+      tickerPxPerSec = speed;
       renderTicker(lines);
     });
   }
@@ -170,6 +173,13 @@
       });
     }
     host.appendChild(track);
+    // Duration from actual width ÷ chosen px/sec, so the on-screen speed is the
+    // same whether there are 2 messages or 20.
+    requestAnimationFrame(function () {
+      var half = track.scrollWidth / 2; // one copy's width (marquee shifts -50%)
+      var dur = Math.max(6, half / tickerPxPerSec);
+      track.style.animationDuration = dur + "s";
+    });
   }
 
   // ---- entrance QR -----------------------------------------------------

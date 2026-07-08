@@ -392,6 +392,24 @@
       tickerInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addLine(); } });
     }
 
+    // Ticker scroll speed (pixels/sec; the board keeps the visual speed constant
+    // regardless of how many messages there are).
+    var tickerSpeed = document.getElementById("sgTickerSpeed");
+    if (tickerSpeed) {
+      fbGet("signage/tickerSpeed").then(function (v) {
+        var n = Number(v) || 80;
+        // snap to the closest option
+        var opts = Array.prototype.map.call(tickerSpeed.options, function (o) { return Number(o.value); });
+        var best = opts.reduce(function (a, b) { return Math.abs(b - n) < Math.abs(a - n) ? b : a; }, opts[0]);
+        tickerSpeed.value = String(best);
+      });
+      tickerSpeed.addEventListener("change", function () {
+        fbSet("signage/tickerSpeed", Number(tickerSpeed.value) || 80)
+          .then(function () { showToast("Ticker speed updated"); })
+          .catch(function () { showToast("Couldn't save speed — try again"); });
+      });
+    }
+
     // Featured event (Shopify handle, or blank = auto)
     var featInput = document.getElementById("sgFeatured");
     var featSave = document.getElementById("sgFeaturedSave");
