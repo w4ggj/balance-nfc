@@ -99,6 +99,9 @@
     });
     host.appendChild(track);
     autoScrollEvents(host, track);
+    // If the right panel is spotlighting events (toggle off), refresh it now
+    // that fresh events are in — avoids a lingering welcome/blank state.
+    if (rightLive === false && document.getElementById("sgRight")) renderShowcase();
   }
   function emptyCard(t, b) { var c = el("div", "sg-empty"); c.appendChild(el("h2", null, t)); c.appendChild(el("p", null, b)); return c; }
 
@@ -124,41 +127,86 @@
     var p = document.getElementById("sgLive");
     if (p) p.hidden = !on;
   }
-  // The right panel rotates between two views for league/tournament nights:
-  //   view 0 = standings, view 1 = pairings (Swiss) / pods (Commander).
-  var rightActive = "main";
+  // The right panel has two modes, gated by the "Live event on TV" toggle
+  // (display/board):
+  //   LIVE  (toggle ON + an event active) → that event's live board; Commander/
+  //         Swiss rotate standings ↔ pairings/pods. The "Live now" pill shows.
+  //   SHOWCASE (toggle OFF, or nothing active) → the upcoming Shopify events,
+  //         spotlighted one at a time on a rotation.
+  var rightActive = null;   // null so the very first render always fires
   var rightData = null;
-  var rightView = 0;
+  var rightView = 0;        // live: 0 standings, 1 pairings/pods
+  var rightLive = false;    // is the live board showing?
+  var showcaseIdx = 0;
   function loadRight() {
     var right = document.getElementById("sgRight");
     if (!right || !global.BGF) return;
-    BGF.getConfig().then(function (cfg) {
-      var active = (cfg && cfg.active) || "main";
-      if (active !== rightActive) { rightActive = active; rightView = 0; } // reset to standings on change
-      setLive(active !== "main");
-      right.style.setProperty("--ev", (BGF.COLORS && BGF.COLORS[active]) || "#a07bff");
+    Promise.all([BGF.fbGet("display/board"), BGF.getConfig()]).then(function (r) {
+      var boardOn = r[0] === true;
+      var active = (r[1] && r[1].active) || "main";
+      var showLive = boardOn && active !== "main";
+      var changed = (showLive !== rightLive) || (active !== rightActive);
+      if (changed) rightView = 0;
+      rightActive = active; rightLive = showLive;
+      setLive(showLive);
+      right.style.setProperty("--ev", (BGF.COLORS && BGF.COLORS[showLive ? active : "main"]) || "#a07bff");
+
+      if (!showLive) {
+        // Showcase mode: render once on entering; the rotation advances it.
+        if (changed) { showcaseIdx = 0; renderShowcase(); }
+        return;
+      }
+      // Live mode: refresh every poll so scores update.
       if (active === "commander-league") { BGF.fbGet("commander").then(function (c) { rightData = c || {}; renderRight(); }); }
       else if (active === "tournament") { BGF.fbGet("tournament").then(function (t) { rightData = t || {}; renderRight(); }); }
-      else if (["pokemon", "onepiece", "riftbound", "mtg"].indexOf(active) !== -1) { rightData = null; paintEventCard(right, active); }
-      else { rightData = null; paintWelcome(right); }
+      else { rightData = null; paintEventCard(right, active); }
     });
   }
   function renderRight() {
     var right = document.getElementById("sgRight");
     if (!right) return;
+    if (!rightLive) { renderShowcase(); return; }
     if (rightActive === "commander-league") {
       if (rightView === 1) paintPods(right, rightData || {});
       else paintStandings(right, commanderView(rightData || {}), rightActive);
     } else if (rightActive === "tournament") {
       if (rightView === 1) paintPairings(right, rightData || {});
       else paintStandings(right, swissView(rightData || {}), rightActive);
+    } else {
+      paintEventCard(right, rightActive);
     }
   }
   function rotateRight() {
-    if (rightActive === "commander-league" || rightActive === "tournament") {
-      rightView = rightView ? 0 : 1;
-      renderRight();
+    if (rightLive && (rightActive === "commander-league" || rightActive === "tournament")) {
+      rightView = rightView ? 0 : 1; renderRight();
+    } else if (!rightLive) {
+      showcaseIdx++; renderShowcase();
     }
+  }
+  // Spotlight the upcoming events one at a time (toggle off / nothing live).
+  function renderShowcase() {
+    var right = document.getElementById("sgRight");
+    if (!right) return;
+    right.style.setProperty("--ev", "#a07bff");
+    if (!lastEvents.length) { paintWelcome(right); return; }
+    var idx = showcaseIdx % lastEvents.length;
+    var ev = lastEvents[idx], d = new Date(ev.start);
+    right.innerHTML = "";
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", isToday(d) ? "Happening Today" : "Upcoming Event"));
+    head.appendChild(el("div", "sg-r-sub", (idx + 1) + " / " + lastEvents.length));
+    right.appendChild(head);
+    var card = el("div", "sg-r-event");
+    if (ev.game) card.appendChild(el("div", "sg-re-kick", ev.game));
+    card.appendChild(el("div", "sg-re-name", ev.name || "Event"));
+    card.appendChild(el("div", "sg-re-when", whenLine(ev, d)));
+    var meta = el("div", "sg-re-meta");
+    meta.appendChild(el("span", "sg-ev-price", priceWord(ev)));
+    meta.appendChild(document.createTextNode(" · "));
+    meta.appendChild(el("span", "sg-ev-status " + statusCls(ev), statusWord(ev)));
+    card.appendChild(meta);
+    right.appendChild(card);
+    addCornerQRUrl(right, ev.registerUrl || MAIN_SITE, ev.registerUrl ? "Scan to register" : "Scan to visit");
   }
 
   function commanderView(c) {
@@ -308,11 +356,14 @@
 
   // Corner QR — points at the active event's register link, else the store.
   function addCornerQR(right, active) {
-    var url = qrTargetFor(active);
+    addCornerQRUrl(right, qrTargetFor(active), active === "main" ? "Scan to visit" : "Scan to register");
+  }
+  function addCornerQRUrl(right, url, cap) {
     var box = el("div", "sg-corner-qr");
     var svg = qrSvg(url, 4);
-    if (svg) box.innerHTML = svg; else return;
-    box.appendChild(el("div", "sg-corner-cap", active === "main" ? "Scan to visit" : "Scan to register"));
+    if (!svg) return;
+    box.innerHTML = svg;
+    box.appendChild(el("div", "sg-corner-cap", cap || "Scan"));
     right.appendChild(box);
   }
   function qrTargetFor(active) {
@@ -415,7 +466,7 @@
       renderEntranceQR(); setInterval(renderEntranceQR, POLL_FB_MS);
     } else {
       loadRight(); setInterval(loadRight, POLL_RIGHT_MS);
-      setInterval(rotateRight, 15000); // alternate standings ↔ pairings/pods
+      setInterval(rotateRight, 10000); // live: standings↔pairings/pods · showcase: next event
     }
 
     // Unattended signage: reload hourly with a cache-buster so future updates
