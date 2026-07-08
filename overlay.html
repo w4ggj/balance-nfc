@@ -15,12 +15,13 @@
   </style>
 </head>
 <body>
-  <!-- Drop this into your DakBoard design as a full-screen Web Frame.
-       Transparent by default (your DakBoard design shows through). When staff
-       turn the big-screen toggle on the control panel ON, the TV mirrors the
-       live event: Commander → leaderboard, Pokémon tournament → board, a game
-       event → that game's page. OFF (or nothing live) = see-through.
-       ?demo=1 forces it on for previewing. -->
+  <!-- SUPERSEDED by signage.html?screen=main (the shop TVs run the in-repo
+       signage board now, not DakBoard). Kept working for any DakBoard setup:
+       it calls the SAME shared BGF.mountEventOverlay logic as signage.html.
+       Drop into a DakBoard design as a full-screen Web Frame — transparent by
+       default; when the big-screen toggle is ON the TV mirrors the live event
+       (Commander → leaderboard, Pokémon tournament → board, game event → that
+       game's page). OFF (or nothing live) = see-through. ?demo=1 to preview. -->
   <iframe id="screen" title="Live event display" scrolling="no"></iframe>
 
   <script>

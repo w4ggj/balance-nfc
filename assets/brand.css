@@ -265,6 +265,19 @@ body[data-game="tournament"]{ --game: #34d399; }
 .sys-desc { color: var(--muted); font-size: 13px; margin: 12px 0 14px; }
 .sys-card .event-actions { margin-top: 0; }
 
+/* Signage controls (config.html) */
+.sg-check { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 600; margin: 2px 0 12px; }
+.sg-check input { width: 18px; height: 18px; accent-color: var(--accent-2); }
+.sg-tlist { display: grid; gap: 8px; margin-bottom: 12px; }
+.sg-tline { display: flex; align-items: center; gap: 10px; padding: 9px 10px; background: var(--bg); border: 1px solid var(--surface-2); border-radius: 12px; }
+.sg-tltext { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg-tlctl { flex: 0 0 auto; display: flex; gap: 6px; }
+.sg-mini { width: 32px; height: 32px; border: 1px solid var(--surface-2); background: var(--surface-2); color: var(--text); border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; }
+.sg-mini:active { border-color: var(--accent-2); }
+.sg-tadd { display: flex; gap: 8px; align-items: center; }
+.sg-tadd .field { flex: 1 1 auto; }
+.sg-tadd .btn { flex: 0 0 auto; }
+
 /* Publish box */
 .publish { margin-top: 8px; padding: 18px; border-radius: var(--radius);
   background: var(--surface); border: 1px solid var(--surface-2); box-shadow: var(--shadow); }

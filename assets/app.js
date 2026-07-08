@@ -18,6 +18,11 @@
   // a plain JSON file the code still works for reading (writes need Firebase).
   var CONFIG_URL = "https://balance-nfc-default-rtdb.firebaseio.com/active.json";
 
+  // Cloudflare Worker that serves the signage schedule (events + seats-left).
+  // Deploy board-api/ (see board-api/SETUP.md), then paste the deployed URL here.
+  // The signage board polls this ~every 60s; falls back gracefully if unset.
+  var BOARD_API = "__FILL_IN_WORKER_URL__";   // e.g. https://board-api.jleone0.workers.dev
+
   // Is the config backend a Firebase Realtime Database (writable) or a static file?
   function isFirebase() { return /firebaseio|firebasedatabase/.test(CONFIG_URL); }
 
@@ -324,29 +329,110 @@
     });
   }
 
+  // ---- Board & signage controls (config.html) -------------------------
+  // Staff-edited content for the signage TVs, stored under /signage:
+  //   special  { text, clearAtClose }   ticker  [string,…]   featured  handle|null
+  // Both screens read these live, so edits appear within seconds.
+  function initSignage() {
+    var root = document.getElementById("signageControls");
+    if (!root) return;
+
+    // Today's special
+    var specialText = document.getElementById("sgSpecialText");
+    var specialClear = document.getElementById("sgSpecialClear");
+    var specialSave = document.getElementById("sgSpecialSave");
+    if (specialSave) {
+      fbGet("signage/special").then(function (s) {
+        if (specialText) specialText.value = (s && s.text) || "";
+        if (specialClear) specialClear.checked = !s || s.clearAtClose !== false; // default on
+      });
+      specialSave.addEventListener("click", function () {
+        var payload = { text: (specialText.value || "").trim(), clearAtClose: !!(specialClear && specialClear.checked) };
+        fbSet("signage/special", payload)
+          .then(function () { showToast(payload.text ? "Today's special updated" : "Special cleared"); })
+          .catch(function () { showToast("Couldn't save the special — try again"); });
+      });
+    }
+
+    // Ticker — editable list of lines
+    var tickerList = document.getElementById("sgTickerList");
+    var tickerAdd = document.getElementById("sgTickerAdd");
+    var tickerInput = document.getElementById("sgTickerInput");
+    var lines = [];
+    function drawTicker() {
+      if (!tickerList) return;
+      tickerList.innerHTML = "";
+      lines.forEach(function (line, i) {
+        var row = document.createElement("div"); row.className = "sg-tline";
+        var span = document.createElement("span"); span.className = "sg-tltext"; span.textContent = line;
+        row.appendChild(span);
+        var ctl = document.createElement("div"); ctl.className = "sg-tlctl";
+        ctl.appendChild(miniBtn("↑", function () { if (i > 0) { swap(i, i - 1); } }));
+        ctl.appendChild(miniBtn("↓", function () { if (i < lines.length - 1) { swap(i, i + 1); } }));
+        ctl.appendChild(miniBtn("✕", function () { lines.splice(i, 1); saveTicker(); }));
+        row.appendChild(ctl);
+        tickerList.appendChild(row);
+      });
+      if (!lines.length) { var e = document.createElement("p"); e.className = "hint"; e.textContent = "No ticker messages yet."; tickerList.appendChild(e); }
+    }
+    function miniBtn(txt, fn) { var b = document.createElement("button"); b.className = "sg-mini"; b.type = "button"; b.textContent = txt; b.addEventListener("click", fn); return b; }
+    function swap(a, b) { var t = lines[a]; lines[a] = lines[b]; lines[b] = t; saveTicker(); }
+    function saveTicker() {
+      drawTicker();
+      fbSet("signage/ticker", lines).catch(function () { showToast("Couldn't save the ticker — try again"); });
+    }
+    if (tickerAdd && tickerInput) {
+      fbGet("signage/ticker").then(function (t) { lines = Array.isArray(t) ? t.slice() : []; drawTicker(); });
+      function addLine() {
+        var v = (tickerInput.value || "").trim();
+        if (!v) return;
+        lines.push(v); tickerInput.value = ""; saveTicker();
+      }
+      tickerAdd.addEventListener("click", addLine);
+      tickerInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addLine(); } });
+    }
+
+    // Featured event (Shopify handle, or blank = auto)
+    var featInput = document.getElementById("sgFeatured");
+    var featSave = document.getElementById("sgFeaturedSave");
+    if (featSave && featInput) {
+      fbGet("signage/featured").then(function (h) { featInput.value = (typeof h === "string") ? h : ""; });
+      featSave.addEventListener("click", function () {
+        var v = (featInput.value || "").trim();
+        fbSet("signage/featured", v || null)
+          .then(function () { showToast(v ? "Featured event set" : "Featured event set to auto"); })
+          .catch(function () { showToast("Couldn't save — try again"); });
+      });
+    }
+  }
+
   // ---- Expose ----------------------------------------------------------
   window.BGF = {
-    EVENTS: EVENTS, LABELS: LABELS, COLORS: COLORS, MAX_TABLES: MAX_TABLES,
+    EVENTS: EVENTS, LABELS: LABELS, COLORS: COLORS, MAX_TABLES: MAX_TABLES, BOARD_API: BOARD_API,
     getTable: getTable, getConfig: getConfig, setActive: setActive,
     fbGet: fbGet, fbSet: fbSet, fbUpdate: fbUpdate,
     routeHome: routeHome, initEvent: initEvent, initConfig: initConfig,
     initBigScreen: initBigScreen, latestLiveTournament: latestLiveTournament,
-    initDisplay: initDisplay
+    initDisplay: initDisplay, mountEventOverlay: mountEventOverlay, initSignage: initSignage
   };
 
-  // ---- Big-screen dispatcher (overlay.html) ---------------------------
-  // The DakBoard web frame loads overlay.html. When staff turn the big-screen
-  // toggle ON, the TV mirrors whatever event is live: the matching board/info
-  // page fills the screen. OFF (or nothing live) = transparent, so the normal
-  // DakBoard design shows through. ?demo=1 forces it on for previewing.
-  function initDisplay() {
-    var frame = document.getElementById("screen");
+  // ---- Shared event overlay (overlay.html + signage.html main mode) ---
+  // Mounts the "live event on the TV" behavior onto an <iframe>: when the
+  // big-screen toggle (display/board) is ON and an event is active, the iframe
+  // fills with the matching board/info page; OFF (or nothing live) hides it so
+  // whatever sits behind (the DakBoard design, or the signage board) shows.
+  // Both overlay.html and signage.html call this identical logic — no divergence.
+  //   frame       : the <iframe> element to drive
+  //   opts.onState : optional callback(src|null) fired when the mounted page changes
+  // ?demo=1 forces it on for previewing.
+  function mountEventOverlay(frame, opts) {
     if (!frame) return;
+    opts = opts || {};
     var demo = new URLSearchParams(location.search).get("demo") != null;
     var passQuery = location.search || "";
     var current = null;
 
-    // Choose the fullscreen page for an active event (null = stay transparent).
+    // Choose the fullscreen page for an active event (null = hide the overlay).
     function targetFor(active, live) {
       switch (active) {
         case "commander-league": return "commander-board.html";
@@ -365,12 +451,14 @@
       if (!src) {
         frame.style.display = "none";
         if (frame.src && !/about:blank$/.test(frame.src)) frame.src = "about:blank";
-        document.body.classList.remove("on");
-        return;
+      } else {
+        frame.style.display = "block";
+        if (frame.getAttribute("src") !== src) frame.src = src;
       }
-      frame.style.display = "block";
-      if (frame.getAttribute("src") !== src) frame.src = src;
-      document.body.classList.add("on");
+      // `board-live` on <body> lets the host page hide its own design behind the
+      // board (overlay.html and signage.html main mode both key off this).
+      document.body.classList.toggle("board-live", !!src);
+      if (opts.onState) opts.onState(src);
     }
 
     function tick() {
@@ -390,4 +478,7 @@
     tick();
     setInterval(tick, 5000);
   }
+
+  // overlay.html entry point — drives the #screen iframe with the shared logic.
+  function initDisplay() { mountEventOverlay(document.getElementById("screen")); }
 })();

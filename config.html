@@ -116,6 +116,41 @@
       <a class="btn ghost" href="overlay.html" target="_blank" rel="noopener">Open the DakBoard overlay page ↗</a>
     </div>
 
+    <p class="section-label">Board &amp; signage</p>
+    <p style="color:var(--muted);font-size:13px;margin:-6px 2px 14px;">
+      The two shop TVs run the signage board (schedule, specials, ticker). Edits
+      here appear on both screens within a few seconds.
+    </p>
+    <div id="signageControls">
+      <div class="sys-card">
+        <div class="sys-head"><span class="sys-title">Today's special</span></div>
+        <input class="field" id="sgSpecialText" placeholder="e.g. 15% off all sealed Pokémon" maxlength="120" style="margin-top:12px" />
+        <label class="sg-check"><input type="checkbox" id="sgSpecialClear" checked /> Clear automatically after close (10 PM)</label>
+        <div class="event-actions"><button class="btn primary" id="sgSpecialSave" type="button">Save special</button></div>
+      </div>
+
+      <div class="sys-card">
+        <div class="sys-head"><span class="sys-title">Ticker messages</span></div>
+        <p class="hint" style="margin:10px 0 12px">Short lines that scroll along the bottom of both screens.</p>
+        <div id="sgTickerList" class="sg-tlist"></div>
+        <div class="sg-tadd">
+          <input class="field" id="sgTickerInput" placeholder="Add a message and press Enter" maxlength="120" style="margin:0" />
+          <button class="btn ghost" id="sgTickerAdd" type="button">Add</button>
+        </div>
+      </div>
+
+      <div class="sys-card">
+        <div class="sys-head"><span class="sys-title">Featured event <small>drives the entrance QR</small></span></div>
+        <input class="field" id="sgFeatured" placeholder="Shopify handle (blank = next upcoming)" style="margin-top:12px" />
+        <div class="event-actions"><button class="btn ghost" id="sgFeaturedSave" type="button">Save featured event</button></div>
+      </div>
+
+      <div class="event-actions">
+        <a class="btn ghost" href="signage.html?screen=main" target="_blank" rel="noopener">Preview 75″ board ↗</a>
+        <a class="btn ghost" href="signage.html?screen=entrance" target="_blank" rel="noopener">Preview entrance board ↗</a>
+      </div>
+    </div>
+
     <p class="section-label">Utilities</p>
     <div class="event-actions">
       <a class="btn ghost" href="qr-sheet.html" target="_blank" rel="noopener">Printable table QR sheet ↗</a>
@@ -133,6 +168,6 @@
   <div class="toast" id="toast"></div>
 
   <script src="assets/app.js"></script>
-  <script>BGF.initConfig(); BGF.initBigScreen();</script>
+  <script>BGF.initConfig(); BGF.initBigScreen(); BGF.initSignage();</script>
 </body>
 </html>

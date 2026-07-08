@@ -1,0 +1,104 @@
+/* ============================================================
+   Balance Martial Arts & Gaming — in-store signage board
+   Two layouts via <body data-screen="main|entrance">. Sized with
+   vw/vh/clamp so it reads on a 75" landscape and a 40" portrait.
+   ============================================================ */
+body.signage {
+  margin: 0; height: 100vh; width: 100vw; overflow: hidden;
+  background:
+    radial-gradient(1400px 800px at 50% -10%, rgba(200,30,39,.16), transparent 60%),
+    radial-gradient(1000px 600px at 110% 8%, rgba(245,197,24,.08), transparent 55%),
+    var(--bg);
+}
+
+/* The signage design fills the screen; the live-board iframe covers it. */
+.sg-design { height: 100vh; width: 100vw; display: flex; flex-direction: column; padding: 3vh 3vw; }
+.sg-screen { display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; border: 0; background: var(--bg); z-index: 10; }
+body.board-live .sg-screen { display: block; }
+body.board-live .sg-design { visibility: hidden; }
+
+/* ── Header ─────────────────────────────────────────── */
+.sg-header { flex: 0 0 auto; display: flex; align-items: center; gap: 2vw; }
+.sg-logo { height: clamp(56px, 9vh, 130px); width: auto; filter: drop-shadow(0 6px 20px rgba(200,30,39,.3)); }
+.sg-headmid { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; }
+.sg-clock { flex: 0 0 auto; text-align: right; }
+.sg-time { font-size: clamp(22px, 3.4vw, 56px); font-weight: 900; line-height: 1; letter-spacing: -.01em; }
+.sg-date { font-size: clamp(12px, 1.4vw, 22px); color: var(--muted); font-weight: 700; margin-top: .6vh; }
+
+/* Today's special */
+.sg-special {
+  display: inline-flex; align-items: center; gap: 1vw; max-width: 100%;
+  padding: 1vh 1.6vw; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-2) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent-2) 45%, var(--surface-2));
+}
+.sg-special-tag {
+  font-size: clamp(10px, 1vw, 15px); font-weight: 900; letter-spacing: .14em; text-transform: uppercase;
+  color: #0b1220; background: var(--accent-2); padding: .4vh .8vw; border-radius: 999px; flex: 0 0 auto;
+}
+.sg-special-text { font-size: clamp(14px, 1.7vw, 30px); font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Main area ──────────────────────────────────────── */
+.sg-main { flex: 1 1 auto; min-height: 0; display: flex; gap: 3vw; margin: 2.4vh 0; }
+.sg-events-col { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.sg-h {
+  margin: 0 0 1.6vh; font-size: clamp(16px, 2vw, 34px); font-weight: 900; letter-spacing: -.01em;
+  color: var(--accent-2);
+}
+.sg-events { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-auto-rows: max-content; gap: 1.4vh; }
+
+.sg-event {
+  display: flex; align-items: center; gap: 1.6vw;
+  padding: 1.6vh 1.6vw; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--surface-2);
+}
+.sg-event.today { border-color: var(--accent-2); background: color-mix(in srgb, var(--accent-2) 10%, var(--surface)); }
+.sg-when { flex: 0 0 auto; min-width: clamp(90px, 11vw, 190px); text-align: center; border-right: 1px solid var(--surface-2); padding-right: 1.2vw; }
+.sg-day { font-size: clamp(15px, 1.8vw, 30px); font-weight: 900; color: var(--accent-2); }
+.sg-clock2 { font-size: clamp(12px, 1.4vw, 22px); color: var(--muted); font-weight: 700; margin-top: .4vh; }
+.sg-emid { flex: 1 1 auto; min-width: 0; }
+.sg-ename { font-size: clamp(17px, 2.1vw, 36px); font-weight: 800; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg-emeta { display: flex; align-items: center; gap: 1vw; margin-top: .8vh; }
+.sg-price { font-size: clamp(13px, 1.5vw, 24px); font-weight: 800; color: var(--text); }
+.sg-cal { font-size: clamp(12px, 1.4vw, 22px); font-weight: 700; color: var(--muted); }
+
+/* seats-left status pill */
+.sg-pill {
+  font-size: clamp(12px, 1.3vw, 20px); font-weight: 800; padding: .5vh 1vw; border-radius: 999px;
+  border: 1px solid transparent;
+}
+.sg-pill.open    { color: #34d399; background: color-mix(in srgb, #34d399 16%, transparent); border-color: color-mix(in srgb, #34d399 45%, transparent); }
+.sg-pill.almost  { color: #ffb053; background: color-mix(in srgb, #ffb053 16%, transparent); border-color: color-mix(in srgb, #ffb053 45%, transparent); }
+.sg-pill.soldout { color: #ff6b6b; background: color-mix(in srgb, #ff6b6b 14%, transparent); border-color: color-mix(in srgb, #ff6b6b 40%, transparent); }
+
+.sg-empty { text-align: center; padding: 6vh 2vw; color: var(--muted); }
+.sg-empty h2 { color: var(--text); font-size: clamp(20px, 2.6vw, 40px); margin: 0 0 1vh; }
+.sg-empty p { margin: 0; font-size: clamp(14px, 1.6vw, 24px); }
+
+/* ── QR column (entrance only) ──────────────────────── */
+.sg-qr-col { flex: 0 0 auto; width: clamp(220px, 26vw, 460px); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.sg-qr { width: clamp(180px, 22vw, 400px); aspect-ratio: 1; background: #fff; border-radius: 18px; padding: 2%; box-shadow: var(--shadow); }
+.sg-qr svg { width: 100%; height: 100%; display: block; }
+.sg-qr-sub { text-align: center; color: var(--muted); font-size: clamp(13px, 1.5vw, 22px); font-weight: 700; margin: 2vh 0 0; max-width: 90%; }
+
+/* ── Ticker ─────────────────────────────────────────── */
+.sg-ticker {
+  flex: 0 0 auto; overflow: hidden; white-space: nowrap;
+  border-top: 1px solid var(--surface-2); padding-top: 1.4vh; margin-top: auto;
+}
+.sg-ticker-track { display: inline-block; white-space: nowrap; will-change: transform; animation: sg-marquee 40s linear infinite; }
+.sg-ticker-item { font-size: clamp(15px, 1.8vw, 28px); font-weight: 700; color: var(--text); }
+.sg-ticker-dot { color: var(--accent-2); margin: 0 1.4vw; font-weight: 900; }
+@keyframes sg-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ── main (75" landscape): no QR; two event columns for density ─────── */
+body[data-screen="main"] .sg-qr-col { display: none; }
+body[data-screen="main"] .sg-events { grid-template-columns: 1fr 1fr; gap: 1.4vh 2vw; align-content: start; }
+
+/* ── entrance (40" portrait): stacked, QR shown, single event column ── */
+body[data-screen="entrance"] .sg-header { flex-wrap: wrap; row-gap: 1.6vh; }
+body[data-screen="entrance"] .sg-headmid { order: 3; flex-basis: 100%; }
+body[data-screen="entrance"] .sg-special { width: 100%; justify-content: center; }
+body[data-screen="entrance"] .sg-main { flex-direction: column; }
+body[data-screen="entrance"] .sg-qr-col { width: 100%; }
+body[data-screen="entrance"] .sg-events { grid-template-columns: 1fr; }

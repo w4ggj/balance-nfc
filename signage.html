@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Balance Gaming FL — Signage</title>
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+  <link rel="stylesheet" href="assets/signage.css" />
+</head>
+<body class="signage" data-screen="main">
+  <!-- In-store signage for the shop TVs (replaces DakBoard).
+       ?screen=main      → 75" landscape play-area TV (flips to live event board)
+       ?screen=entrance  → 40" portrait counter TV (adds a scan-to-register QR) -->
+
+  <!-- The signage design (shown normally; hidden behind the board on main mode) -->
+  <div class="sg-design" id="sgDesign">
+    <header class="sg-header">
+      <img class="sg-logo" src="assets/logo.png" alt="Balance Gaming FL" />
+      <div class="sg-headmid">
+        <div class="sg-special" id="sgSpecial" hidden></div>
+      </div>
+      <div class="sg-clock" id="sgClock"></div>
+    </header>
+
+    <main class="sg-main">
+      <section class="sg-events-col">
+        <h2 class="sg-h">Upcoming Events</h2>
+        <div class="sg-events" id="sgEvents"></div>
+      </section>
+
+      <!-- entrance-only: scan to register -->
+      <aside class="sg-qr-col">
+        <h2 class="sg-h">Scan to Register</h2>
+        <div class="sg-qr" id="sgQR"></div>
+        <p class="sg-qr-sub">Point your camera here to sign up for tonight's event.</p>
+      </aside>
+    </main>
+
+    <footer class="sg-ticker" id="sgTicker" hidden></footer>
+  </div>
+
+  <!-- main mode: the live event board covers the design when an event is live -->
+  <iframe id="sgScreen" class="sg-screen" title="Live event board" scrolling="no"></iframe>
+
+  <script src="assets/qrcode.js"></script>
+  <script src="assets/app.js"></script>
+  <script src="assets/signage.js"></script>
+  <script>Signage.init();</script>
+</body>
+</html>
