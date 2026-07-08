@@ -152,6 +152,50 @@
   function sec(t) { return el("p", "section-label", t); }
   function socialLink(label, href) { var a = el("a", "gsoc"); a.href = href; a.target = "_blank"; a.rel = "noopener"; a.textContent = label; return a; }
 
-  global.BGFG = { GAMES: GAMES, LINKS: LINKS, initGame: initGame, isTonight: isTonight, stripDate: stripDate };
+  // ---- TV / wall version (event-tv.html?game=…) ------------------------
+  // Big-screen "tonight's event" for the advertising display. Same Shopify
+  // pull as the tap page, rendered large. Auto-refreshes so it stays live.
+  function loadTonightTv(game, host) {
+    var G = GAMES[game];
+    var url = SHOP + "/collections/" + G.eventsHandle + "/products.json?limit=250";
+    fetch(url, { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (data) {
+        var list = (data && data.products) || [];
+        renderTonightTv(game, host, list.filter(function (p) { return isTonight(p.title); }));
+      })
+      .catch(function () { renderTonightTv(game, host, null); });
+  }
+  function renderTonightTv(game, host, events) {
+    var G = GAMES[game];
+    host.innerHTML = "";
+    if (events === null || (events && !events.length)) {
+      host.appendChild(el("div", "evtv-kicker", "Tonight at Balance"));
+      host.appendChild(el("div", "evtv-title", (events === null) ? "See tonight's schedule" : "No " + G.short + " event tonight"));
+      host.appendChild(el("div", "evtv-meta", "Ask the counter or check our events page for what's on."));
+      return;
+    }
+    events.forEach(function (p) {
+      var card = el("div", "evtv-card");
+      card.appendChild(el("div", "evtv-kicker", "Tonight · " + G.short));
+      card.appendChild(el("div", "evtv-title", stripDate(p.title)));
+      var price = (p.variants && p.variants[0] && p.variants[0].price != null) ? p.variants[0].price : null;
+      if (price != null && Number(price) > 0) card.appendChild(el("div", "evtv-meta", "Entry $" + price + " · register at the counter"));
+      else card.appendChild(el("div", "evtv-meta", "Register at the counter"));
+      host.appendChild(card);
+    });
+  }
+  function initGameTv(game) {
+    game = (GAMES[game] ? game : "pokemon");
+    var G = GAMES[game];
+    document.body.setAttribute("data-game", game);
+    var nameEl = document.getElementById("evtvGame");
+    if (nameEl) nameEl.textContent = G.label;
+    var host = document.getElementById("evtvBody");
+    loadTonightTv(game, host);
+    setInterval(function () { loadTonightTv(game, host); }, 60000); // stay live
+  }
+
+  global.BGFG = { GAMES: GAMES, LINKS: LINKS, initGame: initGame, initGameTv: initGameTv, isTonight: isTonight, stripDate: stripDate };
   if (typeof module !== "undefined" && module.exports) module.exports = global.BGFG;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tonight's Event — Balance Gaming FL</title>
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+</head>
+<body class="evtv">
+  <!-- Big-screen "tonight's event" for the advertising TV. ?game=mtg|onepiece|
+       riftbound|pokemon selects the game. Pulls the event live from Shopify. -->
+  <main class="evtv-wrap">
+    <img class="evtv-logo" src="assets/logo.png" alt="Balance Gaming FL" />
+    <div class="evtv-game" id="evtvGame">Balance Gaming</div>
+    <div class="evtv-rule"></div>
+    <div id="evtvBody"></div>
+    <div class="evtv-foot">Balance Martial Arts &amp; Gaming · <b>balancegamingfl.com</b></div>
+  </main>
+
+  <script src="assets/games.js"></script>
+  <script>
+    var g = new URLSearchParams(location.search).get("game") || "pokemon";
+    BGFG.initGameTv(g);
+  </script>
+</body>
+</html>

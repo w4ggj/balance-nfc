@@ -351,10 +351,10 @@
       switch (active) {
         case "commander-league": return "commander-board.html";
         case "tournament":       return "board.html" + passQuery;
-        case "pokemon":          return (live ? "board.html" + passQuery : "pokemon.html");
-        case "onepiece":         return "onepiece.html";
-        case "riftbound":        return "riftbound.html";
-        case "mtg":              return "mtg.html";
+        case "pokemon":          return (live ? "board.html" + passQuery : "event-tv.html?game=pokemon");
+        case "onepiece":         return "event-tv.html?game=onepiece";
+        case "riftbound":        return "event-tv.html?game=riftbound";
+        case "mtg":              return "event-tv.html?game=mtg";
         default:                 return null; // main / unknown
       }
     }
