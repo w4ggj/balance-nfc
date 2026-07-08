@@ -244,7 +244,7 @@
         var page = input.getAttribute("data-page");
         var on = (eff === page);
         input.checked = on;
-        var row = input.closest(".switch-row");
+        var row = input.closest(".switch-row, .sys-card");
         if (row) row.setAttribute("data-on", on ? "true" : "false");
       });
       if (dot) dot.style.setProperty("--dot", COLORS[eff]);

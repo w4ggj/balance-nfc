@@ -68,25 +68,39 @@
       <label class="toggle"><input type="checkbox" data-page="mtg" aria-label="Magic: The Gathering"><span class="track"></span><span class="knob"></span></label>
     </div>
 
-    <!-- Tournament (Swiss) -->
-    <div class="switch-row" style="--rowc:#34d399" data-on="false">
-      <span class="swatch"></span>
-      <span class="name">Tournament (Swiss) <small>set up in admin ↗</small></span>
-      <a class="prev" href="admin.html" target="_blank" rel="noopener">Admin</a>
-      <label class="toggle"><input type="checkbox" data-page="tournament" aria-label="Tournament"><span class="track"></span><span class="knob"></span></label>
-    </div>
-
-    <!-- Commander League -->
-    <div class="switch-row" style="--rowc:#e0902a" data-on="false">
-      <span class="swatch"></span>
-      <span class="name">Commander League <small>run in staff console ↗</small></span>
-      <a class="prev" href="commander-admin.html" target="_blank" rel="noopener">Console</a>
-      <label class="toggle"><input type="checkbox" data-page="commander-league" aria-label="Commander League"><span class="track"></span><span class="knob"></span></label>
-    </div>
-
     <div class="notice" style="margin-top:20px">
       Changes are <b style="color:var(--text)">instant</b> — every table updates on their next scan.
       No apps, no logins. Just tap.
+    </div>
+
+    <p class="section-label">Programs</p>
+
+    <!-- Tournament (Swiss) — everything for this system in one card -->
+    <div class="sys-card" style="--rowc:#34d399" data-on="false">
+      <div class="sys-head">
+        <span class="sys-title">Tournament (Swiss) <small>Swiss pairings · player self-check-in</small></span>
+        <label class="toggle"><input type="checkbox" data-page="tournament" aria-label="Tournament (Swiss)"><span class="track"></span><span class="knob"></span></label>
+      </div>
+      <p class="sys-desc">Turn on to send table tags to the tournament. Set up and run it from the admin console; put a board on a TV.</p>
+      <div class="event-actions">
+        <a class="btn primary" href="admin.html" target="_blank" rel="noopener">Open the admin console ↗</a>
+        <a class="btn ghost" href="board.html" target="_blank" rel="noopener">Board — rotating (TV) ↗</a>
+        <a class="btn ghost" href="pairings.html" target="_blank" rel="noopener">Pairings only (TV) ↗</a>
+        <a class="btn ghost" href="standings.html" target="_blank" rel="noopener">Standings only (TV) ↗</a>
+      </div>
+    </div>
+
+    <!-- Commander League — everything for this system in one card -->
+    <div class="sys-card" style="--rowc:#e0902a" data-on="false">
+      <div class="sys-head">
+        <span class="sys-title">Commander League <small>Friday-night EDH · pods &amp; voting</small></span>
+        <label class="toggle"><input type="checkbox" data-page="commander-league" aria-label="Commander League"><span class="track"></span><span class="knob"></span></label>
+      </div>
+      <p class="sys-desc">Turn on to send table tags to the league. Create the league, start a night, assign pods, and advance games in the staff console.</p>
+      <div class="event-actions">
+        <a class="btn primary" href="commander-admin.html" target="_blank" rel="noopener">Open the staff console ↗</a>
+        <a class="btn ghost" href="commander-board.html" target="_blank" rel="noopener">TV leaderboard ↗</a>
+      </div>
     </div>
 
     <p class="section-label">Big screen (advertising display)</p>
@@ -100,37 +114,8 @@
       <span class="name">Live event on TV <small id="bigScreenState">…</small></span>
       <label class="toggle"><input type="checkbox" id="bigScreenToggle" aria-label="Live event on TV"><span class="track"></span><span class="knob"></span></label>
     </div>
-
-    <p class="section-label">Commander League</p>
-    <p style="color:var(--muted);font-size:13px;margin:-6px 2px 14px;">
-      Run Friday-night Commander here: create the league, start a session,
-      assign pods, and advance games. Turn the toggle above on so table tags
-      send players to the league.
-    </p>
-    <div class="event-actions">
-      <a class="btn primary" href="commander-admin.html" target="_blank" rel="noopener">Open the staff console ↗</a>
-      <a class="btn ghost" href="commander-board.html" target="_blank" rel="noopener">Open the TV leaderboard ↗</a>
-    </div>
-
-    <p class="section-label">Swiss tournament</p>
-    <p style="color:var(--muted);font-size:13px;margin:-6px 2px 14px;">
-      Set up and run a Swiss tournament (players self-check-in, seeding,
-      pairings, results). Turn the Tournament toggle above on to send tags here.
-    </p>
-    <div class="event-actions">
-      <a class="btn primary" href="admin.html" target="_blank" rel="noopener">Open the admin console ↗</a>
-    </div>
-
-    <p class="section-label">Wall displays (TVs)</p>
-    <p style="color:var(--muted);font-size:13px;margin:-6px 2px 14px;">
-      Open on a TV or in the DakBoard web frame. The rotating board flips
-      between pairings and standings on its own.
-    </p>
-    <div class="event-actions">
-      <a class="btn ghost" href="board.html" target="_blank" rel="noopener">Tournament board — rotating ↗</a>
-      <a class="btn ghost" href="pairings.html" target="_blank" rel="noopener">Pairings only ↗</a>
-      <a class="btn ghost" href="standings.html" target="_blank" rel="noopener">Standings only ↗</a>
-      <a class="btn ghost" href="overlay.html" target="_blank" rel="noopener">DakBoard overlay page ↗</a>
+    <div class="event-actions" style="margin-top:12px">
+      <a class="btn ghost" href="overlay.html" target="_blank" rel="noopener">Open the DakBoard overlay page ↗</a>
     </div>
 
     <p class="section-label">Utilities</p>

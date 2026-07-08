@@ -252,6 +252,19 @@ body[data-game="tournament"]{ --game: #34d399; }
 .toggle input:checked + .track { background: var(--rowc, var(--accent)); }
 .toggle input:checked ~ .knob { transform: translateX(21px); }
 
+/* Program cards — one self-contained card per system (toggle + its links) */
+.sys-card {
+  background: var(--surface); border: 1px solid var(--surface-2); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 18px 18px 16px; margin-bottom: 14px;
+  transition: border-color .12s ease;
+}
+.sys-card[data-on="true"] { border-color: var(--rowc, var(--accent-2)); }
+.sys-head { display: flex; align-items: center; gap: 14px; }
+.sys-title { flex: 1 1 auto; min-width: 0; font-weight: 800; font-size: 17px; }
+.sys-title small { display: block; font-weight: 500; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.sys-desc { color: var(--muted); font-size: 13px; margin: 12px 0 14px; }
+.sys-card .event-actions { margin-top: 0; }
+
 /* Publish box */
 .publish { margin-top: 8px; padding: 18px; border-radius: var(--radius);
   background: var(--surface); border: 1px solid var(--surface-2); box-shadow: var(--shadow); }
