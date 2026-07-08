@@ -97,6 +97,21 @@ shopify: friday-commander
 or just paste the product URL (`.../products/friday-commander`). The Worker
 uses that link over any guess.
 
+## 5. Optional: attach an image to any event
+
+Put an image URL in the calendar event's **description** and the big-screen
+rotation shows it (works for non-ticketed events too, and overrides the
+Shopify product image):
+
+```
+image: https://cdn.shopify.com/s/files/1/xxxx/poster.jpg
+```
+
+A bare image URL ending in .png/.jpg/.gif/.webp in the description also works.
+Easiest place to host one: Shopify admin → **Content → Files** → upload →
+copy the URL. (Ticketed events already show their product's featured image
+automatically — this is just for adding/overriding art per event.)
+
 ---
 
 ## Tuning (wrangler.toml `[vars]`)

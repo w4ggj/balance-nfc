@@ -233,7 +233,9 @@ function merge(calEvents, shopEvents, env, tz) {
       ticketed: !!match,
       price: match ? match.price : null,
       registerUrl: match ? match.url : null,
-      image: match ? match.image : null,
+      // An "image: <url>" in the calendar event description wins; otherwise the
+      // matched Shopify product's image. Lets any event (even non-ticketed) have art.
+      image: imageFromText(ev.description) || (match ? match.image : null),
       seatsLeft: seatsLeft,
       status: status
     };
@@ -282,5 +284,16 @@ function handleFromText(text) {
   if (m) return m[1].toLowerCase();
   m = t.match(/shopify\s*[:=]\s*([a-z0-9\-]+)/i);
   if (m) return m[1].toLowerCase();
+  return null;
+}
+
+// Pull an explicit image URL from a calendar event description:
+//   image: https://…/poster.jpg     (also accepts a bare image URL)
+function imageFromText(text) {
+  const t = String(text || "");
+  let m = t.match(/image\s*[:=]\s*(https?:\/\/[^\s"'<>]+)/i);
+  if (m) return m[1];
+  m = t.match(/(https?:\/\/[^\s"'<>]+\.(?:png|jpe?g|gif|webp|avif)(?:\?[^\s"'<>]*)?)/i);
+  if (m) return m[1];
   return null;
 }
