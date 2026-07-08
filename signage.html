@@ -8,15 +8,11 @@
   <meta name="robots" content="noindex" />
   <meta http-equiv="Cache-Control" content="no-store" />
   <link rel="icon" type="image/png" href="assets/logo.png" />
-  <script>
-    /* Cache-bust the stylesheets so the unattended TVs always show the latest
-       build (kiosk browsers cache aggressively). */
-    (function () {
-      window.__SGV = Date.now();
-      document.write('<link rel="stylesheet" href="assets/brand.css?t=' + window.__SGV + '">');
-      document.write('<link rel="stylesheet" href="assets/signage.css?t=' + window.__SGV + '">');
-    })();
-  </script>
+  <!-- Plain <link> tags so styles apply reliably on every kiosk browser
+       (document.write-injected CSS didn't apply on one of the TVs). Freshness
+       comes from the hourly self-reload + the JS cache-buster below. -->
+  <link rel="stylesheet" href="assets/brand.css" />
+  <link rel="stylesheet" href="assets/signage.css" />
 </head>
 <body class="signage" data-screen="main">
   <!-- In-store signage for the shop TVs (replaces DakBoard).
@@ -53,9 +49,9 @@
   </div>
 
   <script>
-    /* Cache-bust the scripts too, then start once they've all loaded. */
+    /* Cache-bust the scripts so the unattended TVs always run the latest build. */
     (function () {
-      var t = window.__SGV || Date.now();
+      var t = Date.now();
       ["assets/qrcode.js", "assets/app.js", "assets/commander.js", "assets/tournament.js", "assets/signage.js"]
         .forEach(function (src) { document.write('<script src="' + src + '?t=' + t + '"><\/script>'); });
     })();

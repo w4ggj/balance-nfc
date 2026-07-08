@@ -18,7 +18,9 @@ body.signage {
 /* ── Header ─────────────────────────────────────────── */
 .sg-header { flex: 0 0 auto; display: flex; align-items: center; gap: 2vw; margin-bottom: 2vh; }
 .sg-brand { display: flex; align-items: center; gap: 14px; flex: 1 1 auto; min-width: 0; }
-.sg-logo { height: clamp(52px, 7vh, 104px); width: auto; border-radius: 10px; }
+/* vh + px caps (not clamp) so the logo is constrained even on older kiosk
+   browsers that don't support clamp(). max-width stops it ever spanning wide. */
+.sg-logo { height: 7vh; min-height: 48px; max-height: 100px; width: auto; max-width: 40vw; border-radius: 10px; }
 .sg-brandname { font-size: clamp(18px, 2vw, 34px); font-weight: 800; letter-spacing: -.01em; }
 .sg-headright { flex: 0 0 auto; display: flex; align-items: center; gap: 1.4vw; }
 .sg-live {
@@ -96,7 +98,7 @@ body.signage {
 .sg-fun-text { font-size: clamp(28px, 4vw, 66px); font-weight: 800; line-height: 1.25; max-width: 24ch; color: var(--text); }
 
 .sg-welcome { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-.sg-welcome-logo { width: clamp(120px, 12vw, 220px); margin-bottom: 3vh; filter: drop-shadow(0 8px 24px rgba(200,30,39,.28)); }
+.sg-welcome-logo { width: 12vw; min-width: 120px; max-width: 220px; margin-bottom: 3vh; filter: drop-shadow(0 8px 24px rgba(200,30,39,.28)); }
 .sg-welcome-h { font-size: clamp(26px, 3vw, 52px); font-weight: 900; letter-spacing: -.02em; }
 .sg-welcome-sub { font-size: clamp(15px, 1.6vw, 26px); color: var(--muted); margin-top: 1.6vh; max-width: 22ch; }
 
