@@ -21,7 +21,7 @@
   // Cloudflare Worker that serves the signage schedule (events + seats-left).
   // Deploy board-api/ (see board-api/SETUP.md), then paste the deployed URL here.
   // The signage board polls this ~every 60s; falls back gracefully if unset.
-  var BOARD_API = "__FILL_IN_WORKER_URL__";   // e.g. https://board-api.jleone0.workers.dev
+  var BOARD_API = "https://board-api.jleone0.workers.dev";
 
   // Is the config backend a Firebase Realtime Database (writable) or a static file?
   function isFirebase() { return /firebaseio|firebasedatabase/.test(CONFIG_URL); }
