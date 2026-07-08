@@ -418,7 +418,12 @@
       setInterval(rotateRight, 15000); // alternate standings ↔ pairings/pods
     }
 
-    setTimeout(function () { location.reload(); }, 60 * 60 * 1000);
+    // Unattended signage: reload hourly with a cache-buster so future updates
+    // reach the TVs even when the kiosk browser caches aggressively.
+    setTimeout(function () {
+      try { var u = new URL(location.href); u.searchParams.set("t", String(Date.now())); location.replace(u.toString()); }
+      catch (e) { location.reload(); }
+    }, 60 * 60 * 1000);
   }
 
   global.Signage = { init: init };

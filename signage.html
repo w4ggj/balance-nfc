@@ -6,9 +6,17 @@
   <title>Balance Gaming FL — Signage</title>
   <meta name="theme-color" content="#0e0f13" />
   <meta name="robots" content="noindex" />
+  <meta http-equiv="Cache-Control" content="no-store" />
   <link rel="icon" type="image/png" href="assets/logo.png" />
-  <link rel="stylesheet" href="assets/brand.css" />
-  <link rel="stylesheet" href="assets/signage.css" />
+  <script>
+    /* Cache-bust the stylesheets so the unattended TVs always show the latest
+       build (kiosk browsers cache aggressively). */
+    (function () {
+      window.__SGV = Date.now();
+      document.write('<link rel="stylesheet" href="assets/brand.css?t=' + window.__SGV + '">');
+      document.write('<link rel="stylesheet" href="assets/signage.css?t=' + window.__SGV + '">');
+    })();
+  </script>
 </head>
 <body class="signage" data-screen="main">
   <!-- In-store signage for the shop TVs (replaces DakBoard).
@@ -27,16 +35,13 @@
     </header>
 
     <main class="sg-body">
-      <!-- LEFT: upcoming events (both modes) -->
       <section class="sg-left">
         <h2 class="sg-h">Upcoming Events</h2>
         <div class="sg-events" id="sgEvents"></div>
       </section>
 
-      <!-- RIGHT: live board for the active event (main mode) -->
       <section class="sg-right" id="sgRight"></section>
 
-      <!-- entrance-only: scan to register -->
       <aside class="sg-qr-col">
         <h2 class="sg-h">Scan to Register</h2>
         <div class="sg-qr" id="sgQR"></div>
@@ -47,11 +52,14 @@
     <footer class="sg-ticker" id="sgTicker" hidden></footer>
   </div>
 
-  <script src="assets/qrcode.js"></script>
-  <script src="assets/app.js"></script>
-  <script src="assets/commander.js"></script>
-  <script src="assets/tournament.js"></script>
-  <script src="assets/signage.js"></script>
-  <script>Signage.init();</script>
+  <script>
+    /* Cache-bust the scripts too, then start once they've all loaded. */
+    (function () {
+      var t = window.__SGV || Date.now();
+      ["assets/qrcode.js", "assets/app.js", "assets/commander.js", "assets/tournament.js", "assets/signage.js"]
+        .forEach(function (src) { document.write('<script src="' + src + '?t=' + t + '"><\/script>'); });
+    })();
+  </script>
+  <script>document.addEventListener("DOMContentLoaded", function () { if (window.Signage) Signage.init(); });</script>
 </body>
 </html>
