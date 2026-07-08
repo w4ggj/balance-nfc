@@ -1,0 +1,20 @@
+name = "board-api"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# Non-secret settings — safe to keep here.
+[vars]
+ALLOW_ORIGIN            = "https://nfc.balancegamingfl.com"
+TIMEZONE               = "America/New_York"
+HORIZON_DAYS           = "21"
+ALMOST_FULL            = "3"
+EVENTS_COLLECTION_HANDLE = "events"
+SHOPIFY_API_VERSION    = "2024-10"
+
+# Fill these in (calendar id + shop domain are not secret):
+GCAL_CALENDAR_ID       = "PUT_YOUR_CALENDAR_ID_HERE"
+SHOPIFY_SHOP           = "your-store.myshopify.com"
+
+# SECRETS — do NOT put these here. Set them with:
+#   wrangler secret put GCAL_API_KEY
+#   wrangler secret put SHOPIFY_ADMIN_TOKEN

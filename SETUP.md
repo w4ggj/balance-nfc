@@ -1,0 +1,91 @@
+# Board Data API — setup
+
+One small Cloudflare Worker that feeds the signage board a merged, cached
+list of upcoming events: **Google Calendar** for the full schedule,
+**Shopify Admin** for entry price + exact seats-left.
+
+The board reads this Worker's URL. Nothing else needs a server.
+
+---
+
+## What you provide (4 things)
+
+| Setting | What it is | Secret? |
+|---|---|---|
+| `GCAL_CALENDAR_ID` | The calendar that holds all store events | No — in `wrangler.toml` |
+| `GCAL_API_KEY` | Google API key, restricted to the Calendar API | **Yes — secret** |
+| `SHOPIFY_SHOP` | Your `*.myshopify.com` domain | No — in `wrangler.toml` |
+| `SHOPIFY_ADMIN_TOKEN` | Custom-app Admin API token | **Yes — secret** |
+
+---
+
+## 1. Google Calendar
+
+1. Make the calendar public: Google Calendar → that calendar's **Settings and
+   sharing** → **Access permissions** → check **Make available to public**
+   (set to "See only free/busy"? No — choose **See all event details**).
+2. On the same page, copy the **Calendar ID** (looks like
+   `abc123@group.calendar.google.com`). → this is `GCAL_CALENDAR_ID`.
+3. Get an API key: [console.cloud.google.com](https://console.cloud.google.com)
+   → create/select a project → **APIs & Services** → enable **Google Calendar
+   API** → **Credentials** → **Create credentials → API key**. Restrict it to
+   the **Calendar API** (and optionally to your Worker's domain). → this is
+   `GCAL_API_KEY`.
+
+> Recurring weekly game nights are fine — the Worker asks Google to expand them
+> into individual dated instances.
+
+---
+
+## 2. Shopify Admin token
+
+1. Shopify admin → **Settings → Apps and sales channels → Develop apps** →
+   **Create an app** (name it e.g. "Board API").
+2. **Configure Admin API scopes** → enable **`read_products`** and
+   **`read_inventory`**. Save.
+3. **Install app** → then **Reveal the Admin API access token** once and copy
+   it. → this is `SHOPIFY_ADMIN_TOKEN` (starts with `shpat_`).
+4. Your `SHOPIFY_SHOP` is the `*.myshopify.com` domain (Settings → Domains).
+
+> Events must be in a collection whose handle is `events` (default) — or set
+> `EVENTS_COLLECTION_HANDLE` to match. Seats-left = the event product's tracked
+> inventory, exactly as you already cap seats.
+
+---
+
+## 3. Deploy
+
+```bash
+npm install -g wrangler        # if needed
+cd board-api
+# edit wrangler.toml: set GCAL_CALENDAR_ID and SHOPIFY_SHOP
+wrangler secret put GCAL_API_KEY          # paste when prompted
+wrangler secret put SHOPIFY_ADMIN_TOKEN   # paste when prompted
+wrangler deploy
+```
+
+Wrangler prints the Worker URL, e.g.
+`https://board-api.jleone0.workers.dev`. Open it in a browser — you should see
+JSON with an `events` array. **That URL is what the board will read.**
+
+---
+
+## 4. Optional: force a calendar event to a specific product
+
+If the auto-match (same date + similar name) ever guesses wrong, put the
+Shopify product handle in the calendar event's **description**, either as:
+
+```
+shopify: friday-commander
+```
+
+or just paste the product URL (`.../products/friday-commander`). The Worker
+uses that link over any guess.
+
+---
+
+## Tuning (wrangler.toml `[vars]`)
+
+- `HORIZON_DAYS` — how far ahead to show (default 21).
+- `ALMOST_FULL` — seats at/under this show "almost full" (default 3).
+- `TIMEZONE` — used to date-match evening events (default America/New_York).
