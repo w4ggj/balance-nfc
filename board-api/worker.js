@@ -233,6 +233,7 @@ function merge(calEvents, shopEvents, env, tz) {
       ticketed: !!match,
       price: match ? match.price : null,
       registerUrl: match ? match.url : null,
+      image: match ? match.image : null,
       seatsLeft: seatsLeft,
       status: status
     };
