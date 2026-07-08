@@ -23,7 +23,17 @@
        ?demo=1 forces it on for previewing. -->
   <iframe id="screen" title="Live event display" scrolling="no"></iframe>
 
-  <script src="assets/app.js"></script>
-  <script>BGF.initDisplay();</script>
+  <script>
+    // Signage runs unattended on the DakBoard for days, so it must stay current
+    // on its own. Load app.js with a cache-buster (always fresh code), and
+    // reload the whole page hourly so future updates reach the TV automatically.
+    (function () {
+      var s = document.createElement("script");
+      s.src = "assets/app.js?t=" + Date.now();
+      s.onload = function () { if (window.BGF && BGF.initDisplay) BGF.initDisplay(); };
+      document.head.appendChild(s);
+      setTimeout(function () { location.reload(); }, 60 * 60 * 1000);
+    })();
+  </script>
 </body>
 </html>
