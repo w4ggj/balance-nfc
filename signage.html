@@ -12,24 +12,29 @@
 </head>
 <body class="signage" data-screen="main">
   <!-- In-store signage for the shop TVs (replaces DakBoard).
-       ?screen=main      → 75" landscape play-area TV (flips to live event board)
-       ?screen=entrance  → 40" portrait counter TV (adds a scan-to-register QR) -->
-
-  <!-- The signage design (shown normally; hidden behind the board on main mode) -->
-  <div class="sg-design" id="sgDesign">
+       ?screen=main      → 75" landscape: events left, live event board right
+       ?screen=entrance  → 40" portrait: events + scan-to-register QR -->
+  <div class="sg-design">
     <header class="sg-header">
-      <img class="sg-logo" src="assets/logo.png" alt="Balance Gaming FL" />
-      <div class="sg-headmid">
-        <div class="sg-special" id="sgSpecial" hidden></div>
+      <div class="sg-brand">
+        <img class="sg-logo" src="assets/logo.png" alt="Balance Gaming FL" />
+        <span class="sg-brandname">Balance Gaming FL</span>
       </div>
-      <div class="sg-clock" id="sgClock"></div>
+      <div class="sg-headright">
+        <span class="sg-live" id="sgLive" hidden><span class="sg-livedot"></span> Live now</span>
+        <div class="sg-clock" id="sgClock"></div>
+      </div>
     </header>
 
-    <main class="sg-main">
-      <section class="sg-events-col">
+    <main class="sg-body">
+      <!-- LEFT: upcoming events (both modes) -->
+      <section class="sg-left">
         <h2 class="sg-h">Upcoming Events</h2>
         <div class="sg-events" id="sgEvents"></div>
       </section>
+
+      <!-- RIGHT: live board for the active event (main mode) -->
+      <section class="sg-right" id="sgRight"></section>
 
       <!-- entrance-only: scan to register -->
       <aside class="sg-qr-col">
@@ -42,11 +47,10 @@
     <footer class="sg-ticker" id="sgTicker" hidden></footer>
   </div>
 
-  <!-- main mode: the live event board covers the design when an event is live -->
-  <iframe id="sgScreen" class="sg-screen" title="Live event board" scrolling="no"></iframe>
-
   <script src="assets/qrcode.js"></script>
   <script src="assets/app.js"></script>
+  <script src="assets/commander.js"></script>
+  <script src="assets/tournament.js"></script>
   <script src="assets/signage.js"></script>
   <script>Signage.init();</script>
 </body>
