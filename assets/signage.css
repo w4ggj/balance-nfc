@@ -3,8 +3,12 @@
    Two layouts via <body data-screen="main|entrance">. Sized with
    vw/vh/clamp so it reads on a 75" landscape and a 40" portrait.
    ============================================================ */
+/* A `hidden` element must stay hidden even though .sg-special/.sg-ticker set
+   their own display — otherwise an empty special/ticker shows as a blank pill. */
+.signage [hidden] { display: none !important; }
+
 body.signage {
-  margin: 0; height: 100vh; width: 100vw; overflow: hidden;
+  margin: 0; height: 100dvh; width: 100vw; overflow: hidden;
   background:
     radial-gradient(1400px 800px at 50% -10%, rgba(200,30,39,.16), transparent 60%),
     radial-gradient(1000px 600px at 110% 8%, rgba(245,197,24,.08), transparent 55%),
@@ -40,12 +44,13 @@ body.board-live .sg-design { visibility: hidden; }
 
 /* ── Main area ──────────────────────────────────────── */
 .sg-main { flex: 1 1 auto; min-height: 0; display: flex; gap: 3vw; margin: 2.4vh 0; }
-.sg-events-col { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.sg-events-col { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .sg-h {
   margin: 0 0 1.6vh; font-size: clamp(16px, 2vw, 34px); font-weight: 900; letter-spacing: -.01em;
   color: var(--accent-2);
 }
-.sg-events { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-auto-rows: max-content; gap: 1.4vh; }
+.sg-events { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.sg-etrack { display: grid; grid-auto-rows: max-content; gap: 1.4vh; will-change: transform; }
 
 .sg-event {
   display: flex; align-items: center; gap: 1.6vw;
@@ -94,7 +99,7 @@ body.board-live .sg-design { visibility: hidden; }
 
 /* ── main (75" landscape): no QR; two event columns for density ─────── */
 body[data-screen="main"] .sg-qr-col { display: none; }
-body[data-screen="main"] .sg-events { grid-template-columns: 1fr 1fr; gap: 1.4vh 2vw; align-content: start; }
+body[data-screen="main"] .sg-etrack { grid-template-columns: 1fr 1fr; gap: 1.4vh 2vw; align-content: start; }
 
 /* ── entrance (40" portrait): stacked, QR shown, single event column ── */
 body[data-screen="entrance"] .sg-header { flex-wrap: wrap; row-gap: 1.6vh; }
@@ -102,4 +107,4 @@ body[data-screen="entrance"] .sg-headmid { order: 3; flex-basis: 100%; }
 body[data-screen="entrance"] .sg-special { width: 100%; justify-content: center; }
 body[data-screen="entrance"] .sg-main { flex-direction: column; }
 body[data-screen="entrance"] .sg-qr-col { width: 100%; }
-body[data-screen="entrance"] .sg-events { grid-template-columns: 1fr; }
+body[data-screen="entrance"] .sg-etrack { grid-template-columns: 1fr; }

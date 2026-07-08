@@ -51,17 +51,26 @@
       .then(function (data) { lastEvents = (data && data.events) || []; renderEvents(lastEvents); renderQR(); })
       .catch(function () { renderEvents(null); }); // unreachable → graceful state
   }
+  var lastEventsSig = null;
   function renderEvents(events) {
     var host = document.getElementById("sgEvents");
     if (!host) return;
+    // Skip rebuilding (and restarting the scroll) when nothing changed.
+    if (events !== null) {
+      var sig = JSON.stringify(events);
+      if (sig === lastEventsSig) return;
+      lastEventsSig = sig;
+    } else { lastEventsSig = null; }
+
     host.innerHTML = "";
+    var track = el("div", "sg-etrack");
     if (events === null) {
-      host.appendChild(emptyCard("Schedule unavailable", "See the counter for today's games."));
-      return;
+      track.appendChild(emptyCard("Schedule unavailable", "See the counter for today's games."));
+      host.appendChild(track); return;
     }
     if (!events.length) {
-      host.appendChild(emptyCard("No upcoming events", "See the counter for today's schedule."));
-      return;
+      track.appendChild(emptyCard("No upcoming events", "See the counter for today's schedule."));
+      host.appendChild(track); return;
     }
     events.forEach(function (ev) {
       var d = new Date(ev.start);
@@ -83,7 +92,30 @@
       }
       mid.appendChild(meta);
       card.appendChild(mid);
-      host.appendChild(card);
+      track.appendChild(card);
+    });
+    host.appendChild(track);
+    autoScrollEvents(host, track);
+  }
+
+  // Gentle vertical auto-scroll when the list is taller than its area, so every
+  // event cycles into view on a TV. Ping-pongs down then back up.
+  var kfMade = {};
+  function autoScrollEvents(host, track) {
+    requestAnimationFrame(function () {
+      track.style.animation = "none";
+      track.style.transform = "none";
+      var overflow = track.scrollHeight - host.clientHeight;
+      if (overflow <= 8) return;                 // it all fits — no scroll
+      var name = "sgscroll_" + Math.floor(overflow);
+      if (!kfMade[name]) {
+        kfMade[name] = true;
+        var css = "@keyframes " + name + "{0%,8%{transform:translateY(0)}48%,58%{transform:translateY(-" +
+          overflow + "px)}98%,100%{transform:translateY(0)}}";
+        var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
+      }
+      var dur = Math.max(20, overflow / 18);     // ~18px/sec, min 20s each way
+      track.style.animation = name + " " + (dur * 2) + "s ease-in-out infinite";
     });
   }
   function seatPill(ev) {
