@@ -252,6 +252,17 @@ body[data-game="tournament"]{ --game: #34d399; }
 .toggle input:checked + .track { background: var(--rowc, var(--accent)); }
 .toggle input:checked ~ .knob { transform: translateX(21px); }
 
+/* Control panel — mobile is a single column (default). On wider screens the
+   groups flow into a masonry-style multi-column dashboard. */
+.cfg-group { break-inside: avoid; }
+@media (min-width: 900px) {
+  .cfg .wrap { max-width: 1040px; }
+  .cfg .status { margin-bottom: 8px; }
+  .cfg .cfg-cols { column-count: 2; column-gap: 26px; margin-top: 8px; }
+  .cfg .cfg-group { display: inline-block; width: 100%; break-inside: avoid; }
+  .cfg .cfg-group .section-label { margin-top: 6px; }
+}
+
 /* Program cards — one self-contained card per system (toggle + its links) */
 .sys-card {
   background: var(--surface); border: 1px solid var(--surface-2); border-radius: var(--radius);
