@@ -410,6 +410,48 @@
       });
     }
 
+    // Reusable add / remove / reorder list editor bound to a Firebase array.
+    function wireListEditor(listEl, inputEl, addBtn, path) {
+      var lines = [];
+      function mini(txt, fn) { var b = document.createElement("button"); b.className = "sg-mini"; b.type = "button"; b.textContent = txt; b.addEventListener("click", fn); return b; }
+      function draw() {
+        listEl.innerHTML = "";
+        lines.forEach(function (line, i) {
+          var row = document.createElement("div"); row.className = "sg-tline";
+          var span = document.createElement("span"); span.className = "sg-tltext"; span.textContent = line; row.appendChild(span);
+          var ctl = document.createElement("div"); ctl.className = "sg-tlctl";
+          ctl.appendChild(mini("↑", function () { if (i > 0) { var t = lines[i - 1]; lines[i - 1] = lines[i]; lines[i] = t; save(); } }));
+          ctl.appendChild(mini("↓", function () { if (i < lines.length - 1) { var t = lines[i + 1]; lines[i + 1] = lines[i]; lines[i] = t; save(); } }));
+          ctl.appendChild(mini("✕", function () { lines.splice(i, 1); save(); }));
+          row.appendChild(ctl); listEl.appendChild(row);
+        });
+        if (!lines.length) { var e = document.createElement("p"); e.className = "hint"; e.textContent = "Nothing added yet."; listEl.appendChild(e); }
+      }
+      function save() { draw(); fbSet(path, lines).catch(function () { showToast("Couldn't save — try again"); }); }
+      fbGet(path).then(function (t) { lines = Array.isArray(t) ? t.slice() : []; draw(); });
+      function add() { var v = (inputEl.value || "").trim(); if (!v) return; lines.push(v); inputEl.value = ""; save(); }
+      addBtn.addEventListener("click", add);
+      inputEl.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); add(); } });
+    }
+
+    // Fun rotation — on/off toggle + lines injected into the event spotlight.
+    var funToggle = document.getElementById("sgFunToggle");
+    if (funToggle) {
+      fbGet("signage/funOn").then(function (v) {
+        funToggle.checked = v === true;
+        var row = funToggle.closest(".sys-card"); if (row) row.setAttribute("data-on", v === true ? "true" : "false");
+      });
+      funToggle.addEventListener("change", function () {
+        var on = funToggle.checked;
+        var row = funToggle.closest(".sys-card"); if (row) row.setAttribute("data-on", on ? "true" : "false");
+        fbSet("signage/funOn", on)
+          .then(function () { showToast(on ? "Fun rotation on" : "Fun rotation off"); })
+          .catch(function () { funToggle.checked = !on; if (row) row.setAttribute("data-on", !on ? "true" : "false"); showToast("Couldn't save — try again"); });
+      });
+    }
+    var funList = document.getElementById("sgFunList"), funInput = document.getElementById("sgFunInput"), funAdd = document.getElementById("sgFunAdd");
+    if (funList && funInput && funAdd) wireListEditor(funList, funInput, funAdd, "signage/fun");
+
     // Featured event (Shopify handle, or blank = auto)
     var featInput = document.getElementById("sgFeatured");
     var featSave = document.getElementById("sgFeaturedSave");

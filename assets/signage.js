@@ -183,21 +183,59 @@
       showcaseIdx++; renderShowcase();
     }
   }
-  // Spotlight the upcoming events one at a time (toggle off / nothing live).
+  // Fun rotation (dad jokes / one-liners) mixed into the showcase.
+  var funOn = false, funLines = [];
+  function loadFun() {
+    Promise.all([BGF.fbGet("signage/funOn"), BGF.fbGet("signage/fun")]).then(function (r) {
+      funOn = r[0] === true;
+      funLines = Array.isArray(r[1]) ? r[1].filter(Boolean) : [];
+    });
+  }
+  // Combined spotlight list: events, with a fun card slipped in after every 3rd
+  // event when the fun toggle is on.
+  function buildShowcase() {
+    var items = lastEvents.map(function (ev) { return { kind: "event", ev: ev }; });
+    if (funOn && funLines.length && items.length) {
+      var out = [], fi = 0;
+      for (var i = 0; i < items.length; i++) {
+        out.push(items[i]);
+        if ((i + 1) % 3 === 0) { out.push({ kind: "fun", text: funLines[fi % funLines.length] }); fi++; }
+      }
+      if (out.length === items.length) out.push({ kind: "fun", text: funLines[0] }); // few events → still show one
+      return out;
+    }
+    return items;
+  }
+
+  // Spotlight the upcoming events (and fun cards) one at a time.
   function renderShowcase() {
     var right = document.getElementById("sgRight");
     if (!right) return;
+    var items = buildShowcase();
+    if (!items.length) { paintWelcome(right); return; }
+    var it = items[showcaseIdx % items.length];
+    if (it.kind === "fun") { paintFunCard(right, it.text); return; }
     right.style.setProperty("--ev", "#a07bff");
-    if (!lastEvents.length) { paintWelcome(right); return; }
-    var idx = showcaseIdx % lastEvents.length;
-    var ev = lastEvents[idx], d = new Date(ev.start);
+    var ev = it.ev, d = new Date(ev.start);
     right.innerHTML = "";
     var head = el("div", "sg-r-head");
     head.appendChild(el("div", "sg-r-title", isToday(d) ? "Happening Today" : "Upcoming Event"));
-    head.appendChild(el("div", "sg-r-sub", (idx + 1) + " / " + lastEvents.length));
+    var evIdx = lastEvents.indexOf(ev);
+    head.appendChild(el("div", "sg-r-sub", (evIdx + 1) + " / " + lastEvents.length));
     right.appendChild(head);
     right.appendChild(eventCardEls(ev, d, ev.game));
     addCornerQRUrl(right, ev.registerUrl || MAIN_SITE, ev.registerUrl ? "Scan to register" : "Scan to visit");
+  }
+  function paintFunCard(right, text) {
+    right.innerHTML = "";
+    right.style.setProperty("--ev", "#f5c518");
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", "Just for fun"));
+    head.appendChild(el("div", "sg-r-sub", "😄"));
+    right.appendChild(head);
+    var card = el("div", "sg-fun");
+    card.appendChild(el("div", "sg-fun-text", text));
+    right.appendChild(card);
   }
 
   // Big event card (image + details) for the showcase and live game view. The
@@ -483,7 +521,8 @@
 
     startClock();
     loadEvents(); setInterval(loadEvents, POLL_EVENTS_MS);
-    loadTicker(); setInterval(loadTicker, POLL_FB_MS);
+    loadTicker(); loadFun();
+    setInterval(function () { loadTicker(); loadFun(); }, POLL_FB_MS);
 
     if (screen === "entrance") {
       renderEntranceQR(); setInterval(renderEntranceQR, POLL_FB_MS);

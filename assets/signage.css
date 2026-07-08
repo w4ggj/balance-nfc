@@ -91,6 +91,10 @@ body.signage {
 .sg-re-name { font-size: clamp(30px, 4vw, 68px); font-weight: 900; letter-spacing: -.02em; line-height: 1.05; margin: 1.4vh 0; }
 .sg-re-when { font-size: clamp(15px, 1.7vw, 28px); color: var(--muted); font-weight: 700; }
 .sg-re-meta { font-size: clamp(16px, 1.8vw, 30px); color: var(--muted); font-weight: 600; margin-top: 1vh; }
+/* Fun card (dad jokes / one-liners) */
+.sg-fun { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 2vw; }
+.sg-fun-text { font-size: clamp(28px, 4vw, 66px); font-weight: 800; line-height: 1.25; max-width: 24ch; color: var(--text); }
+
 .sg-welcome { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .sg-welcome-logo { width: clamp(120px, 12vw, 220px); margin-bottom: 3vh; filter: drop-shadow(0 8px 24px rgba(200,30,39,.28)); }
 .sg-welcome-h { font-size: clamp(26px, 3vw, 52px); font-weight: 900; letter-spacing: -.02em; }
