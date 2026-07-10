@@ -14,8 +14,15 @@
   <!-- TV leaderboard for the wall / DakBoard. Aggregate season standings only. -->
   <main id="clBoard"></main>
 
-  <script src="assets/app.js"></script>
-  <script src="assets/commander.js"></script>
-  <script>BGFCL.initBoard();</script>
+  <!-- Cache-bust JS so this unattended TV always runs the latest board code,
+       and self-reload hourly to pick up new pages. -->
+  <script>
+    var t = Date.now();
+    ["assets/app.js", "assets/commander.js"].forEach(function (src) {
+      document.write('<script src="' + src + '?t=' + t + '"><\/script>');
+    });
+  </script>
+  <script>BGFCL.initBoard();
+    setTimeout(function () { location.reload(); }, 3600000);</script>
 </body>
 </html>

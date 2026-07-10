@@ -115,6 +115,28 @@ body.cl-wall {
 .cl-lbrow .cl-nm { font-size: clamp(20px, 3vw, 42px); font-weight: 800; }
 .cl-lbrow .cl-pts { font-size: clamp(24px, 3.4vw, 48px); font-weight: 900; color: var(--game); }
 
+/* Pods / seating on the game-room TV board */
+.cl-podgrid {
+  display: grid; gap: clamp(12px, 1.6vw, 24px);
+  grid-template-columns: repeat(auto-fit, minmax(clamp(220px, 22vw, 360px), 1fr));
+}
+.cl-podcard {
+  background: var(--surface); border: 1px solid var(--surface-2); border-radius: 18px;
+  padding: clamp(14px, 1.8vw, 26px); border-top: 4px solid var(--game);
+}
+.cl-podcardhead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 1.2vh; }
+.cl-podcardt { font-size: clamp(22px, 2.6vw, 40px); font-weight: 900; }
+.cl-podcardp {
+  font-size: clamp(12px, 1.1vw, 16px); font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--game);
+}
+.cl-podnames { display: grid; gap: .8vh; }
+.cl-podnm {
+  font-size: clamp(18px, 2vw, 32px); font-weight: 700; line-height: 1.15;
+  padding: .5vh 0; border-bottom: 1px solid var(--surface-2);
+}
+.cl-podnm:last-child { border-bottom: none; }
+
 /* Empty state (board + player) */
 .cl-empty { text-align: center; padding: 6vh 20px; color: var(--muted); }
 .cl-empty h2 { color: var(--text); font-size: clamp(22px, 3vw, 40px); margin: 0 0 8px; }

@@ -133,10 +133,47 @@
       c = c || {};
       root.innerHTML = "";
       var name = (c.league && c.league.meta && c.league.meta.name) || "Commander League";
+      var today = todayId();
+      var night = (c.nights || {})[today];
+      var pods = night && night.pods;
+      var live = night && (night.status === "checkin" || /^game\d+$/.test(night.status));
+      // During a live night with pods assigned, the game-room TV shows the
+      // seating — each pod's table and who's in it. Otherwise it shows the
+      // season leaderboard.
+      if (live && pods && Object.keys(pods).length) renderPods(c, name, night, pods);
+      else renderStandings(c, name);
+    }
+
+    function bhead(name, sub) {
       var head = el("div", "cl-bhead");
       head.appendChild(el("div", "cl-btitle", name));
-      head.appendChild(el("div", "cl-bsub", "Season Standings"));
+      head.appendChild(el("div", "cl-bsub", sub));
       root.appendChild(head);
+    }
+
+    function renderPods(c, name, night, pods) {
+      var sub = /^game(\d+)$/.test(night.status)
+        ? ("Game " + (night.currentGame || night.status.match(/\d+/)[0]) + " · Pods")
+        : "Tonight's Pods";
+      bhead(name, sub);
+      var grid = el("div", "cl-podgrid");
+      Object.keys(pods).sort(function (a, b) { return a - b; }).forEach(function (pn) {
+        var p = pods[pn] || {};
+        var card = el("div", "cl-podcard");
+        var top = el("div", "cl-podcardhead");
+        top.appendChild(el("span", "cl-podcardt", "Table " + p.table));
+        top.appendChild(el("span", "cl-podcardp", "Pod " + pn));
+        card.appendChild(top);
+        var names = el("div", "cl-podnames");
+        Object.keys(p.members || {}).forEach(function (u) { names.appendChild(el("div", "cl-podnm", nameOf(c, u))); });
+        card.appendChild(names);
+        grid.appendChild(card);
+      });
+      root.appendChild(grid);
+    }
+
+    function renderStandings(c, name) {
+      bhead(name, "Season Standings");
       var st = Engine.standings(c);
       if (!st.length) { root.appendChild(clMsg("No players yet", "Standings appear as players join and vote.")); return; }
       var list = el("div", "cl-lb");
@@ -149,6 +186,7 @@
       });
       root.appendChild(list);
     }
+
     draw(); setInterval(draw, 4000);
   }
   function clMsg(t, b) { var c = el("div", "cl-empty"); c.appendChild(el("h2", null, t)); c.appendChild(el("p", null, b)); return c; }
