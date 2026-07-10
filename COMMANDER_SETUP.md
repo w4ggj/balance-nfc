@@ -38,7 +38,7 @@ Merge this block into your database rules, alongside the existing `active`,
 
       "attendance": {
         "$uid": {
-          ".write": "(auth != null && auth.uid === $uid) || $uid.beginsWith('walk_')",
+          ".write": "(auth != null && auth.uid === $uid) || $uid.beginsWith('walk_') || !newData.exists()",
           ".validate": "newData.val() === true"
         }
       },
@@ -70,8 +70,10 @@ What each part does:
   phone-less **walk-in** players (their uids all start with `walk_`).
 - `nights/$night/status|currentGame|pods` — staff console controls the phase and
   seating. Open.
-- `attendance/$uid` — a player can only check **themselves** in; the same
-  `walk_` clause lets the console check a walk-in in for tonight.
+- `attendance/$uid` — a player can only check **themselves** in; the
+  `walk_` clause lets the console check a walk-in in, and `!newData.exists()`
+  lets the console (or the player's own Sign out) **remove** someone from
+  tonight's roster if they change their mind.
 - `votes/$game/$uid` — one **write-once** vote per player per game; the
   `.validate` blocks voting for yourself.
 - `questionnaire/$uid` — one write-once end-of-night response per player.

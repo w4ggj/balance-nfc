@@ -257,7 +257,7 @@
       sc2.appendChild(actions);
       root.appendChild(sc2);
 
-      if (night.status === "checkin") renderWalkins(night);
+      if (night.status === "checkin") renderRoster(night);
 
       // pods list
       if (Object.keys(pods).length) {
@@ -276,16 +276,20 @@
       renderFeedback(night); renderStandings(); renderDanger();
     }
 
-    // Walk-ins — register a player with no phone directly from the console.
-    // They get a synthetic "walk_" uid so the Firebase rules can tell staff-added
-    // players apart from Auth players; they're checked in for tonight and flow
-    // into pod assignment, and their podmates can vote for them like anyone else.
-    function renderWalkins(night) {
+    // Tonight's roster — everyone checked in, plus a way to add a phone-less
+    // walk-in and to remove anyone who changed their mind (before pods).
+    //   • Walk-ins get a synthetic "walk_" uid so the Firebase rules can tell
+    //     staff-added players apart from Auth players. Removing a walk-in deletes
+    //     the record (they're a single-night identity).
+    //   • Removing a phone player only drops them from tonight's attendance —
+    //     their season account and points are untouched.
+    function renderRoster(night) {
       var card = el("div", "cl-card");
-      card.appendChild(el("p", "section-label", "Walk-ins (no phone)"));
-      card.appendChild(el("p", "hint", "Add a player who can't sign in on their own phone. They're checked in for tonight, seated in a pod, and their table can vote for them. (They just can't fill the end-of-night questionnaire themselves.)"));
-      var add = el("div"); add.style.display = "flex"; add.style.gap = "8px"; add.style.marginTop = "10px";
-      var i = el("input", "field"); i.placeholder = "Player name"; i.setAttribute("maxlength", "40"); i.style.margin = "0";
+      card.appendChild(el("p", "section-label", "Tonight's roster"));
+      card.appendChild(el("p", "hint", "Everyone checked in for tonight. Add a phone-less walk-in, or remove anyone who changed their mind — do it before you assign pods."));
+
+      var add = el("div"); add.style.display = "flex"; add.style.gap = "8px"; add.style.margin = "10px 0";
+      var i = el("input", "field"); i.placeholder = "Add a walk-in (no phone) — name"; i.setAttribute("maxlength", "40"); i.style.margin = "0";
       var btn = el("button", "btn game", "Add"); btn.style.flex = "0 0 auto";
       function doAdd() {
         var name = (i.value || "").trim();
@@ -303,23 +307,24 @@
       add.appendChild(i); add.appendChild(btn); card.appendChild(add);
 
       var att = night.attendance || {};
-      var walkins = Object.keys(att).filter(function (u) { return u.indexOf("walk_") === 0; });
-      if (walkins.length) {
-        card.appendChild(el("p", "hint", walkins.length + " walk-in" + (walkins.length > 1 ? "s" : "") + " added tonight"));
-        walkins.forEach(function (u) {
-          var row = el("div", "cl-frow");
-          row.appendChild(el("span", null, nameOf(C, u)));
-          var rm = el("button", "cl-choice sm", "Remove");
-          rm.addEventListener("click", function () {
-            var today = todayId();
-            commit(Promise.all([
-              set("nights/" + today + "/attendance/" + u, null),
-              set("players/" + u, null)
-            ]));
-          });
-          row.appendChild(rm); card.appendChild(row);
+      var uids = Object.keys(att);
+      if (!uids.length) { card.appendChild(el("p", "hint", "No one checked in yet.")); root.appendChild(card); return; }
+      uids.sort(function (a, b) { return nameOf(C, a).localeCompare(nameOf(C, b)); });
+      uids.forEach(function (u) {
+        var walk = u.indexOf("walk_") === 0;
+        var row = el("div", "cl-frow");
+        var nm = el("span", null, nameOf(C, u));
+        if (walk) { var tag = el("span", null, " · walk-in"); tag.style.cssText = "opacity:.55;font-size:.85em"; nm.appendChild(tag); }
+        row.appendChild(nm);
+        var rm = el("button", "cl-choice sm", "Remove");
+        rm.addEventListener("click", function () {
+          var today = todayId();
+          if (walk) commit(Promise.all([ set("nights/" + today + "/attendance/" + u, null), set("players/" + u, null) ]));
+          else commit(set("nights/" + today + "/attendance/" + u, null));
         });
-      }
+        row.appendChild(rm); card.appendChild(row);
+      });
+      card.appendChild(el("p", "hint", uids.length + " checked in"));
       root.appendChild(card);
     }
 
@@ -385,6 +390,7 @@
     firebase.initializeApp(FIREBASE_CONFIG);
     var auth = firebase.auth(), db = firebase.database();
     var LS_EMAIL = "cl_email", LS_TBL = "cl_tbl";
+    var autoChecked = {}; // auto-check-in once per night, so a staff removal isn't instantly undone
     var tbl = qp("tbl"); if (tbl) localStorage.setItem(LS_TBL, tbl);
 
     // Complete an email-link sign-in if we arrived from the emailed link.
@@ -462,8 +468,13 @@
         return;
       }
 
-      // check in for tonight
-      if (!night.attendance || !night.attendance[uid]) db.ref("commander/nights/" + today + "/attendance/" + uid).set(true);
+      // check in for tonight — only once per night per device. If the organizer
+      // later removes you (you changed your mind and left), we don't fight back
+      // and re-add you on the next update; reload the page to check in again.
+      if (!autoChecked[today]) {
+        autoChecked[today] = true;
+        if (!night.attendance || !night.attendance[uid]) db.ref("commander/nights/" + today + "/attendance/" + uid).set(true);
+      }
 
       var pod = findPod(night, uid);
       root.appendChild(hello(C, uid));
@@ -590,7 +601,14 @@
       }
       if (s.attendance.length) c.appendChild(el("p", "cl-sub", "Attended: " + s.attendance.join(", ")));
       var out = el("button", "btn ghost", "Sign out"); out.style.marginTop = "12px";
-      out.addEventListener("click", function () { auth.signOut(); });
+      out.addEventListener("click", function () {
+        // Changed your mind? Signing out also drops you from tonight's roster so
+        // you won't be seated in a pod. Your season stats are untouched.
+        var today = todayId();
+        autoChecked[today] = true;
+        db.ref("commander/nights/" + today + "/attendance/" + user.uid).remove()
+          .catch(function () {}).then(function () { auth.signOut(); });
+      });
       c.appendChild(out);
       return c;
     }
