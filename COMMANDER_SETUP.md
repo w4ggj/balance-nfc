@@ -24,7 +24,7 @@ Merge this block into your database rules, alongside the existing `active`,
   "players": {
     ".write": "!newData.exists()",
     "$uid": {
-      ".write": "auth != null && auth.uid === $uid",
+      ".write": "(auth != null && auth.uid === $uid) || $uid.beginsWith('walk_')",
       ".validate": "newData.hasChildren(['name'])"
     }
   },
@@ -38,7 +38,7 @@ Merge this block into your database rules, alongside the existing `active`,
 
       "attendance": {
         "$uid": {
-          ".write": "auth != null && auth.uid === $uid",
+          ".write": "(auth != null && auth.uid === $uid) || $uid.beginsWith('walk_')",
           ".validate": "newData.val() === true"
         }
       },
@@ -65,10 +65,13 @@ Merge this block into your database rules, alongside the existing `active`,
 What each part does:
 
 - `league` — staff console writes the league name/scoring. Open (private link).
-- `players/$uid` — a signed-in player can only write **their own** record.
+- `players/$uid` — a signed-in player can only write **their own** record. The
+  `$uid.beginsWith('walk_')` clause also lets the **staff console** add
+  phone-less **walk-in** players (their uids all start with `walk_`).
 - `nights/$night/status|currentGame|pods` — staff console controls the phase and
   seating. Open.
-- `attendance/$uid` — a player can only check **themselves** in.
+- `attendance/$uid` — a player can only check **themselves** in; the same
+  `walk_` clause lets the console check a walk-in in for tonight.
 - `votes/$game/$uid` — one **write-once** vote per player per game; the
   `.validate` blocks voting for yourself.
 - `questionnaire/$uid` — one write-once end-of-night response per player.
@@ -86,6 +89,11 @@ What each part does:
 
 1. Open `commander-admin.html` → **Create league** → **Start tonight's session**.
 2. Players tap a table tag → sign in by email → auto-checked-in.
+   - **No NFC phone?** Same table's QR on `qr-sheet.html` opens the identical
+     page — scan it with any camera.
+   - **No phone at all?** During check-in, use **Walk-ins (no phone)** on the
+     console to add them by name. They're seated in a pod and can be voted for
+     by their table (they just skip the self-questionnaire point).
 3. **Assign pods** → **Start Game 1** → **Start Game 2/3…** → **End games →
    Questionnaire** → **Close the night**.
 4. Put `commander-board.html` on the TV for season standings.

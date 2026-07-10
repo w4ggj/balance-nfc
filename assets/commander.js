@@ -257,6 +257,8 @@
       sc2.appendChild(actions);
       root.appendChild(sc2);
 
+      if (night.status === "checkin") renderWalkins(night);
+
       // pods list
       if (Object.keys(pods).length) {
         var pc = el("div", "cl-card");
@@ -272,6 +274,53 @@
       }
 
       renderFeedback(night); renderStandings(); renderDanger();
+    }
+
+    // Walk-ins — register a player with no phone directly from the console.
+    // They get a synthetic "walk_" uid so the Firebase rules can tell staff-added
+    // players apart from Auth players; they're checked in for tonight and flow
+    // into pod assignment, and their podmates can vote for them like anyone else.
+    function renderWalkins(night) {
+      var card = el("div", "cl-card");
+      card.appendChild(el("p", "section-label", "Walk-ins (no phone)"));
+      card.appendChild(el("p", "hint", "Add a player who can't sign in on their own phone. They're checked in for tonight, seated in a pod, and their table can vote for them. (They just can't fill the end-of-night questionnaire themselves.)"));
+      var add = el("div"); add.style.display = "flex"; add.style.gap = "8px"; add.style.marginTop = "10px";
+      var i = el("input", "field"); i.placeholder = "Player name"; i.setAttribute("maxlength", "40"); i.style.margin = "0";
+      var btn = el("button", "btn game", "Add"); btn.style.flex = "0 0 auto";
+      function doAdd() {
+        var name = (i.value || "").trim();
+        if (!name) { i.focus(); return; }
+        var uid = "walk_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        var today = todayId();
+        i.value = "";
+        commit(Promise.all([
+          set("players/" + uid, { name: name, joinedAt: Date.now(), walkIn: true }),
+          set("nights/" + today + "/attendance/" + uid, true)
+        ]));
+      }
+      btn.addEventListener("click", doAdd);
+      i.addEventListener("keydown", function (e) { if (e.key === "Enter") doAdd(); });
+      add.appendChild(i); add.appendChild(btn); card.appendChild(add);
+
+      var att = night.attendance || {};
+      var walkins = Object.keys(att).filter(function (u) { return u.indexOf("walk_") === 0; });
+      if (walkins.length) {
+        card.appendChild(el("p", "hint", walkins.length + " walk-in" + (walkins.length > 1 ? "s" : "") + " added tonight"));
+        walkins.forEach(function (u) {
+          var row = el("div", "cl-frow");
+          row.appendChild(el("span", null, nameOf(C, u)));
+          var rm = el("button", "cl-choice sm", "Remove");
+          rm.addEventListener("click", function () {
+            var today = todayId();
+            commit(Promise.all([
+              set("nights/" + today + "/attendance/" + u, null),
+              set("players/" + u, null)
+            ]));
+          });
+          row.appendChild(rm); card.appendChild(row);
+        });
+      }
+      root.appendChild(card);
     }
 
     function renderFeedback(night) {
