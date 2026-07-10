@@ -257,7 +257,7 @@
       sc2.appendChild(actions);
       root.appendChild(sc2);
 
-      if (night.status === "checkin") renderRoster(night);
+      if (night.status !== "closed") renderRoster(night);
 
       // pods list
       if (Object.keys(pods).length) {
@@ -284,47 +284,91 @@
     //   • Removing a phone player only drops them from tonight's attendance —
     //     their season account and points are untouched.
     function renderRoster(night) {
+      var today = todayId();
+      var checkin = night.status === "checkin";
       var card = el("div", "cl-card");
       card.appendChild(el("p", "section-label", "Tonight's roster"));
-      card.appendChild(el("p", "hint", "Everyone checked in for tonight. Add a phone-less walk-in, or remove anyone who changed their mind — do it before you assign pods."));
+      card.appendChild(el("p", "hint", checkin
+        ? "Everyone checked in for tonight. Add a phone-less walk-in, or drop anyone who changed their mind before you assign pods."
+        : "Drop a player from tonight if they leave mid-night — it pulls them from their pod too. Season stats stay intact."));
 
-      var add = el("div"); add.style.display = "flex"; add.style.gap = "8px"; add.style.margin = "10px 0";
-      var i = el("input", "field"); i.placeholder = "Add a walk-in (no phone) — name"; i.setAttribute("maxlength", "40"); i.style.margin = "0";
-      var btn = el("button", "btn game", "Add"); btn.style.flex = "0 0 auto";
-      function doAdd() {
-        var name = (i.value || "").trim();
-        if (!name) { i.focus(); return; }
-        var uid = "walk_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-        var today = todayId();
-        i.value = "";
-        commit(Promise.all([
-          set("players/" + uid, { name: name, joinedAt: Date.now(), walkIn: true }),
-          set("nights/" + today + "/attendance/" + uid, true)
-        ]));
+      // Add a walk-in — only while checking in (before pods are assigned).
+      if (checkin) {
+        var add = el("div"); add.style.display = "flex"; add.style.gap = "8px"; add.style.margin = "10px 0";
+        var i = el("input", "field"); i.placeholder = "Add a walk-in (no phone) — name"; i.setAttribute("maxlength", "40"); i.style.margin = "0";
+        var btn = el("button", "btn game", "Add"); btn.style.flex = "0 0 auto";
+        function doAdd() {
+          var name = (i.value || "").trim();
+          if (!name) { i.focus(); return; }
+          var uid = "walk_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+          i.value = "";
+          commit(Promise.all([
+            set("players/" + uid, { name: name, joinedAt: Date.now(), walkIn: true }),
+            set("nights/" + today + "/attendance/" + uid, true)
+          ]));
+        }
+        btn.addEventListener("click", doAdd);
+        i.addEventListener("keydown", function (e) { if (e.key === "Enter") doAdd(); });
+        add.appendChild(i); add.appendChild(btn); card.appendChild(add);
       }
-      btn.addEventListener("click", doAdd);
-      i.addEventListener("keydown", function (e) { if (e.key === "Enter") doAdd(); });
-      add.appendChild(i); add.appendChild(btn); card.appendChild(add);
+
+      // Drop a player from THIS session: clear their check-in and pull them out
+      // of any pod tonight.
+      //   • Phone player → flag them "dropped" for the night. The Firebase rules
+      //     then reject any re-check-in, so their still-open phone can't add them
+      //     back. Season account and stats are untouched, and it's reversible.
+      //   • Walk-in (single-night identity) → delete the record outright.
+      function drop(u, walk) {
+        var updates = {};
+        updates["nights/" + today + "/attendance/" + u] = null;
+        var pods = night.pods || {};
+        Object.keys(pods).forEach(function (pn) {
+          if (pods[pn].members && pods[pn].members[u]) updates["nights/" + today + "/pods/" + pn + "/members/" + u] = null;
+        });
+        if (walk) updates["players/" + u] = null;
+        else updates["nights/" + today + "/dropped/" + u] = true;
+        commit(BGF.fbUpdate("commander", updates));
+      }
+      // Undo a phone-player drop: clear the flag first, then re-check them in.
+      // Two steps on purpose — the rules block the attendance write until the
+      // dropped flag is actually gone.
+      function undrop(u) {
+        commit(set("nights/" + today + "/dropped/" + u, null)
+          .then(function () { return set("nights/" + today + "/attendance/" + u, true); }));
+      }
 
       var att = night.attendance || {};
       var uids = Object.keys(att);
-      if (!uids.length) { card.appendChild(el("p", "hint", "No one checked in yet.")); root.appendChild(card); return; }
-      uids.sort(function (a, b) { return nameOf(C, a).localeCompare(nameOf(C, b)); });
-      uids.forEach(function (u) {
-        var walk = u.indexOf("walk_") === 0;
-        var row = el("div", "cl-frow");
-        var nm = el("span", null, nameOf(C, u));
-        if (walk) { var tag = el("span", null, " · walk-in"); tag.style.cssText = "opacity:.55;font-size:.85em"; nm.appendChild(tag); }
-        row.appendChild(nm);
-        var rm = el("button", "cl-choice sm", "Remove");
-        rm.addEventListener("click", function () {
-          var today = todayId();
-          if (walk) commit(Promise.all([ set("nights/" + today + "/attendance/" + u, null), set("players/" + u, null) ]));
-          else commit(set("nights/" + today + "/attendance/" + u, null));
+      if (!uids.length) card.appendChild(el("p", "hint", "No one checked in yet."));
+      else {
+        uids.sort(function (a, b) { return nameOf(C, a).localeCompare(nameOf(C, b)); });
+        uids.forEach(function (u) {
+          var walk = u.indexOf("walk_") === 0;
+          var row = el("div", "cl-frow");
+          var nm = el("span", null, nameOf(C, u));
+          if (walk) { var tag = el("span", null, " · walk-in"); tag.style.cssText = "opacity:.55;font-size:.85em"; nm.appendChild(tag); }
+          row.appendChild(nm);
+          var rm = el("button", "cl-choice sm", "Drop");
+          rm.addEventListener("click", function () { drop(u, walk); });
+          row.appendChild(rm); card.appendChild(row);
         });
-        row.appendChild(rm); card.appendChild(row);
-      });
-      card.appendChild(el("p", "hint", uids.length + " checked in"));
+        card.appendChild(el("p", "hint", uids.length + " in tonight"));
+      }
+
+      // Dropped phone players — offer an undo in case it was a mistake.
+      var dropped = Object.keys(night.dropped || {});
+      if (dropped.length) {
+        card.appendChild(el("p", "section-label", "Dropped tonight"));
+        dropped.sort(function (a, b) { return nameOf(C, a).localeCompare(nameOf(C, b)); });
+        dropped.forEach(function (u) {
+          var row = el("div", "cl-frow");
+          var nm = el("span", null, nameOf(C, u)); nm.style.opacity = ".6";
+          row.appendChild(nm);
+          var un = el("button", "cl-choice sm", "Add back");
+          un.addEventListener("click", function () { undrop(u); });
+          row.appendChild(un); card.appendChild(row);
+        });
+      }
       root.appendChild(card);
     }
 
@@ -468,9 +512,16 @@
         return;
       }
 
-      // check in for tonight — only once per night per device. If the organizer
-      // later removes you (you changed your mind and left), we don't fight back
-      // and re-add you on the next update; reload the page to check in again.
+      // If the organizer dropped you from tonight, stop here — don't check back
+      // in (the rules would reject it anyway). Your season stats are unaffected.
+      if (night.dropped && night.dropped[uid]) {
+        root.appendChild(hello(C, uid));
+        root.appendChild(clCard("Checked out for tonight", "The organizer removed you from tonight's session. See a staff member if that wasn't expected."));
+        root.appendChild(statsLink(user, C));
+        return;
+      }
+
+      // check in for tonight — only once per night per device.
       if (!autoChecked[today]) {
         autoChecked[today] = true;
         if (!night.attendance || !night.attendance[uid]) db.ref("commander/nights/" + today + "/attendance/" + uid).set(true);
