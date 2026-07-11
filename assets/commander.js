@@ -115,15 +115,42 @@
   ];
 
   function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
-  function todayId(d) { d = d || new Date(); var p = function (n) { return n < 10 ? "0" + n : "" + n; }; return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
+  var STORE_TZ = "America/New_York";
+  // The "night" key is the store-local (Eastern) calendar date, so every device —
+  // staff phone, game-room TV, kiosk — agrees on which night is today regardless
+  // of its own timezone or a UTC midnight rollover.
+  function todayId(d) {
+    d = d || new Date();
+    try {
+      var parts = new Intl.DateTimeFormat("en-US", { timeZone: STORE_TZ, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(d);
+      var o = {}; parts.forEach(function (x) { o[x.type] = x.value; });
+      if (o.year && o.month && o.day) return o.year + "-" + o.month + "-" + o.day;
+    } catch (e) { /* fall through to local */ }
+    var p = function (n) { return n < 10 ? "0" + n : "" + n; };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }
   function nameOf(c, uid) { return (c.players && c.players[uid] && c.players[uid].name) || "Player"; }
   function findPod(night, uid) {
     var pods = (night && night.pods) || {};
     var found = null;
-    Object.keys(pods).forEach(function (pn) { if (pods[pn].members && pods[pn].members[uid]) found = { podNo: +pn, table: pods[pn].table, members: Object.keys(pods[pn].members) }; });
+    // pods may come back from Firebase as an array with a null hole at index 0
+    // (keys 1,2,… coerce to an array) — skip empty slots.
+    Object.keys(pods).forEach(function (pn) { var p = pods[pn]; if (p && p.members && p.members[uid]) found = { podNo: +pn, table: p.table, members: Object.keys(p.members) }; });
     return found;
   }
   function qp(name) { return new URLSearchParams(location.search).get(name); }
+  // The night a live board should feature: the most recent one still running
+  // (check-in or a game). Picking the latest active night — rather than strictly
+  // today's key — keeps pods on screen for a late session or a display whose
+  // local date has rolled past the night's date.
+  function liveNight(c) {
+    var nights = (c && c.nights) || {}, keys = Object.keys(nights).sort();
+    for (var i = keys.length - 1; i >= 0; i--) {
+      var n = nights[keys[i]];
+      if (n && (n.status === "checkin" || /^game\d+$/.test(n.status || ""))) return n;
+    }
+    return null;
+  }
 
   // ---- TV leaderboard (commander-board.html) — read-only via REST ------
   function initBoard() {
@@ -133,14 +160,12 @@
       c = c || {};
       root.innerHTML = "";
       var name = (c.league && c.league.meta && c.league.meta.name) || "Commander League";
-      var today = todayId();
-      var night = (c.nights || {})[today];
+      var night = liveNight(c);
       var pods = night && night.pods;
-      var live = night && (night.status === "checkin" || /^game\d+$/.test(night.status));
       // During a live night with pods assigned, the game-room TV shows the
       // seating — each pod's table and who's in it. Otherwise it shows the
       // season leaderboard.
-      if (live && pods && Object.keys(pods).length) renderPods(c, name, night, pods);
+      if (night && pods && Object.keys(pods).length) renderPods(c, name, night, pods);
       else renderStandings(c, name);
     }
 
@@ -158,7 +183,7 @@
       bhead(name, sub);
       var grid = el("div", "cl-podgrid");
       Object.keys(pods).sort(function (a, b) { return a - b; }).forEach(function (pn) {
-        var p = pods[pn] || {};
+        var p = pods[pn]; if (!p) return; // skip Firebase's null array hole
         var card = el("div", "cl-podcard");
         var top = el("div", "cl-podcardhead");
         top.appendChild(el("span", "cl-podcardt", "Table " + p.table));
@@ -302,7 +327,8 @@
         var pc = el("div", "cl-card");
         pc.appendChild(el("p", "section-label", "Pods"));
         Object.keys(pods).sort(function (a, b) { return a - b; }).forEach(function (pn) {
-          var p = pods[pn], row = el("div", "cl-podrow");
+          var p = pods[pn]; if (!p) return; // skip Firebase's null array hole
+          var row = el("div", "cl-podrow");
           row.appendChild(el("span", "cl-podt", "T" + p.table));
           var names = Object.keys(p.members || {}).map(function (u) { return nameOf(C, u); }).join(", ");
           row.appendChild(el("span", "cl-podm", names));

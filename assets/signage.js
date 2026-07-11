@@ -43,7 +43,27 @@
     if (ev.ticketed && ev.price != null && Number(ev.price) > 0) return "$" + ev.price;
     return "Free";
   }
-  function todayId() { var p = function (n) { return n < 10 ? "0" + n : "" + n; }; var d = new Date(); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
+  // Store-local (Eastern) calendar date — matches how the night is keyed, so the
+  // board agrees on "today" no matter the kiosk's own timezone.
+  function todayId() {
+    try {
+      var parts = new Intl.DateTimeFormat("en-US", { timeZone: TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+      var o = {}; parts.forEach(function (x) { o[x.type] = x.value; });
+      if (o.year && o.month && o.day) return o.year + "-" + o.month + "-" + o.day;
+    } catch (e) { /* fall through */ }
+    var p = function (n) { return n < 10 ? "0" + n : "" + n; }; var d = new Date();
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }
+  // The Commander night to feature: the most recent one still running, so pods
+  // stay on screen for a late session or after the display's date has rolled.
+  function liveNight(c) {
+    var nights = (c && c.nights) || {}, keys = Object.keys(nights).sort();
+    for (var i = keys.length - 1; i >= 0; i--) {
+      var n = nights[keys[i]];
+      if (n && (n.status === "checkin" || /^game\d+$/.test(n.status || ""))) return n;
+    }
+    return null;
+  }
 
   // ---- clock -----------------------------------------------------------
   function startClock() {
@@ -165,15 +185,24 @@
   function renderRight() {
     var right = document.getElementById("sgRight");
     if (!right) return;
-    if (!rightLive) { renderShowcase(); return; }
-    if (rightActive === "commander-league") {
-      if (rightView === 1) paintPods(right, rightData || {});
-      else paintStandings(right, commanderView(rightData || {}), rightActive);
-    } else if (rightActive === "tournament") {
-      if (rightView === 1) paintPairings(right, rightData || {});
-      else paintStandings(right, swissView(rightData || {}), rightActive);
-    } else {
-      paintEventCard(right, rightActive);
+    try {
+      if (!rightLive) { renderShowcase(); return; }
+      if (rightActive === "commander-league") {
+        // Lead with the pods (who's seated where) — that's the useful in-room
+        // info during a night — and rotate to the season standings.
+        if (rightView === 1) paintStandings(right, commanderView(rightData || {}), rightActive);
+        else paintPods(right, rightData || {});
+      } else if (rightActive === "tournament") {
+        if (rightView === 1) paintPairings(right, rightData || {});
+        else paintStandings(right, swissView(rightData || {}), rightActive);
+      } else {
+        paintEventCard(right, rightActive);
+      }
+    } catch (e) {
+      // Never leave the panel blank on an unexpected data shape.
+      right.innerHTML = "";
+      right.appendChild(centerMsg("Live board", "Updating…"));
+      if (global.console) global.console.error("[signage] renderRight", e);
     }
   }
   function rotateRight() {
@@ -278,9 +307,9 @@
 
   function commanderView(c) {
     var rows = (global.BGFCL ? BGFCL.Engine.standings(c) : []).map(function (s) { return { rank: s.rank, name: s.name, pts: s.points }; });
-    var night = (c.nights || {})[todayId()];
+    var night = liveNight(c);
     var round = night ? (night.currentGame || 0) : 0;
-    return { title: "Commander League" + (round ? " — Round " + round : ""), rows: rows };
+    return { title: "Commander League" + (round ? " — Game " + round : ""), rows: rows };
   }
   function swissView(t) {
     var rows = (global.BGFT && t.players ? BGFT.Engine.standings(t.players, t.rounds || {}) : []).map(function (s) { return { rank: s.rank, name: s.name, pts: s.points }; });
@@ -351,10 +380,10 @@
   // Commander pods for tonight.
   function paintPods(right, c) {
     right.innerHTML = "";
-    var night = (c.nights || {})[todayId()];
+    var night = liveNight(c);
     var round = night ? (night.currentGame || 0) : 0;
     var head = el("div", "sg-r-head");
-    head.appendChild(el("div", "sg-r-title", "Commander League" + (round ? " — Round " + round : "")));
+    head.appendChild(el("div", "sg-r-title", "Commander League" + (round ? " — Game " + round : "")));
     head.appendChild(el("div", "sg-r-sub", "Tonight's Pods"));
     right.appendChild(head);
 
@@ -365,13 +394,17 @@
     }
     var name = function (uid) { return (c.players && c.players[uid] && c.players[uid].name) || "Player"; };
     var list = el("div", "sg-plist");
-    Object.keys(pods).sort(function (a, b) { return (pods[a].table || 0) - (pods[b].table || 0); }).forEach(function (pn) {
-      var p = pods[pn], row = el("div", "sg-prow");
-      row.appendChild(el("span", "sg-p-tbl", "T" + (p.table != null ? p.table : "?")));
-      var names = Object.keys(p.members || {}).map(name).join(" · ");
-      row.appendChild(el("div", "sg-p-vs", names));
-      list.appendChild(row);
-    });
+    // pods can arrive from Firebase as an array with a null hole at index 0
+    // (keys 1,2,… coerce to an array) — skip empty slots so a null doesn't blank
+    // the whole panel.
+    Object.keys(pods).filter(function (k) { return pods[k]; })
+      .sort(function (a, b) { return (pods[a].table || 0) - (pods[b].table || 0); }).forEach(function (pn) {
+        var p = pods[pn], row = el("div", "sg-prow");
+        row.appendChild(el("span", "sg-p-tbl", "T" + (p.table != null ? p.table : "?")));
+        var names = Object.keys(p.members || {}).map(name).join(" · ");
+        row.appendChild(el("div", "sg-p-vs", names));
+        list.appendChild(row);
+      });
     right.appendChild(list);
     addCornerQR(right, "commander-league");
   }
