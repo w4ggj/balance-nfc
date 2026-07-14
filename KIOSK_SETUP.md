@@ -65,9 +65,25 @@ The signage page is just a website, so a Fire Stick + a kiosk browser runs it.
    screensaver doesn't drift over the board).
 8. Reopen Fully Kiosk settings later with the remote's **Menu (☰)** button.
 
+> **Where those toggles live:** *Start on Boot* is under **Settings → Device
+> Management**; a *Keep Screen On* type option is under **Power Settings**. They're
+> in sub-menus, not the top list. On Fire OS these can be **PLUS-gated or hidden**
+> (Fully's own note: Fire OS "may have a restricted feature set").
+> - For *keep awake*, you don't actually need Fully's setting — set **Fire TV →
+>   Display & Sounds → Screensaver → Never** (that's what blanks a Fire TV).
+> - If *Start on Boot* is missing, either buy the cheap one-time **PLUS single-
+>   device license** (unlocks it), or sideload a helper like **"Autostart - No
+>   root"** and point it at Fully Kiosk.
+>
+> **Can't find the app after a reboot?** Sideloaded apps don't show on the Fire
+> TV home. Go to **Your Apps & Channels → See All**, scroll to the **bottom** —
+> Fully Kiosk is there. Highlight it, press the **☰** remote button → **Move** →
+> pin it to the front row so it's one click next time. (Or **Settings →
+> Applications → Manage Installed Applications → Fully Kiosk → Launch**.)
+>
 > **Boot behavior:** on power-up the stick shows the Fire TV home for a few
-> seconds, then Fully Kiosk auto-launches the URL. Unattended, just not instant.
-> The free version of Fully Kiosk covers everything above — no purchase needed.
+> seconds, then (with auto-start set) Fully Kiosk launches the URL. A store
+> display stays powered, so reboots only happen on a power blip.
 >
 > **Portrait 40″ screen on a Fire Stick:** Fire OS can't rotate the display, so
 > use the page's built-in rotation instead — set the Start URL to
