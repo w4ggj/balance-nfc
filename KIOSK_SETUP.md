@@ -15,6 +15,12 @@ work — pick per screen:
 > - **75″ landscape** → `https://nfc.balancegamingfl.com/signage.html?screen=main`
 > - **40″ portrait**  → `https://nfc.balancegamingfl.com/signage.html?screen=entrance`
 >
+> **Portrait TV on a landscape-only device (Fire Stick)?** Add `&rotate=ccw` to
+> rotate the whole board 90° counter-clockwise in the browser, so a device that
+> can't rotate at the OS level still fills a portrait-mounted screen:
+> `…signage.html?screen=entrance&rotate=ccw` (use `&rotate=cw` if it comes out
+> upside-down). Devices that rotate at the OS level (mini PC / Pi) don't need this.
+>
 > These are plain pages on GitHub Pages. Anything like `…workers.dev/display/TOKEN`
 > is a **different project** — not this system — and will show a blank screen.
 
@@ -63,8 +69,11 @@ The signage page is just a website, so a Fire Stick + a kiosk browser runs it.
 > seconds, then Fully Kiosk auto-launches the URL. Unattended, just not instant.
 > The free version of Fully Kiosk covers everything above — no purchase needed.
 >
-> Fire TV can't easily rotate to portrait — use a mini PC / laptop for the **40″
-> portrait** screen (`?screen=entrance`).
+> **Portrait 40″ screen on a Fire Stick:** Fire OS can't rotate the display, so
+> use the page's built-in rotation instead — set the Start URL to
+> `https://nfc.balancegamingfl.com/signage.html?screen=entrance&rotate=ccw`
+> (or `&rotate=cw` if it's upside-down). Mount the TV in portrait and it reads
+> upright — no mini PC required.
 
 ---
 

@@ -15,6 +15,21 @@ body.signage {
 }
 .sg-design { height: 100vh; width: 100%; display: flex; flex-direction: column; padding: 2.2vh 2vw; overflow: hidden; }
 
+/* Rotate the whole board 90° for a portrait-mounted TV driven by a landscape-
+   only device (Fire TV Stick, etc.). Enable with ?rotate=ccw (counter-clockwise)
+   or ?rotate=cw. The .sg-design frame is sized to the physical (rotated) screen
+   so the portrait layout fills it. */
+body[data-rotate="ccw"] .sg-design,
+body[data-rotate="cw"]  .sg-design {
+  position: absolute;
+  width: 100vh;
+  height: 100vw;
+  overflow: hidden;
+  transform-origin: top left;
+}
+body[data-rotate="ccw"] .sg-design { top: 100vh; left: 0;     transform: rotate(-90deg); }
+body[data-rotate="cw"]  .sg-design { top: 0;     left: 100vw; transform: rotate(90deg); }
+
 /* ── Header ─────────────────────────────────────────── */
 .sg-header { flex: 0 0 auto; display: flex; align-items: center; gap: 2vw; margin-bottom: 2vh; }
 .sg-brand { display: flex; align-items: center; gap: 14px; flex: 1 1 auto; min-width: 0; }

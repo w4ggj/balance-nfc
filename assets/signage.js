@@ -565,6 +565,10 @@
   function init() {
     var screen = (qp("screen") === "entrance") ? "entrance" : "main";
     document.body.setAttribute("data-screen", screen);
+    // Optional CSS rotation for a portrait-mounted TV driven by a landscape-only
+    // device (e.g. a Fire TV Stick): ?rotate=ccw (counter-clockwise) or =cw.
+    var rot = qp("rotate");
+    if (rot === "cw" || rot === "ccw") document.body.setAttribute("data-rotate", rot);
 
     startClock();
     loadEvents(); setInterval(loadEvents, POLL_EVENTS_MS);
