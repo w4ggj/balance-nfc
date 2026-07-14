@@ -41,12 +41,15 @@ sudo apt update && sudo apt install -y --no-install-recommends \
 ```
 
 ## 4. Prevent out-of-memory blanking (important on 512 MB)
-Chromium can run out of RAM on the Zero 2 W and the screen goes black. Add
-compressed swap:
+Chromium can run out of RAM on the Zero 2 W and the screen goes black. Add a
+1 GB swapfile (simple and reliable — zram-tools is finicky on Pi OS):
 ```
-sudo apt install -y zram-tools
-printf 'ALGO=lz4\nPERCENT=50\n' | sudo tee /etc/default/zramswap
-sudo systemctl restart zramswap
+sudo fallocate -l 1G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+free -h        # confirm the Swap line shows ~1.0 Gi
 ```
 
 ## 5. Stop the display and console from blanking
