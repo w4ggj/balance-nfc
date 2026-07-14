@@ -35,10 +35,18 @@ The signage page is just a website, so a Fire Stick + a kiosk browser runs it.
 
 ### 2. Install Downloader + Fully Kiosk
 3. Home → search 🔍 → **Downloader** (orange, by AFTVnews) → install → open.
-4. On a phone/computer, open **fully-kiosk.com** → Download → copy the **APK link**
-   (Fire OS / Fire TV build).
-5. In Downloader's URL box, paste that link → **Go** → **Install** (approve unknown
-   apps for Downloader if prompted).
+4. In Downloader's URL box, type the **direct APK link** (skips hunting the site):
+   ```
+   https://www.fully-kiosk.com/files/2025/10/Fully-Kiosk-Browser-v1.59.1.apk
+   ```
+   If that version 404s, grab the newest `.apk` from the Download box on
+   **fully-kiosk.com** (same folder, higher version number).
+5. **Go** → **Install** (approve unknown apps for Downloader if prompted).
+
+> Fire OS notes: Fully Kiosk is built mainly for tablets and "may have a
+> restricted feature set or issues" on Fire TV — fine for showing a URL, but
+> test it. The free build works; a cheap one-time **PLUS single-device license**
+> removes the branding and firms up auto-start for a permanent install.
 
 ### 3. Configure Fully Kiosk
 6. Open **Fully Kiosk Browser** → set:
