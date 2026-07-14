@@ -1,7 +1,15 @@
-# In-store signage — Raspberry Pi kiosk setup
+# In-store signage — TV kiosk setup
 
-Runs the two shop TVs on the in-store signage board. Each TV is a Raspberry
-Pi Zero 2 W booting straight into a full-screen Chromium pointed at one URL.
+Runs the two shop TVs on the in-store signage board. Each TV needs one small
+device that boots into a full-screen browser pointed at one URL. Any of these
+work — pick per screen:
+
+- **Amazon Fire TV Stick** + Fully Kiosk Browser — cheapest, easiest (Option A)
+- **Mini PC / old laptop** (Windows or Linux) + Chrome kiosk — most reliable, and
+  the right choice for the **portrait** screen because it rotates in one click
+- **Raspberry Pi** — works, but **only the Pi Zero 2 W / Pi 3 / Pi 4** (Option B).
+  The original **Pi Zero W (ARMv6, no NEON) can NOT run this** — modern Chromium
+  won't install and the page won't render.
 
 > **The two URLs (no tokens, no Worker):**
 > - **75″ landscape** → `https://nfc.balancegamingfl.com/signage.html?screen=main`
@@ -10,10 +18,49 @@ Pi Zero 2 W booting straight into a full-screen Chromium pointed at one URL.
 > These are plain pages on GitHub Pages. Anything like `…workers.dev/display/TOKEN`
 > is a **different project** — not this system — and will show a blank screen.
 
-The page already self-reloads hourly with a cache-buster, so once a Pi is
+The page already self-reloads hourly with a cache-buster, so once a device is
 running it keeps itself current with no maintenance.
 
 ---
+
+## Option A — Amazon Fire TV Stick (easiest)
+
+The signage page is just a website, so a Fire Stick + a kiosk browser runs it.
+
+### 1. Enable sideloading
+1. **Settings → My Fire TV → About** → highlight the device name, press **Select 7×**
+   → "You are now a developer."
+2. **My Fire TV → Developer options** → **Apps from Unknown Sources** ON (newer Fire
+   OS approves per-app — you'll allow Downloader in the next step).
+
+### 2. Install Downloader + Fully Kiosk
+3. Home → search 🔍 → **Downloader** (orange, by AFTVnews) → install → open.
+4. On a phone/computer, open **fully-kiosk.com** → Download → copy the **APK link**
+   (Fire OS / Fire TV build).
+5. In Downloader's URL box, paste that link → **Go** → **Install** (approve unknown
+   apps for Downloader if prompted).
+
+### 3. Configure Fully Kiosk
+6. Open **Fully Kiosk Browser** → set:
+   - **Start URL** → `https://nfc.balancegamingfl.com/signage.html?screen=main`
+   - **Start on Boot** → ON  ← makes it auto-open after power-up
+   - **Keep Screen On** → ON
+   - **Fullscreen Mode** → ON
+   - Kiosk lock / "bring to front" → ON (snaps back if the home screen appears)
+7. **Settings → Display & Sounds → Screensaver → Start Time → Never** (so Amazon's
+   screensaver doesn't drift over the board).
+8. Reopen Fully Kiosk settings later with the remote's **Menu (☰)** button.
+
+> **Boot behavior:** on power-up the stick shows the Fire TV home for a few
+> seconds, then Fully Kiosk auto-launches the URL. Unattended, just not instant.
+> The free version of Fully Kiosk covers everything above — no purchase needed.
+>
+> Fire TV can't easily rotate to portrait — use a mini PC / laptop for the **40″
+> portrait** screen (`?screen=entrance`).
+
+---
+
+## Option B — Raspberry Pi (Zero 2 W / 3 / 4 only)
 
 ## Hardware per unit
 - Raspberry Pi Zero 2 W  (note: **512 MB RAM** — the steps below keep Chromium stable on it)
