@@ -8,27 +8,124 @@
   <meta name="robots" content="noindex" />
   <meta http-equiv="Cache-Control" content="no-store" />
   <link rel="icon" type="image/png" href="assets/logo.png" />
-  <!-- Plain <link> tags so styles apply reliably on every kiosk browser
-       (document.write-injected CSS didn't apply on one of the TVs). Freshness
-       comes from the hourly self-reload + the JS cache-buster below. -->
-  <link rel="stylesheet" href="assets/brand.css?v=3" />
-  <link rel="stylesheet" href="assets/signage.css?v=3" />
+  <!-- ALL styles are inlined below — NO external stylesheet. This box (and some
+       kiosk players) cache external CSS and ignore ?v= busting; inlining removes
+       that failure mode entirely, so the board always renders with the current
+       styles whenever the device loads this HTML. Keep the improvements here
+       (QR cap, event-spotlight sizing) in sync if the external signage.css is
+       ever edited — this inline copy is what actually ships to the TVs. -->
   <style>
-    /* Inline hard-caps. Some kiosk media players cache the external stylesheet
-       and ignore ?v= cache-busting, but they DO re-download this HTML (it's the
-       CMS content URL), so these inline rules always take effect. */
-    html, body { margin: 0 !important; padding: 0 !important; }
-    .sg-corner-qr { width: clamp(88px, 8vw, 150px) !important; right: 0 !important; bottom: 0 !important; }
-    .sg-corner-qr svg, .sg-corner-qr img { width: 100% !important; height: auto !important; max-width: 150px !important; }
-    /* Event spotlight: bigger image + tighter gap so wide banners fill the panel
-       instead of floating small with the info pushed far right. */
-    .sg-r-event.has-img { gap: 2vw !important; }
-    .sg-re-img { flex: 0 0 50% !important; max-height: 72vh !important; }
-    .sg-re-img img { max-height: 72vh !important; }
-    .sg-re-name { font-size: clamp(34px, 4.4vw, 76px) !important; margin: 1.2vh 0 !important; }
-    .sg-re-kick { font-size: clamp(15px, 1.7vw, 27px) !important; }
-    .sg-re-when { font-size: clamp(16px, 1.8vw, 30px) !important; }
-    .sg-re-meta { font-size: clamp(17px, 1.9vw, 32px) !important; }
+    :root {
+      --bg: #0e0f13; --surface: #191b22; --surface-2: #22252e;
+      --text: #f4f5f7; --muted: #9aa0ad; --accent: #c81e27; --accent-2: #f5c518;
+      --radius: 18px; --shadow: 0 10px 30px rgba(0,0,0,.35); --game: var(--accent);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+    body { color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .signage [hidden] { display: none !important; }
+    body.signage {
+      margin: 0; padding: 0; height: 100vh; width: 100vw; max-width: 100%; overflow: hidden;
+      background:
+        radial-gradient(1400px 800px at 20% -10%, rgba(160,123,255,.10), transparent 60%),
+        radial-gradient(1200px 700px at 100% 0%, rgba(200,30,39,.10), transparent 55%),
+        var(--bg);
+    }
+    .sg-design { height: 100vh; width: 100%; display: flex; flex-direction: column; padding: 2.2vh 2vw; overflow: hidden; }
+    body[data-rotate="ccw"] .sg-design,
+    body[data-rotate="cw"]  .sg-design { position: absolute; width: 100vh; height: 100vw; overflow: hidden; transform-origin: top left; }
+    body[data-rotate="ccw"] .sg-design { top: 100vh; left: 0; transform: rotate(-90deg); }
+    body[data-rotate="cw"]  .sg-design { top: 0; left: 100vw; transform: rotate(90deg); }
+    .sg-header { flex: 0 0 auto; display: flex; align-items: center; gap: 2vw; margin-bottom: 2vh; }
+    .sg-brand { display: flex; align-items: center; gap: 14px; flex: 1 1 auto; min-width: 0; }
+    .sg-logo { height: 7vh; min-height: 48px; max-height: 100px; width: auto; max-width: 40vw; border-radius: 10px; }
+    .sg-brandname { font-size: clamp(18px, 2vw, 34px); font-weight: 800; letter-spacing: -.01em; }
+    .sg-headright { flex: 0 0 auto; display: flex; align-items: center; gap: 1.4vw; }
+    .sg-live { display: inline-flex; align-items: center; gap: 8px; padding: .6vh 1vw; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); color: #ff8f95; font-size: clamp(11px, 1.1vw, 17px); font-weight: 800; letter-spacing: .04em; }
+    .sg-livedot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); animation: sg-pulse 1.8s infinite; }
+    @keyframes sg-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+    .sg-clock { font-size: clamp(20px, 2.4vw, 40px); font-weight: 900; line-height: 1; letter-spacing: -.01em; }
+    .sg-h { margin: 0 0 1.4vh; font-size: clamp(12px, 1.2vw, 18px); font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+    .sg-body { flex: 1 1 auto; min-height: 0; display: flex; gap: 2.4vw; }
+    .sg-left { flex: 0 0 33%; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+    .sg-right { flex: 1 1 auto; min-width: 0; min-height: 0; position: relative; display: flex; flex-direction: column; --ev: #a07bff; }
+    .sg-events { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+    .sg-etrack { display: grid; grid-auto-rows: max-content; gap: 1.1vh; will-change: transform; }
+    .sg-ev { padding: 1.2vh 1.1vw; border-radius: 12px; background: var(--surface); border: 1px solid var(--surface-2); border-left: 3px solid transparent; }
+    .sg-ev.featured { border-left-color: #a07bff; background: color-mix(in srgb, #a07bff 10%, var(--surface)); }
+    .sg-ev-when { font-size: clamp(11px, 1vw, 16px); color: var(--muted); font-weight: 700; }
+    .sg-ev-name { font-size: clamp(15px, 1.35vw, 24px); font-weight: 800; line-height: 1.15; margin: .3vh 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sg-ev-meta { font-size: clamp(12px, 1.05vw, 17px); color: var(--muted); font-weight: 600; }
+    .sg-ev-price { color: var(--text); font-weight: 700; }
+    .sg-ev-status.open { color: #34d399; }
+    .sg-ev-status.almost { color: #ffb053; }
+    .sg-ev-status.soldout { color: #ff6b6b; }
+    .sg-r-head { flex: 0 0 auto; display: flex; align-items: baseline; justify-content: space-between; gap: 2vw; margin-bottom: 1.6vh; }
+    .sg-r-title { font-size: clamp(20px, 2.2vw, 40px); font-weight: 800; letter-spacing: -.01em; }
+    .sg-r-sub { font-size: clamp(11px, 1.1vw, 17px); font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+    .sg-stbl { flex: 1 1 auto; min-height: 0; overflow: hidden; display: block; }
+    .sg-strow { display: grid; grid-template-columns: clamp(34px,3vw,52px) 1fr clamp(50px,5vw,80px); gap: 1vw; align-items: center; padding: 1.15vh 1vw; border-radius: 10px; border-left: 3px solid transparent; font-size: clamp(15px, 1.5vw, 26px); }
+    .sg-strow.head { color: var(--muted); font-size: clamp(10px,1vw,15px); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; padding-bottom: .6vh; }
+    .sg-strow.top { background: color-mix(in srgb, var(--ev) 16%, transparent); border-left-color: var(--ev); }
+    .sg-st-rk { text-align: center; color: var(--muted); font-weight: 800; }
+    .sg-strow.top .sg-st-rk { color: var(--ev); }
+    .sg-st-nm { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sg-st-pt { text-align: right; font-weight: 900; }
+    .sg-plist { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-auto-rows: max-content; gap: 1.1vh; align-content: start; }
+    .sg-prow { display: flex; align-items: center; gap: 1.2vw; padding: 1.1vh 1vw; border-radius: 10px; background: var(--surface); border: 1px solid var(--surface-2); }
+    .sg-p-tbl { flex: 0 0 auto; min-width: clamp(42px, 3.6vw, 64px); text-align: center; font-size: clamp(14px, 1.4vw, 22px); font-weight: 900; color: var(--ev); background: var(--bg); border: 1px solid var(--surface-2); border-radius: 8px; padding: .6vh .5vw; }
+    .sg-p-vs { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: .8vw; font-size: clamp(15px, 1.5vw, 26px); }
+    .sg-p-name { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sg-p-name.won { color: var(--ev); }
+    .sg-p-name.bye { color: var(--muted); font-weight: 700; }
+    .sg-p-x { flex: 0 0 auto; color: var(--muted); font-weight: 700; font-size: clamp(11px, 1vw, 16px); }
+    .sg-r-event { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+    /* Event spotlight — bigger image, tighter gap, larger info (wide banners fill better) */
+    .sg-r-event.has-img { flex-direction: row; align-items: center; gap: 2vw; }
+    .sg-re-img { flex: 0 0 50%; min-width: 0; display: flex; align-items: center; justify-content: center; max-height: 72vh; }
+    .sg-re-img img { max-width: 100%; max-height: 72vh; object-fit: contain; border-radius: 16px; box-shadow: var(--shadow); }
+    .sg-re-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+    .sg-re-kick { font-size: clamp(15px, 1.7vw, 27px); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ev); }
+    .sg-re-name { font-size: clamp(34px, 4.4vw, 76px); font-weight: 900; letter-spacing: -.02em; line-height: 1.05; margin: 1.2vh 0; }
+    .sg-re-when { font-size: clamp(16px, 1.8vw, 30px); color: var(--muted); font-weight: 700; }
+    .sg-re-meta { font-size: clamp(17px, 1.9vw, 32px); color: var(--muted); font-weight: 600; margin-top: 1vh; }
+    .sg-fun { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 2vw; }
+    .sg-fun-text { font-size: clamp(28px, 4vw, 66px); font-weight: 800; line-height: 1.25; max-width: 24ch; color: var(--text); }
+    .sg-welcome { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .sg-welcome-logo { width: 12vw; min-width: 120px; max-width: 220px; margin-bottom: 3vh; filter: drop-shadow(0 8px 24px rgba(200,30,39,.28)); }
+    .sg-welcome-h { font-size: clamp(26px, 3vw, 52px); font-weight: 900; letter-spacing: -.02em; }
+    .sg-welcome-sub { font-size: clamp(15px, 1.6vw, 26px); color: var(--muted); margin-top: 1.6vh; max-width: 22ch; }
+    /* Corner QR — capped small so a caching box can't blow it up */
+    .sg-corner-qr { position: absolute; right: 0; bottom: 0; width: clamp(88px, 8vw, 150px); text-align: center; }
+    .sg-corner-qr svg { width: 100%; height: auto; display: block; background: #fff; border-radius: 12px; padding: 5%; }
+    .sg-corner-cap { font-size: clamp(10px, .9vw, 14px); color: var(--muted); font-weight: 700; margin-top: .6vh; }
+    .sg-qr-col { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .sg-qr { width: clamp(200px, 24vw, 420px); aspect-ratio: 1; background: #fff; border-radius: 18px; padding: 2%; box-shadow: var(--shadow); }
+    .sg-qr svg { width: 100%; height: 100%; display: block; }
+    .sg-qr-sub { text-align: center; color: var(--muted); font-size: clamp(13px, 1.5vw, 22px); font-weight: 700; margin: 2vh 0 0; max-width: 90%; }
+    .sg-empty { text-align: center; padding: 4vh 1vw; color: var(--muted); }
+    .sg-empty h2 { color: var(--text); font-size: clamp(18px, 2vw, 32px); margin: 0 0 1vh; }
+    .sg-empty p { margin: 0; font-size: clamp(13px, 1.4vw, 20px); }
+    .sg-ticker { flex: 0 0 auto; overflow: hidden; white-space: nowrap; border-top: 1px solid var(--surface-2); padding: 1.4vh 2vw 0; margin: 1.6vh -2vw 0; width: 100vw; }
+    .sg-ticker-track { display: inline-block; white-space: nowrap; will-change: transform; }
+    .sg-ticker-item { font-size: clamp(14px, 1.5vw, 24px); font-weight: 700; color: var(--text); }
+    .sg-ticker-special b { color: var(--accent-2); }
+    .sg-ticker-dot { color: var(--accent-2); margin: 0 1.4vw; font-weight: 900; }
+    body[data-screen="main"] .sg-qr-col { display: none; }
+    body[data-screen="entrance"] .sg-right { display: none; }
+    body[data-screen="entrance"] .sg-body { flex-direction: column; }
+    body[data-screen="entrance"] .sg-left { flex: 1 1 auto; }
+    body[data-screen="entrance"] .sg-qr-col { width: 100%; }
+    body[data-screen="entrance"] .sg-h { font-size: clamp(18px, 2.6vw, 34px); margin-bottom: 2vh; }
+    body[data-screen="entrance"] .sg-brandname { font-size: clamp(22px, 3vw, 40px); }
+    body[data-screen="entrance"] .sg-clock { font-size: clamp(26px, 3.4vw, 48px); }
+    body[data-screen="entrance"] .sg-etrack { gap: 2vh; }
+    body[data-screen="entrance"] .sg-ev { padding: 1.7vh 4vw; border-left-width: 5px; }
+    body[data-screen="entrance"] .sg-ev-when { font-size: clamp(15px, 2vw, 27px); }
+    body[data-screen="entrance"] .sg-ev-name { font-size: clamp(23px, 3.4vw, 44px); margin: .6vh 0; white-space: normal; }
+    body[data-screen="entrance"] .sg-ev-meta { font-size: clamp(15px, 2vw, 27px); }
+    body[data-screen="entrance"] .sg-qr { width: clamp(190px, 22vw, 340px); }
+    body[data-screen="entrance"] .sg-qr-sub { font-size: clamp(14px, 1.9vw, 26px); }
   </style>
 </head>
 <body class="signage" data-screen="main">
