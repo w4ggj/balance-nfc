@@ -126,6 +126,53 @@
     body[data-screen="entrance"] .sg-ev-meta { font-size: clamp(15px, 2vw, 27px); }
     body[data-screen="entrance"] .sg-qr { width: clamp(190px, 22vw, 340px); }
     body[data-screen="entrance"] .sg-qr-sub { font-size: clamp(14px, 1.9vw, 26px); }
+
+    /* ── Fallback for older kiosk webviews (Chromium < 79) that DON'T support
+       clamp()/color-mix() — e.g. some Android "advertising box" browsers. On
+       those, every clamp() width/font-size is dropped, so the QR blows up to
+       its intrinsic size and text loses its sizing. Those boxes render at a
+       fixed 1920×1080, so pin fixed pixel sizes. Modern browsers support clamp,
+       so they ignore this entire block. ── */
+    @supports not (width: clamp(1px, 2px, 3px)) {
+      .sg-brandname { font-size: 32px; }
+      .sg-clock { font-size: 38px; }
+      .sg-h { font-size: 17px; }
+      .sg-live { font-size: 16px; background: #2b1e22; border-color: rgba(200,30,39,.45); }
+      .sg-ev-when { font-size: 15px; }
+      .sg-ev-name { font-size: 22px; }
+      .sg-ev-meta { font-size: 16px; }
+      .sg-ev.featured { background: #221f2d; }
+      .sg-r-title { font-size: 38px; }
+      .sg-r-sub { font-size: 16px; }
+      .sg-strow { grid-template-columns: 52px 1fr 80px; font-size: 24px; }
+      .sg-strow.head { font-size: 14px; }
+      .sg-strow.top { background: rgba(160,123,255,.16); }
+      .sg-p-tbl { min-width: 62px; font-size: 21px; }
+      .sg-p-vs { font-size: 24px; }
+      .sg-p-x { font-size: 15px; }
+      .sg-re-kick { font-size: 26px; }
+      .sg-re-name { font-size: 68px; }
+      .sg-re-when { font-size: 28px; }
+      .sg-re-meta { font-size: 30px; }
+      .sg-fun-text { font-size: 60px; }
+      .sg-welcome-h { font-size: 48px; }
+      .sg-welcome-sub { font-size: 24px; }
+      .sg-corner-qr { width: 150px; }
+      .sg-corner-cap { font-size: 14px; }
+      .sg-qr { width: 380px; }
+      .sg-qr-sub { font-size: 20px; }
+      .sg-empty h2 { font-size: 30px; }
+      .sg-empty p { font-size: 18px; }
+      .sg-ticker-item { font-size: 22px; }
+      body[data-screen="entrance"] .sg-h { font-size: 32px; }
+      body[data-screen="entrance"] .sg-brandname { font-size: 38px; }
+      body[data-screen="entrance"] .sg-clock { font-size: 46px; }
+      body[data-screen="entrance"] .sg-ev-when { font-size: 26px; }
+      body[data-screen="entrance"] .sg-ev-name { font-size: 42px; }
+      body[data-screen="entrance"] .sg-ev-meta { font-size: 26px; }
+      body[data-screen="entrance"] .sg-qr { width: 320px; }
+      body[data-screen="entrance"] .sg-qr-sub { font-size: 24px; }
+    }
   </style>
 </head>
 <body class="signage" data-screen="main">
