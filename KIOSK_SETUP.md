@@ -132,6 +132,17 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 free -h        # confirm the Swap line shows ~1.0 Gi
 ```
 
+## 4b. Silence the "less than 1 GB RAM" Chromium popup (Zero 2 W)
+The 512 MB Zero 2 W triggers Chromium's low-memory warning on every boot,
+which blocks an unattended kiosk. Suppress it with the `--no-memcheck` flag,
+added globally so it applies however Chromium is launched:
+```
+echo 'CHROMIUM_FLAGS="$CHROMIUM_FLAGS --no-memcheck"' | sudo tee /etc/chromium.d/00-nomemcheck
+sudo reboot
+```
+If it still appears, find the launch script (`grep -rl chromium ~/ /etc/xdg /opt`)
+and add `--no-memcheck` to its `chromium-browser` line.
+
 ## 5. Stop the display and console from blanking
 Append `consoleblank=0` to the kernel cmdline (keep it all on one line):
 ```
