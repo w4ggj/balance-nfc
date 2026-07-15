@@ -45,6 +45,12 @@
   }
   // Store-local (Eastern) calendar date — matches how the night is keyed, so the
   // board agrees on "today" no matter the kiosk's own timezone.
+  // Event titles sometimes carry a redundant leading date (e.g.
+  // "2026/08/02 One Piece …") — the board shows the date separately, so strip it.
+  function cleanName(n) {
+    var s = (n == null ? "" : String(n)).replace(/^\s*\d{4}[\/\-.]\d{1,2}[\/\-.]\d{1,2}\s*[-–—:]*\s*/, "").trim();
+    return s || (n || "Event");
+  }
   function todayId() {
     try {
       var parts = new Intl.DateTimeFormat("en-US", { timeZone: TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
@@ -109,7 +115,7 @@
       var d = new Date(ev.start);
       var card = el("div", "sg-ev" + (isToday(d) ? " featured" : ""));
       card.appendChild(el("div", "sg-ev-when", whenLine(ev, d)));
-      card.appendChild(el("div", "sg-ev-name", ev.name || "Event"));
+      card.appendChild(el("div", "sg-ev-name", cleanName(ev.name)));
       var meta = el("div", "sg-ev-meta");
       meta.appendChild(el("span", "sg-ev-price", priceWord(ev)));
       meta.appendChild(document.createTextNode(" · "));
@@ -294,7 +300,7 @@
     }
     var info = el("div", "sg-re-info");
     if (kick) info.appendChild(el("div", "sg-re-kick", kick));
-    info.appendChild(el("div", "sg-re-name", ev.name || "Event"));
+    info.appendChild(el("div", "sg-re-name", cleanName(ev.name)));
     info.appendChild(el("div", "sg-re-when", whenLine(ev, d)));
     var meta = el("div", "sg-re-meta");
     meta.appendChild(el("span", "sg-ev-price", priceWord(ev)));
