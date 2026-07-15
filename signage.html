@@ -13,6 +13,14 @@
        comes from the hourly self-reload + the JS cache-buster below. -->
   <link rel="stylesheet" href="assets/brand.css?v=3" />
   <link rel="stylesheet" href="assets/signage.css?v=3" />
+  <style>
+    /* Inline hard-caps. Some kiosk media players cache the external stylesheet
+       and ignore ?v= cache-busting, but they DO re-download this HTML (it's the
+       CMS content URL), so these inline rules always take effect. */
+    html, body { margin: 0 !important; padding: 0 !important; }
+    .sg-corner-qr { width: clamp(88px, 8vw, 150px) !important; right: 0 !important; bottom: 0 !important; }
+    .sg-corner-qr svg, .sg-corner-qr img { width: 100% !important; height: auto !important; max-width: 150px !important; }
+  </style>
 </head>
 <body class="signage" data-screen="main">
   <!-- In-store signage for the shop TVs (replaces DakBoard).
