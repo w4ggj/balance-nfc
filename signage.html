@@ -20,6 +20,15 @@
     html, body { margin: 0 !important; padding: 0 !important; }
     .sg-corner-qr { width: clamp(88px, 8vw, 150px) !important; right: 0 !important; bottom: 0 !important; }
     .sg-corner-qr svg, .sg-corner-qr img { width: 100% !important; height: auto !important; max-width: 150px !important; }
+    /* Event spotlight: bigger image + tighter gap so wide banners fill the panel
+       instead of floating small with the info pushed far right. */
+    .sg-r-event.has-img { gap: 2vw !important; }
+    .sg-re-img { flex: 0 0 50% !important; max-height: 72vh !important; }
+    .sg-re-img img { max-height: 72vh !important; }
+    .sg-re-name { font-size: clamp(34px, 4.4vw, 76px) !important; margin: 1.2vh 0 !important; }
+    .sg-re-kick { font-size: clamp(15px, 1.7vw, 27px) !important; }
+    .sg-re-when { font-size: clamp(16px, 1.8vw, 30px) !important; }
+    .sg-re-meta { font-size: clamp(17px, 1.9vw, 32px) !important; }
   </style>
 </head>
 <body class="signage" data-screen="main">
