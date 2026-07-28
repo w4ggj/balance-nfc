@@ -227,5 +227,3 @@ to it automatically (e.g. a link to a registration form that needs the table).
 To move off Firebase, change only `CONFIG_URL` in `assets/app.js`. If it points at
 a plain JSON file the pages still **read** it (writes require a Firebase-style URL,
 detected by the `firebaseio` / `firebasedatabase` host).
-
-TAVA end-to-end test - safe to revert.
