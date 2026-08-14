@@ -634,13 +634,16 @@
   function makeVideoEl() {
     var el = document.createElement("div");
     el.className = "sg-videobg";
-    el.style.cssText = "position:absolute;top:0;left:0;right:0;bottom:0;background:#000;overflow:hidden;border-radius:inherit;";
+    // Transparent container centred in the panel — the board's own background
+    // shows as blank space around the video, not a black box.
+    el.style.cssText = "position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:inherit;";
     videoFrame = document.createElement("iframe");
     videoFrame.setAttribute("allow", "autoplay; encrypted-media; fullscreen");
     videoFrame.setAttribute("frameborder", "0");
     videoFrame.setAttribute("scrolling", "no");
-    // Fill the panel; YouTube letterboxes the 16:9 video inside as needed.
-    videoFrame.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;border:0;";
+    // Keep the video's 16:9 shape and fit it inside the panel; the panel is
+    // narrower than 16:9, so it fills the width and leaves blank space top/bottom.
+    videoFrame.style.cssText = "width:100%;height:auto;aspect-ratio:16/9;max-height:100%;border:0;display:block;";
     el.appendChild(videoFrame);
     return el;
   }
