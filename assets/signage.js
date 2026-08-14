@@ -599,6 +599,59 @@
     }).catch(function () {});
   }
 
+  // ---- Video background (YouTube on the main board) --------------------
+  // Reads /video { on, url, sound }. When on, a full-screen YouTube embed
+  // (video / playlist / channel-live) covers the board. YouTube is the one
+  // source that embeds cleanly; the FAST "TV" channels (Pluto/Samsung) don't
+  // expose an embeddable stream. Muted autoplay is reliable everywhere; sound
+  // needs Fully Kiosk's audio-autoplay setting on. Main screen only.
+  function ytEmbed(raw, sound) {
+    if (!raw) return "";
+    raw = String(raw).trim();
+    var base = "https://www.youtube.com/embed/";
+    var opts = "autoplay=1&controls=0&loop=1&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&mute=" + (sound ? "0" : "1");
+    function one(id) { return base + id + "?" + opts + "&playlist=" + id; } // loop=1 needs playlist=self
+    var m;
+    if ((m = raw.match(/[?&]list=([A-Za-z0-9_-]+)/))) return base + "videoseries?list=" + m[1] + "&" + opts;
+    if ((m = raw.match(/youtube\.com\/live\/([A-Za-z0-9_-]{6,})/))) return one(m[1]);
+    if ((m = raw.match(/[?&]v=([A-Za-z0-9_-]{6,})/))) return one(m[1]);
+    if ((m = raw.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/))) return one(m[1]);
+    if ((m = raw.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/))) return m[1] === "videoseries" ? raw : one(m[1]);
+    if ((m = raw.match(/(UC[A-Za-z0-9_-]{20,})/))) return base + "live_stream?channel=" + m[1] + "&" + opts;
+    if (/^PL[A-Za-z0-9_-]+$/.test(raw)) return base + "videoseries?list=" + raw + "&" + opts;
+    if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return one(raw);
+    return "";
+  }
+  var videoEl = null, videoFrame = null, lastVideoSig = "";
+  function ensureVideoEl() {
+    if (videoEl) return;
+    videoEl = document.createElement("div");
+    videoEl.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#000;display:none;z-index:8500;overflow:hidden;";
+    videoFrame = document.createElement("iframe");
+    videoFrame.setAttribute("allow", "autoplay; encrypted-media; fullscreen");
+    videoFrame.setAttribute("frameborder", "0");
+    videoFrame.setAttribute("scrolling", "no");
+    // Cover-fit a 16:9 embed to any screen (fills, crops the overscan edges).
+    videoFrame.style.cssText = "position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:100vw;height:56.25vw;min-height:100vh;min-width:177.78vh;border:0;";
+    videoEl.appendChild(videoFrame);
+    document.body.appendChild(videoEl);
+  }
+  function loadVideo() {
+    if (!global.BGF) return;
+    BGF.fbGet("video").then(function (v) {
+      v = v || {};
+      ensureVideoEl();
+      var src = (v.on === true) ? ytEmbed(v.url, v.sound === true) : "";
+      if (!src) {
+        if (lastVideoSig !== "") { videoFrame.src = "about:blank"; lastVideoSig = ""; } // stop playback
+        videoEl.style.display = "none";
+        return;
+      }
+      videoEl.style.display = "block";
+      if (src !== lastVideoSig) { lastVideoSig = src; videoFrame.src = src; }
+    }).catch(function () {});
+  }
+
   // ---- init ------------------------------------------------------------
   function init() {
     var screen = (qp("screen") === "entrance") ? "entrance" : "main";
@@ -620,6 +673,8 @@
       setInterval(rotateRight, 10000); // live: standings↔pairings/pods · showcase: next event
       // Classroom mode: phone-controlled slides overlay the board when turned on.
       loadPresent(); setInterval(loadPresent, 1500);
+      // Video mode: a YouTube background overlays the board when turned on.
+      loadVideo(); setInterval(loadVideo, 1500);
     }
 
     // Unattended signage: reload hourly with a cache-buster so future updates

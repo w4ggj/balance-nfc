@@ -495,6 +495,40 @@
       });
     }
 
+    // Video background (YouTube on the main board) — /video { on, url, sound }
+    var videoToggle = document.getElementById("sgVideoToggle");
+    var videoUrl = document.getElementById("sgVideoUrl");
+    var videoSound = document.getElementById("sgVideoSound");
+    var videoSave = document.getElementById("sgVideoSave");
+    if (videoToggle || videoUrl) {
+      fbGet("video").then(function (v) {
+        v = v || {};
+        if (videoUrl) videoUrl.value = (typeof v.url === "string") ? v.url : "";
+        if (videoSound) videoSound.checked = v.sound === true;
+        if (videoToggle) {
+          videoToggle.checked = v.on === true;
+          var row = videoToggle.closest(".sys-card"); if (row) row.setAttribute("data-on", v.on === true ? "true" : "false");
+        }
+      });
+    }
+    if (videoToggle) {
+      videoToggle.addEventListener("change", function () {
+        var on = videoToggle.checked;
+        var row = videoToggle.closest(".sys-card"); if (row) row.setAttribute("data-on", on ? "true" : "false");
+        fbSet("video/on", on)
+          .then(function () { showToast(on ? "Video on — playing on the big TV" : "Video off — board back to normal"); })
+          .catch(function () { videoToggle.checked = !on; if (row) row.setAttribute("data-on", !on ? "true" : "false"); showToast("Couldn't save — try again"); });
+      });
+    }
+    if (videoSave && videoUrl) {
+      videoSave.addEventListener("click", function () {
+        var url = (videoUrl.value || "").trim();
+        fbUpdate("video", { url: url || null, sound: !!(videoSound && videoSound.checked) })
+          .then(function () { showToast(url ? "Video source saved" : "Video source cleared"); })
+          .catch(function () { showToast("Couldn't save the video — try again"); });
+      });
+    }
+
     // Featured event (Shopify handle, or blank = auto)
     var featInput = document.getElementById("sgFeatured");
     var featSave = document.getElementById("sgFeaturedSave");

@@ -76,6 +76,41 @@ on/off flag, and the current slide number. No player or account data.)
 
 ---
 
+## Video background on the main TV (YouTube)
+
+The main board can also play a **YouTube** video, playlist, or a channel's live
+stream full-screen — fail reels, trailers, anything between events — toggled from
+the control panel, again without leaving Fully Kiosk.
+
+**What works:** any **YouTube** link (video, `playlist?list=…`, `/live/…`, or a
+channel URL for its live stream). YouTube is the one source that embeds cleanly.
+
+**What doesn't:** the linear **“FailArmy TV” / FAST channels** (Pluto TV, Samsung
+TV Plus, Roku, Freevee) don't expose an embeddable stream, so they can't play
+inside the board. Use the same content on the creator's **YouTube** channel
+instead — or run the FailArmy app on a dedicated Fire Stick for the true channel
+with sound.
+
+**One-time Firebase rule** (alongside the others, don't replace the ruleset):
+
+```json
+"video": {
+  ".read": true,
+  ".write": true
+}
+```
+
+**Use it.** Open **`config.html` → Video background**, paste a YouTube link, and
+flip it on. It fills the 75″ board (cover-fit) and loops.
+
+> **Sound:** it plays **muted** by default (that's what browsers reliably
+> autoplay). To get audio, tick **Play with sound** *and* turn on audio autoplay
+> in **Fully Kiosk → Settings → Web Content → Enable Autoplay / audio**. If sound
+> doesn't come through, the screen is fine — the browser just blocked audio
+> autoplay; the Fully Kiosk setting is what unblocks it.
+
+---
+
 ## Option A — Amazon Fire TV Stick (easiest)
 
 The signage page is just a website, so a Fire Stick + a kiosk browser runs it.
