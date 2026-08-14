@@ -461,6 +461,40 @@
     var funList = document.getElementById("sgFunList"), funInput = document.getElementById("sgFunInput"), funAdd = document.getElementById("sgFunAdd");
     if (funList && funInput && funAdd) wireListEditor(funList, funInput, funAdd, "signage/fun");
 
+    // Presentation (classroom slides on the main board)
+    // /present { on, idx, slides:[imageUrl,...] }. Saving slides resets idx so a
+    // fresh deck starts at slide 1. The phone remote (present-remote.html)
+    // advances idx live; the board overlays slides[idx] when `on` is true.
+    var presentToggle = document.getElementById("sgPresentToggle");
+    var presentSlides = document.getElementById("sgPresentSlides");
+    var presentSave = document.getElementById("sgPresentSave");
+    if (presentToggle) {
+      fbGet("present/on").then(function (v) {
+        presentToggle.checked = v === true;
+        var row = presentToggle.closest(".sys-card"); if (row) row.setAttribute("data-on", v === true ? "true" : "false");
+      });
+      presentToggle.addEventListener("change", function () {
+        var on = presentToggle.checked;
+        var row = presentToggle.closest(".sys-card"); if (row) row.setAttribute("data-on", on ? "true" : "false");
+        fbSet("present/on", on)
+          .then(function () { showToast(on ? "Presentation on — board is showing slides" : "Presentation off — board back to normal"); })
+          .catch(function () { presentToggle.checked = !on; if (row) row.setAttribute("data-on", !on ? "true" : "false"); showToast("Couldn't save — try again"); });
+      });
+    }
+    if (presentSlides) {
+      fbGet("present/slides").then(function (s) {
+        presentSlides.value = Array.isArray(s) ? s.filter(Boolean).join("\n") : "";
+      });
+    }
+    if (presentSave && presentSlides) {
+      presentSave.addEventListener("click", function () {
+        var slides = (presentSlides.value || "").split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+        fbUpdate("present", { slides: slides.length ? slides : null, idx: 0 })
+          .then(function () { showToast(slides.length ? (slides.length + " slide" + (slides.length === 1 ? "" : "s") + " saved") : "Slides cleared"); })
+          .catch(function () { showToast("Couldn't save slides — try again"); });
+      });
+    }
+
     // Featured event (Shopify handle, or blank = auto)
     var featInput = document.getElementById("sgFeatured");
     var featSave = document.getElementById("sgFeaturedSave");

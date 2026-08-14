@@ -29,6 +29,53 @@ running it keeps itself current with no maintenance.
 
 ---
 
+## Classroom presentation on the main TV (no relaunch)
+
+The main 75″ board can show slides **on top of the normal signage** without ever
+leaving Fully Kiosk — you drive it live from your phone. Good for when you use
+the gaming space as a classroom.
+
+**How it works:** the board watches Firebase `/present`. When you turn it on, a
+full-screen slide overlays the board; tap ◀/▶ on your phone and the TV follows in
+about a second. Turn it off and the board goes right back to events/standings.
+Nothing to relaunch, no HDMI cable, no input switching.
+
+**One-time Firebase rule.** Add this alongside the other top-level rules
+(`active`, `display`, `signage`, `commander`, …) — don't replace the ruleset:
+
+```json
+"present": {
+  ".read": true,
+  ".write": true
+}
+```
+
+(Open read/write like `/signage` and `/display` — it only holds a slide list, an
+on/off flag, and the current slide number. No player or account data.)
+
+**Prepare slides (once per deck).**
+1. Export your PowerPoint/Google Slides as **images** — in PowerPoint, *File →
+   Export → Change File Type → PNG → All Slides*. (Images load on the TV without
+   any cross-origin/CORS trouble that a raw PDF would hit.)
+2. Upload the PNGs to **Shopify → Content → Files** (or any public host) and copy
+   each file's URL.
+3. Open **`config.html` → Presentation**, paste the URLs **one per line in slide
+   order**, and click **Save slides**.
+
+**Run it during class.**
+1. On your phone open **`present-remote.html`** (there's an *Open phone remote ↗*
+   button in the Presentation card — bookmark it).
+2. Flip **Show on the big TV** on. The board switches to slide 1.
+3. Tap **Next ▶ / ◀ Prev** to move through the deck — the TV follows live. A
+   Bluetooth presenter clicker works too (arrow / page keys).
+4. Flip it **off** when you're done and the board returns to normal.
+
+> The Fire Stick is never touched — Fully Kiosk stays on `?screen=main` the whole
+> time and just overlays the slides. If Wi-Fi hiccups, the last slide stays up and
+> the next tap re-syncs.
+
+---
+
 ## Option A — Amazon Fire TV Stick (easiest)
 
 The signage page is just a website, so a Fire Stick + a kiosk browser runs it.

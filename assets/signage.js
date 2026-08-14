@@ -567,6 +567,38 @@
     });
   }
 
+  // ---- Presentation mode (phone-controlled slides on the main board) ---
+  // Reads /present { on, idx, slides:[imageUrl,...] }. When on, a fullscreen
+  // slide overlay covers the board and shows slides[idx]; the phone remote
+  // (present-remote.html) advances idx live. Nothing to relaunch — the board
+  // just overlays and un-overlays. Main screen only.
+  var presentEl = null, presentImg = null, lastPresentSig = "";
+  function ensurePresentEl() {
+    if (presentEl) return;
+    presentEl = document.createElement("div");
+    presentEl.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#000;display:none;align-items:center;justify-content:center;z-index:9000;overflow:hidden;";
+    presentImg = document.createElement("img");
+    presentImg.alt = "";
+    presentImg.style.cssText = "max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;";
+    presentEl.appendChild(presentImg);
+    document.body.appendChild(presentEl);
+  }
+  function loadPresent() {
+    if (!global.BGF) return;
+    BGF.fbGet("present").then(function (p) {
+      p = p || {};
+      ensurePresentEl();
+      var slides = (p.slides && p.slides.length) ? p.slides.filter(Boolean) : [];
+      var on = p.on === true && slides.length > 0;
+      if (!on) { presentEl.style.display = "none"; lastPresentSig = ""; return; }
+      var idx = p.idx || 0;
+      if (idx < 0) idx = 0; if (idx > slides.length - 1) idx = slides.length - 1;
+      var url = slides[idx], sig = idx + "|" + url;
+      presentEl.style.display = "flex";
+      if (sig !== lastPresentSig) { lastPresentSig = sig; presentImg.src = url; }
+    }).catch(function () {});
+  }
+
   // ---- init ------------------------------------------------------------
   function init() {
     var screen = (qp("screen") === "entrance") ? "entrance" : "main";
@@ -586,6 +618,8 @@
     } else {
       loadRight(); setInterval(loadRight, POLL_RIGHT_MS);
       setInterval(rotateRight, 10000); // live: standings↔pairings/pods · showcase: next event
+      // Classroom mode: phone-controlled slides overlay the board when turned on.
+      loadPresent(); setInterval(loadPresent, 1500);
     }
 
     // Unattended signage: reload hourly with a cache-buster so future updates

@@ -176,6 +176,19 @@
         <div class="event-actions"><button class="btn ghost" id="sgFeaturedSave" type="button">Save featured event</button></div>
       </div>
 
+      <div class="sys-card" style="--rowc:#38bdf8" data-on="false">
+        <div class="sys-head">
+          <span class="sys-title">Presentation <small>classroom slides on the main TV</small></span>
+          <label class="toggle"><input type="checkbox" id="sgPresentToggle" aria-label="Presentation mode"><span class="track"></span><span class="knob"></span></label>
+        </div>
+        <p class="hint" style="margin:10px 0 12px">Turn on to overlay slides on the 75″ board — no need to touch the Fire Stick. Paste one <b>image URL per line</b> (export your slides as images and upload them to Shopify Files, then paste the links). Then open the phone remote to tap through them live.</p>
+        <textarea class="field" id="sgPresentSlides" rows="6" placeholder="https://…/slide-1.png&#10;https://…/slide-2.png&#10;https://…/slide-3.png" style="margin-top:0;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px"></textarea>
+        <div class="event-actions">
+          <button class="btn primary" id="sgPresentSave" type="button">Save slides</button>
+          <a class="btn ghost" id="sgPresentRemote" href="present-remote.html" target="_blank" rel="noopener">Open phone remote ↗</a>
+        </div>
+      </div>
+
       <div class="event-actions">
         <a class="btn ghost" href="signage.html?screen=main" target="_blank" rel="noopener">Preview 75″ board ↗</a>
         <a class="btn ghost" href="signage.html?screen=entrance" target="_blank" rel="noopener">Preview entrance board ↗</a>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <title>Presentation Remote</title>
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+  <style>
+    body.remote { min-height: 100vh; }
+    .rm-wrap {
+      max-width: 460px; margin: 0 auto; padding: 18px 16px 40px;
+      display: flex; flex-direction: column; gap: 16px; min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .rm-head { text-align: center; }
+    .rm-head img { width: 84px; height: 84px; display: block; margin: 4px auto 8px; }
+    .rm-head h1 { font-size: 20px; margin: 0; letter-spacing: .2px; }
+    .rm-head p { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+
+    .rm-card {
+      background: var(--card, #14161c); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px; padding: 16px;
+    }
+    .rm-switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .rm-switch .lbl { font-weight: 600; font-size: 16px; }
+    .rm-switch .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    .rm-stage {
+      position: relative; background: #000; border-radius: 12px; overflow: hidden;
+      aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center;
+    }
+    .rm-stage img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+    .rm-stage .empty { color: #7a8090; font-size: 13px; text-align: center; padding: 0 18px; }
+
+    .rm-count { text-align: center; font-size: 15px; font-weight: 600; margin: 12px 0 2px; }
+    .rm-count small { color: var(--muted); font-weight: 400; }
+
+    .rm-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .rm-nav button {
+      appearance: none; border: 0; border-radius: 14px; padding: 22px 0;
+      font-size: 22px; font-weight: 700; color: #fff; cursor: pointer;
+      background: #262a33; touch-action: manipulation; user-select: none;
+    }
+    .rm-nav button:active { transform: translateY(1px); filter: brightness(1.15); }
+    .rm-nav button:disabled { opacity: .35; }
+    .rm-nav button.prev { background: #2b3542; }
+    .rm-nav button.next { background: linear-gradient(180deg,#3aa0ff,#2b7fe0); }
+
+    .rm-hint { color: var(--muted); font-size: 12px; text-align: center; line-height: 1.5; }
+    .rm-hint a { color: #7ab8ff; }
+
+    .toggle { position: relative; display: inline-flex; align-items: center; flex: 0 0 auto; width: 58px; height: 34px; cursor: pointer; }
+    .toggle input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+    .toggle .track { position: absolute; inset: 0; background: #3a3f4a; border-radius: 999px; transition: background .15s; }
+    .toggle .knob { position: absolute; top: 3px; left: 3px; width: 28px; height: 28px; background: #fff; border-radius: 50%; transition: transform .15s; }
+    .toggle input:checked ~ .track { background: #3aa0ff; }
+    .toggle input:checked ~ .knob { transform: translateX(24px); }
+  </style>
+</head>
+<body class="remote">
+  <div class="rm-wrap">
+    <div class="rm-head">
+      <img src="assets/logo.png" alt="Balance Gaming FL" />
+      <h1>Presentation Remote</h1>
+      <p>Controls the slides on the 75″ gaming TV</p>
+    </div>
+
+    <div class="rm-card">
+      <div class="rm-switch">
+        <div>
+          <div class="lbl">Show on the big TV</div>
+          <div class="sub" id="rmStatus">Off — board is showing normally</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="rmOn" aria-label="Show presentation on the TV"><span class="track"></span><span class="knob"></span></label>
+      </div>
+    </div>
+
+    <div class="rm-card">
+      <div class="rm-stage"><img id="rmThumb" alt="" hidden /><div class="empty" id="rmEmpty">No slides yet — add image URLs in the control panel.</div></div>
+      <div class="rm-count" id="rmCount">Slide — / —</div>
+      <div class="rm-nav">
+        <button class="prev" id="rmPrev" type="button">◀ Prev</button>
+        <button class="next" id="rmNext" type="button">Next ▶</button>
+      </div>
+    </div>
+
+    <p class="rm-hint">Slides come from the <a href="config.html">control panel</a> → Presentation.<br>Keep this tab open while you teach — it follows the TV live.</p>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>document.write('<scr'+'ipt src="assets/app.js?t='+Date.now()+'"></scr'+'ipt>');</script>
+  <script>
+  (function () {
+    var toastTimer;
+    function toast(msg) {
+      var t = document.getElementById("toast");
+      if (!t) return;
+      t.textContent = msg; t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2400);
+    }
+    function boot() {
+      if (!window.BGF) { setTimeout(boot, 60); return; }
+      var onEl = document.getElementById("rmOn");
+      var statusEl = document.getElementById("rmStatus");
+      var thumb = document.getElementById("rmThumb");
+      var empty = document.getElementById("rmEmpty");
+      var countEl = document.getElementById("rmCount");
+      var prevBtn = document.getElementById("rmPrev");
+      var nextBtn = document.getElementById("rmNext");
+
+      var slides = [];
+      var idx = 0;
+      var on = false;
+      var pushing = false; // don't let a poll clobber a tap mid-flight
+
+      function clamp(i) { if (i < 0) i = 0; if (i > slides.length - 1) i = slides.length - 1; return i; }
+
+      function render() {
+        onEl.checked = on;
+        statusEl.textContent = on
+          ? (slides.length ? "On — slides are live on the TV" : "On — but no slides added yet")
+          : "Off — board is showing normally";
+        var has = slides.length > 0;
+        prevBtn.disabled = !has || idx <= 0;
+        nextBtn.disabled = !has || idx >= slides.length - 1;
+        if (has) {
+          empty.hidden = true; thumb.hidden = false;
+          if (thumb.getAttribute("src") !== slides[idx]) thumb.setAttribute("src", slides[idx]);
+          countEl.innerHTML = "Slide " + (idx + 1) + " / " + slides.length;
+        } else {
+          thumb.hidden = true; empty.hidden = false;
+          countEl.innerHTML = "Slide <small>—</small> / <small>—</small>";
+        }
+      }
+
+      function pull() {
+        if (pushing) return;
+        BGF.fbGet("present").then(function (p) {
+          p = p || {};
+          slides = Array.isArray(p.slides) ? p.slides.filter(Boolean) : [];
+          idx = clamp(p.idx || 0);
+          on = p.on === true;
+          render();
+        }).catch(function () {});
+      }
+
+      function go(delta) {
+        if (!slides.length) return;
+        var ni = clamp(idx + delta);
+        if (ni === idx) return;
+        idx = ni;
+        render();
+        pushing = true;
+        BGF.fbSet("present/idx", idx)
+          .then(function () { pushing = false; })
+          .catch(function () { pushing = false; toast("Couldn't advance — check the connection"); });
+      }
+
+      prevBtn.addEventListener("click", function () { go(-1); });
+      nextBtn.addEventListener("click", function () { go(1); });
+      onEl.addEventListener("change", function () {
+        on = onEl.checked;
+        render();
+        pushing = true;
+        BGF.fbSet("present/on", on)
+          .then(function () { pushing = false; })
+          .catch(function () { pushing = false; on = !on; onEl.checked = on; render(); toast("Couldn't switch — try again"); });
+      });
+
+      // Arrow keys / presenter-clicker support (many Bluetooth clickers send arrows / PgUp/PgDn).
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); go(1); }
+        else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); go(-1); }
+      });
+
+      pull();
+      setInterval(pull, 2500);
+    }
+    boot();
+  })();
+  </script>
+</body>
+</html>
