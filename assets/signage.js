@@ -603,74 +603,164 @@
     }).catch(function () {});
   }
 
-  // ---- Video background (YouTube on the main board) --------------------
-  // Reads /video { on, url, sound }. When on, a full-screen YouTube embed
-  // (video / playlist / channel-live) covers the board. YouTube is the one
-  // source that embeds cleanly; the FAST "TV" channels (Pluto/Samsung) don't
-  // expose an embeddable stream. Muted autoplay is reliable everywhere; sound
-  // needs Fully Kiosk's audio-autoplay setting on. Main screen only.
-  function ytEmbed(raw, sound) {
-    if (!raw) return "";
+  // ---- Video background (YouTube in the standings panel) ---------------
+  // Reads /video { on, url, sound }. When on, a YouTube video/playlist plays in
+  // #sgRight (standings frame) so the events column + ticker stay on screen.
+  // Driven through the IFrame Player API — NOT a dumb <iframe> — so a watchdog
+  // can catch a stall/blank (flaky Wi-Fi, a YouTube error, the WebView dropping
+  // the video surface) and restart playback instead of leaving the panel blank.
+  // YouTube is the one embeddable source; the FAST "TV" channels (Pluto/Samsung)
+  // don't expose an embeddable stream. Sound needs Fully Kiosk audio-autoplay.
+
+  // Parse any YouTube URL form into { videoId, listId }.
+  function ytParse(raw) {
+    if (!raw) return null;
     raw = String(raw).trim();
-    var base = "https://www.youtube.com/embed/";
-    var opts = "autoplay=1&controls=0&loop=1&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&mute=" + (sound ? "0" : "1");
-    function one(id) { return base + id + "?" + opts + "&playlist=" + id; } // loop=1 needs playlist=self
-    var m;
-    if ((m = raw.match(/[?&]list=([A-Za-z0-9_-]+)/))) return base + "videoseries?list=" + m[1] + "&" + opts;
-    if ((m = raw.match(/youtube\.com\/live\/([A-Za-z0-9_-]{6,})/))) return one(m[1]);
-    if ((m = raw.match(/[?&]v=([A-Za-z0-9_-]{6,})/))) return one(m[1]);
-    if ((m = raw.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/))) return one(m[1]);
-    if ((m = raw.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/))) return m[1] === "videoseries" ? raw : one(m[1]);
-    if ((m = raw.match(/(UC[A-Za-z0-9_-]{20,})/))) return base + "live_stream?channel=" + m[1] + "&" + opts;
-    if (/^PL[A-Za-z0-9_-]+$/.test(raw)) return base + "videoseries?list=" + raw + "&" + opts;
-    if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return one(raw);
-    return "";
+    var out = { videoId: "", listId: "" }, m;
+    if ((m = raw.match(/[?&]list=([A-Za-z0-9_-]+)/))) out.listId = m[1];
+    if ((m = raw.match(/youtube\.com\/live\/([A-Za-z0-9_-]{6,})/))) out.videoId = m[1];
+    else if ((m = raw.match(/[?&]v=([A-Za-z0-9_-]{6,})/))) out.videoId = m[1];
+    else if ((m = raw.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/))) out.videoId = m[1];
+    else if ((m = raw.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/)) && m[1] !== "videoseries") out.videoId = m[1];
+    if (!out.videoId && !out.listId) {
+      if (/^PL[A-Za-z0-9_-]+$/.test(raw)) out.listId = raw;
+      else if (/^[A-Za-z0-9_-]{11}$/.test(raw)) out.videoId = raw;
+    }
+    return (out.videoId || out.listId) ? out : null;
   }
-  // The video sits INSIDE the right panel (#sgRight) — the same frame that shows
-  // standings / leaderboard / pods — so the weekly-events column and the bottom
-  // ticker stay on screen. `videoOn` freezes the panel's own repaints while a
-  // video is up, so the timer-driven standings refresh doesn't wipe the iframe.
-  var videoEl = null, videoFrame = null, lastVideoSig = "", videoOn = false;
+
+  // Load the IFrame API once; queue callers until it's ready.
+  var ytApiReady = false, ytApiLoading = false, ytApiCbs = [];
+  function loadYTApi(cb) {
+    if (ytApiReady && global.YT && global.YT.Player) { cb(); return; }
+    ytApiCbs.push(cb);
+    if (ytApiLoading) return;
+    ytApiLoading = true;
+    var prev = global.onYouTubeIframeAPIReady;
+    global.onYouTubeIframeAPIReady = function () {
+      if (typeof prev === "function") { try { prev(); } catch (e) {} }
+      ytApiReady = true;
+      var cbs = ytApiCbs.slice(); ytApiCbs = [];
+      cbs.forEach(function (f) { try { f(); } catch (e) {} });
+    };
+    var s = document.createElement("script");
+    s.src = "https://www.youtube.com/iframe_api";
+    s.async = true;
+    (document.head || document.body).appendChild(s);
+  }
+
+  // The video sits INSIDE the right panel (#sgRight); `videoOn` freezes the
+  // panel's own repaints so the timer-driven standings refresh won't wipe it.
+  var videoEl = null, videoHost = null, videoOn = false;
+  var ytPlayer = null, ytPlayerReady = false, curSig = "", curParsed = null, curSound = false;
+  var wdTimer = null, wdLastTime = -1, wdStuck = 0, recovering = false;
+  var WD_STEP_MS = 10000, WD_STUCK_LIMIT = 30000; // recover after ~30s frozen
+
   function makeVideoEl() {
     var el = document.createElement("div");
     el.className = "sg-videobg";
     // Transparent container centred in the panel — the board's own background
     // shows as blank space around the video, not a black box.
     el.style.cssText = "position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:inherit;";
-    videoFrame = document.createElement("iframe");
-    videoFrame.setAttribute("allow", "autoplay; encrypted-media; fullscreen");
-    videoFrame.setAttribute("frameborder", "0");
-    videoFrame.setAttribute("scrolling", "no");
-    // Keep the video's 16:9 shape and fit it inside the panel; the panel is
-    // narrower than 16:9, so it fills the width and leaves blank space top/bottom.
-    videoFrame.style.cssText = "width:100%;height:auto;aspect-ratio:16/9;max-height:100%;border:0;display:block;";
-    el.appendChild(videoFrame);
+    // Keep the 16:9 shape; the panel is narrower than 16:9 so it fills the width
+    // and leaves blank board space top/bottom. The API replaces this host node.
+    videoHost = document.createElement("div");
+    videoHost.style.cssText = "width:100%;height:auto;aspect-ratio:16/9;max-height:100%;";
+    el.appendChild(videoHost);
     return el;
   }
+
+  function buildPlayer() {
+    if (!global.YT || !global.YT.Player || !videoHost || !curParsed) return;
+    var vars = {
+      autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1,
+      iv_load_policy: 3, fs: 0, disablekb: 1, mute: curSound ? 0 : 1
+    };
+    if (curParsed.listId) { vars.listType = "playlist"; vars.list = curParsed.listId; vars.loop = 1; }
+    else { vars.loop = 1; vars.playlist = curParsed.videoId; } // single-video loop
+    // Fresh mount point each build so a destroyed player leaves no stale iframe.
+    var mount = document.createElement("div");
+    mount.style.cssText = "width:100%;height:100%;";
+    videoHost.innerHTML = "";
+    videoHost.appendChild(mount);
+    ytPlayerReady = false; wdLastTime = -1; wdStuck = 0;
+    try {
+      ytPlayer = new global.YT.Player(mount, {
+        width: "100%", height: "100%",
+        videoId: curParsed.videoId || undefined,
+        playerVars: vars,
+        events: {
+          onReady: function (e) {
+            ytPlayerReady = true;
+            try { if (curSound) e.target.unMute(); else e.target.mute(); } catch (x) {}
+            try { e.target.playVideo(); } catch (x) {}
+          },
+          onStateChange: function (e) {
+            var S = global.YT.PlayerState;
+            if (e.data === S.ENDED || e.data === S.PAUSED) { try { ytPlayer.playVideo(); } catch (x) {} }
+          },
+          onError: function () { recoverPlayer(); }
+        }
+      });
+    } catch (e) { recoverPlayer(); }
+  }
+
+  function recoverPlayer() {
+    if (recovering) return;
+    recovering = true;
+    ytPlayerReady = false; wdLastTime = -1; wdStuck = 0;
+    try { if (ytPlayer && ytPlayer.destroy) ytPlayer.destroy(); } catch (e) {}
+    ytPlayer = null;
+    setTimeout(function () {
+      recovering = false;
+      if (videoOn && curParsed) buildPlayer();
+    }, 2500);
+  }
+
+  // Watchdog: if the player should be playing but time isn't advancing (buffering
+  // forever / blank surface), rebuild it; if it's paused/ended/cued, nudge play.
+  function videoWatchdog() {
+    if (!videoOn || !ytPlayer || !ytPlayerReady || recovering) return;
+    var S = global.YT.PlayerState, st, t;
+    try { st = ytPlayer.getPlayerState(); t = ytPlayer.getCurrentTime(); }
+    catch (e) { recoverPlayer(); return; }
+    if (st === S.PLAYING || st === S.BUFFERING) {
+      if (typeof t === "number" && Math.abs(t - wdLastTime) < 0.2) wdStuck += WD_STEP_MS;
+      else wdStuck = 0;
+      wdLastTime = (typeof t === "number") ? t : wdLastTime;
+      if (wdStuck >= WD_STUCK_LIMIT) recoverPlayer();
+    } else {
+      wdStuck = 0; wdLastTime = -1;
+      try { ytPlayer.playVideo(); } catch (e) {}
+    }
+  }
+
+  function teardownVideo() {
+    videoOn = false; curSig = ""; curParsed = null;
+    try { if (ytPlayer && ytPlayer.destroy) ytPlayer.destroy(); } catch (e) {}
+    ytPlayer = null; ytPlayerReady = false;
+    if (videoEl && videoEl.parentNode) videoEl.parentNode.removeChild(videoEl);
+    rightActive = null; // force loadRight to treat this as a change and repaint
+    loadRight();        // (the panel was emptied to host the video)
+  }
+
   function loadVideo() {
     if (!global.BGF) return;
     var right = document.getElementById("sgRight");
     if (!right) return;
     BGF.fbGet("video").then(function (v) {
       v = v || {};
-      var src = (v.on === true) ? ytEmbed(v.url, v.sound === true) : "";
-      if (!src) {
-        if (videoOn) {
-          videoOn = false;
-          if (videoFrame) videoFrame.src = "about:blank";   // stop playback
-          if (videoEl && videoEl.parentNode) videoEl.parentNode.removeChild(videoEl);
-          lastVideoSig = "";
-          loadRight();                                       // repaint the panel now
-        }
-        return;
-      }
+      var parsed = (v.on === true) ? ytParse(v.url) : null;
+      if (!parsed) { if (videoOn) teardownVideo(); return; } // off or unrecognized URL
+      var sig = parsed.videoId + "|" + parsed.listId + "|" + (v.sound === true ? 1 : 0);
+      // Same video already running — leave it completely alone (never reload on poll).
+      if (videoOn && sig === curSig && videoEl && videoEl.parentNode === right) return;
+      curSig = sig; curParsed = parsed; curSound = (v.sound === true);
       videoOn = true;
       if (!videoEl) videoEl = makeVideoEl();
-      if (videoEl.parentNode !== right) {                    // (re)mount into the panel
-        right.innerHTML = "";
-        right.appendChild(videoEl);
-      }
-      if (src !== lastVideoSig) { lastVideoSig = src; videoFrame.src = src; }
+      if (videoEl.parentNode !== right) { right.innerHTML = ""; right.appendChild(videoEl); }
+      if (!wdTimer) wdTimer = setInterval(videoWatchdog, WD_STEP_MS);
+      loadYTApi(function () { if (videoOn && curParsed) buildPlayer(); });
     }).catch(function () {});
   }
 
