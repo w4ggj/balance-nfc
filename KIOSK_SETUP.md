@@ -79,8 +79,10 @@ on/off flag, and the current slide number. No player or account data.)
 ## Video background on the main TV (YouTube)
 
 The main board can also play a **YouTube** video, playlist, or a channel's live
-stream full-screen — fail reels, trailers, anything between events — toggled from
-the control panel, again without leaving Fully Kiosk.
+stream — fail reels, trailers, anything between events — toggled from the control
+panel, again without leaving Fully Kiosk. It plays **in the main panel** (where
+standings / leaderboards show); the weekly-events column on the left and the
+ticker along the bottom stay on screen.
 
 **What works:** any **YouTube** link (video, `playlist?list=…`, `/live/…`, or a
 channel URL for its live stream). YouTube is the one source that embeds cleanly.
@@ -101,7 +103,8 @@ with sound.
 ```
 
 **Use it.** Open **`config.html` → Video background**, paste a YouTube link, and
-flip it on. It fills the 75″ board (cover-fit) and loops.
+flip it on. It fills the standings panel and loops; flip it off and the panel
+goes right back to standings/events.
 
 > **Sound:** it plays **muted** by default (that's what browsers reliably
 > autoplay). To get audio, tick **Play with sound** *and* turn on audio autoplay

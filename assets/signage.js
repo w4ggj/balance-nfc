@@ -165,6 +165,7 @@
   var rightLive = false;    // is the live board showing?
   var showcaseIdx = 0;
   function loadRight() {
+    if (videoOn) return;   // video owns the panel — don't repaint over it
     var right = document.getElementById("sgRight");
     if (!right || !global.BGF) return;
     Promise.all([BGF.fbGet("display/board"), BGF.getConfig()]).then(function (r) {
@@ -189,6 +190,7 @@
     });
   }
   function renderRight() {
+    if (videoOn) return;
     var right = document.getElementById("sgRight");
     if (!right) return;
     try {
@@ -212,6 +214,7 @@
     }
   }
   function rotateRight() {
+    if (videoOn) return;
     if (rightLive && (rightActive === "commander-league" || rightActive === "tournament")) {
       rightView = rightView ? 0 : 1; renderRight();
     } else if (!rightLive) {
@@ -258,6 +261,7 @@
 
   // Spotlight the upcoming events (and fun cards) one at a time.
   function renderShowcase() {
+    if (videoOn) return;
     var right = document.getElementById("sgRight");
     if (!right) return;
     var items = buildShowcase();
@@ -622,32 +626,47 @@
     if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return one(raw);
     return "";
   }
-  var videoEl = null, videoFrame = null, lastVideoSig = "";
-  function ensureVideoEl() {
-    if (videoEl) return;
-    videoEl = document.createElement("div");
-    videoEl.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#000;display:none;z-index:8500;overflow:hidden;";
+  // The video sits INSIDE the right panel (#sgRight) — the same frame that shows
+  // standings / leaderboard / pods — so the weekly-events column and the bottom
+  // ticker stay on screen. `videoOn` freezes the panel's own repaints while a
+  // video is up, so the timer-driven standings refresh doesn't wipe the iframe.
+  var videoEl = null, videoFrame = null, lastVideoSig = "", videoOn = false;
+  function makeVideoEl() {
+    var el = document.createElement("div");
+    el.className = "sg-videobg";
+    el.style.cssText = "position:absolute;top:0;left:0;right:0;bottom:0;background:#000;overflow:hidden;border-radius:inherit;";
     videoFrame = document.createElement("iframe");
     videoFrame.setAttribute("allow", "autoplay; encrypted-media; fullscreen");
     videoFrame.setAttribute("frameborder", "0");
     videoFrame.setAttribute("scrolling", "no");
-    // Cover-fit a 16:9 embed to any screen (fills, crops the overscan edges).
-    videoFrame.style.cssText = "position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:100vw;height:56.25vw;min-height:100vh;min-width:177.78vh;border:0;";
-    videoEl.appendChild(videoFrame);
-    document.body.appendChild(videoEl);
+    // Fill the panel; YouTube letterboxes the 16:9 video inside as needed.
+    videoFrame.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;border:0;";
+    el.appendChild(videoFrame);
+    return el;
   }
   function loadVideo() {
     if (!global.BGF) return;
+    var right = document.getElementById("sgRight");
+    if (!right) return;
     BGF.fbGet("video").then(function (v) {
       v = v || {};
-      ensureVideoEl();
       var src = (v.on === true) ? ytEmbed(v.url, v.sound === true) : "";
       if (!src) {
-        if (lastVideoSig !== "") { videoFrame.src = "about:blank"; lastVideoSig = ""; } // stop playback
-        videoEl.style.display = "none";
+        if (videoOn) {
+          videoOn = false;
+          if (videoFrame) videoFrame.src = "about:blank";   // stop playback
+          if (videoEl && videoEl.parentNode) videoEl.parentNode.removeChild(videoEl);
+          lastVideoSig = "";
+          loadRight();                                       // repaint the panel now
+        }
         return;
       }
-      videoEl.style.display = "block";
+      videoOn = true;
+      if (!videoEl) videoEl = makeVideoEl();
+      if (videoEl.parentNode !== right) {                    // (re)mount into the panel
+        right.innerHTML = "";
+        right.appendChild(videoEl);
+      }
       if (src !== lastVideoSig) { lastVideoSig = src; videoFrame.src = src; }
     }).catch(function () {});
   }
