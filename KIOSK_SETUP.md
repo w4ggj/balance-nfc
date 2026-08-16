@@ -84,14 +84,27 @@ panel, again without leaving Fully Kiosk. It plays **in the main panel** (where
 standings / leaderboards show); the weekly-events column on the left and the
 ticker along the bottom stay on screen.
 
-**What works:** any **YouTube** link (video, `playlist?list=…`, `/live/…`, or a
-channel URL for its live stream). YouTube is the one source that embeds cleanly.
+**Two kinds of link work — and which one matters on a Fire Stick:**
 
-**What doesn't:** the linear **“FailArmy TV” / FAST channels** (Pluto TV, Samsung
-TV Plus, Roku, Freevee) don't expose an embeddable stream, so they can't play
-inside the board. Use the same content on the creator's **YouTube** channel
-instead — or run the FailArmy app on a dedicated Fire Stick for the true channel
-with sound.
+- **A direct video file** — a URL ending in **`.mp4`** (or `.webm`). This is the
+  **recommended source for the Fire Stick**: it plays through the native video
+  player and renders reliably. Export/upload a clip (e.g. a fail reel) to
+  **Shopify → Content → Files** and paste its link.
+- **A YouTube link** — video, `playlist?list=…`, `/live/…`, or a channel URL for
+  its live stream. Works on most devices, **but** the Fire Stick's built-in
+  browser (Fire OS WebView) often renders embedded YouTube as a **white screen
+  with only audio** — a known WebView limitation, not a board bug. On the Fire
+  Stick, prefer an `.mp4`.
+
+> **Seeing a white screen with sound on the Fire Stick?** That's the WebView
+> failing to render embedded YouTube (most videos, a few slip through). There's no
+> reliable fix inside the kiosk browser — switch that source to a **direct `.mp4`
+> file** and it will render every time.
+
+**What can't play at all:** the linear **“FailArmy TV” / FAST channels** (Pluto
+TV, Samsung TV Plus, Roku, Freevee) don't expose an embeddable stream. Use the
+creator's **YouTube** channel — or, for that true channel with sound, run the
+FailArmy app on a dedicated Fire Stick.
 
 **One-time Firebase rule** (alongside the others, don't replace the ruleset):
 

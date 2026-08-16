@@ -652,7 +652,8 @@
   // The video sits INSIDE the right panel (#sgRight); `videoOn` freezes the
   // panel's own repaints so the timer-driven standings refresh won't wipe it.
   var videoEl = null, videoHost = null, videoOn = false;
-  var ytPlayer = null, ytPlayerReady = false, curSig = "", curParsed = null, curSound = false;
+  var ytPlayer = null, fileVideo = null, ytPlayerReady = false;
+  var curSig = "", curKind = "", curParsed = null, curFileUrl = "", curSound = false;
   var wdTimer = null, wdLastTime = -1, wdStuck = 0, recovering = false;
   var WD_STEP_MS = 10000, WD_STUCK_LIMIT = 30000; // recover after ~30s frozen
 
@@ -670,7 +671,21 @@
     return el;
   }
 
-  function buildPlayer() {
+  // Decide how to play a URL. Embedded YouTube is unreliable inside old kiosk
+  // WebViews (Fire OS) — many videos render a white frame with only audio — so a
+  // direct video FILE (.mp4/.webm/…) is played through a native <video>, which
+  // the WebView renders every time. YouTube links still use the IFrame player.
+  function classifyVideo(raw) {
+    if (!raw) return null;
+    raw = String(raw).trim();
+    if (/\.(mp4|m4v|webm|ogv|ogg|mov)(\?|#|$)/i.test(raw)) return { kind: "file", url: raw };
+    var yt = ytParse(raw);
+    if (yt) return { kind: "yt", parsed: yt };
+    if (/^https?:\/\//i.test(raw)) return { kind: "file", url: raw }; // best-effort: treat any other URL as a file
+    return null;
+  }
+
+  function buildYT() {
     if (!global.YT || !global.YT.Player || !videoHost || !curParsed) return;
     var vars = {
       autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1,
@@ -678,11 +693,9 @@
     };
     if (curParsed.listId) { vars.listType = "playlist"; vars.list = curParsed.listId; vars.loop = 1; }
     else { vars.loop = 1; vars.playlist = curParsed.videoId; } // single-video loop
-    // Fresh mount point each build so a destroyed player leaves no stale iframe.
     var mount = document.createElement("div");
     mount.style.cssText = "width:100%;height:100%;";
-    videoHost.innerHTML = "";
-    videoHost.appendChild(mount);
+    videoHost.innerHTML = ""; videoHost.appendChild(mount);
     ytPlayerReady = false; wdLastTime = -1; wdStuck = 0;
     try {
       ytPlayer = new global.YT.Player(mount, {
@@ -699,36 +712,74 @@
             var S = global.YT.PlayerState;
             if (e.data === S.ENDED || e.data === S.PAUSED) { try { ytPlayer.playVideo(); } catch (x) {} }
           },
-          onError: function () { recoverPlayer(); }
+          onError: function () { recoverVideo(); }
         }
       });
-    } catch (e) { recoverPlayer(); }
+    } catch (e) { recoverVideo(); }
   }
 
-  function recoverPlayer() {
-    if (recovering) return;
-    recovering = true;
-    ytPlayerReady = false; wdLastTime = -1; wdStuck = 0;
+  function buildFile() {
+    if (!videoHost || !curFileUrl) return;
+    var v = document.createElement("video");
+    v.style.cssText = "width:100%;height:auto;aspect-ratio:16/9;max-height:100%;display:block;background:#000;";
+    v.autoplay = true; v.loop = true; v.muted = !curSound; v.controls = false;
+    v.setAttribute("playsinline", ""); v.setAttribute("webkit-playsinline", "");
+    if (!curSound) v.setAttribute("muted", ""); // some webviews need the attribute too
+    v.src = curFileUrl;
+    videoHost.innerHTML = ""; videoHost.appendChild(v);
+    fileVideo = v; ytPlayerReady = true; wdLastTime = -1; wdStuck = 0;
+    var play = function () { try { var p = v.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} };
+    v.addEventListener("loadedmetadata", play);
+    v.addEventListener("canplay", play);
+    v.addEventListener("ended", play);            // loop should cover it; belt-and-suspenders
+    v.addEventListener("error", function () { recoverVideo(); });
+    play();
+  }
+
+  function buildActive() {
+    if (curKind === "file") buildFile();
+    else loadYTApi(function () { if (videoOn && curKind === "yt") buildYT(); });
+  }
+
+  function destroyPlayers() {
     try { if (ytPlayer && ytPlayer.destroy) ytPlayer.destroy(); } catch (e) {}
     ytPlayer = null;
+    if (fileVideo) { try { fileVideo.pause(); fileVideo.removeAttribute("src"); fileVideo.load(); } catch (e) {} fileVideo = null; }
+    ytPlayerReady = false;
+  }
+
+  function recoverVideo() {
+    if (recovering) return;
+    recovering = true;
+    wdLastTime = -1; wdStuck = 0;
+    destroyPlayers();
     setTimeout(function () {
       recovering = false;
-      if (videoOn && curParsed) buildPlayer();
+      if (videoOn) buildActive();
     }, 2500);
   }
 
-  // Watchdog: if the player should be playing but time isn't advancing (buffering
-  // forever / blank surface), rebuild it; if it's paused/ended/cued, nudge play.
+  // Watchdog: if playback should be advancing but currentTime is frozen (buffering
+  // forever / blank surface), rebuild the player; if paused/ended, nudge it.
   function videoWatchdog() {
-    if (!videoOn || !ytPlayer || !ytPlayerReady || recovering) return;
+    if (!videoOn || recovering) return;
+    if (curKind === "file") {
+      if (!fileVideo) return;
+      var ft = fileVideo.currentTime, paused = fileVideo.paused, paused2 = fileVideo.ended;
+      if (paused || paused2) { try { fileVideo.play(); } catch (e) {} wdStuck = 0; wdLastTime = -1; return; }
+      if (typeof ft === "number" && Math.abs(ft - wdLastTime) < 0.2) wdStuck += WD_STEP_MS; else wdStuck = 0;
+      wdLastTime = (typeof ft === "number") ? ft : wdLastTime;
+      if (wdStuck >= WD_STUCK_LIMIT) recoverVideo();
+      return;
+    }
+    if (!ytPlayer || !ytPlayerReady || !global.YT) return;
     var S = global.YT.PlayerState, st, t;
     try { st = ytPlayer.getPlayerState(); t = ytPlayer.getCurrentTime(); }
-    catch (e) { recoverPlayer(); return; }
+    catch (e) { recoverVideo(); return; }
     if (st === S.PLAYING || st === S.BUFFERING) {
-      if (typeof t === "number" && Math.abs(t - wdLastTime) < 0.2) wdStuck += WD_STEP_MS;
-      else wdStuck = 0;
+      if (typeof t === "number" && Math.abs(t - wdLastTime) < 0.2) wdStuck += WD_STEP_MS; else wdStuck = 0;
       wdLastTime = (typeof t === "number") ? t : wdLastTime;
-      if (wdStuck >= WD_STUCK_LIMIT) recoverPlayer();
+      if (wdStuck >= WD_STUCK_LIMIT) recoverVideo();
     } else {
       wdStuck = 0; wdLastTime = -1;
       try { ytPlayer.playVideo(); } catch (e) {}
@@ -736,9 +787,8 @@
   }
 
   function teardownVideo() {
-    videoOn = false; curSig = ""; curParsed = null;
-    try { if (ytPlayer && ytPlayer.destroy) ytPlayer.destroy(); } catch (e) {}
-    ytPlayer = null; ytPlayerReady = false;
+    videoOn = false; curSig = ""; curParsed = null; curFileUrl = ""; curKind = "";
+    destroyPlayers();
     if (videoEl && videoEl.parentNode) videoEl.parentNode.removeChild(videoEl);
     rightActive = null; // force loadRight to treat this as a change and repaint
     loadRight();        // (the panel was emptied to host the video)
@@ -750,17 +800,21 @@
     if (!right) return;
     BGF.fbGet("video").then(function (v) {
       v = v || {};
-      var parsed = (v.on === true) ? ytParse(v.url) : null;
-      if (!parsed) { if (videoOn) teardownVideo(); return; } // off or unrecognized URL
-      var sig = parsed.videoId + "|" + parsed.listId + "|" + (v.sound === true ? 1 : 0);
+      var src = (v.on === true) ? classifyVideo(v.url) : null;
+      if (!src) { if (videoOn) teardownVideo(); return; } // off or unrecognized URL
+      var sound = (v.sound === true);
+      var sig = src.kind + "|" + (src.kind === "file" ? src.url : (src.parsed.videoId + "|" + src.parsed.listId)) + "|" + (sound ? 1 : 0);
       // Same video already running — leave it completely alone (never reload on poll).
       if (videoOn && sig === curSig && videoEl && videoEl.parentNode === right) return;
-      curSig = sig; curParsed = parsed; curSound = (v.sound === true);
+      curSig = sig; curKind = src.kind; curSound = sound;
+      curParsed = (src.kind === "yt") ? src.parsed : null;
+      curFileUrl = (src.kind === "file") ? src.url : "";
       videoOn = true;
       if (!videoEl) videoEl = makeVideoEl();
       if (videoEl.parentNode !== right) { right.innerHTML = ""; right.appendChild(videoEl); }
       if (!wdTimer) wdTimer = setInterval(videoWatchdog, WD_STEP_MS);
-      loadYTApi(function () { if (videoOn && curParsed) buildPlayer(); });
+      destroyPlayers();  // clear any previous player before building the new one
+      buildActive();
     }).catch(function () {});
   }
 
