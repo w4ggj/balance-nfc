@@ -90,16 +90,42 @@ ticker along the bottom stay on screen.
   **recommended source for the Fire Stick**: it plays through the native video
   player and renders reliably. Export/upload a clip (e.g. a fail reel) to
   **Shopify → Content → Files** and paste its link.
-- **A YouTube link** — video, `playlist?list=…`, `/live/…`, or a channel URL for
-  its live stream. Works on most devices, **but** the Fire Stick's built-in
-  browser (Fire OS WebView) often renders embedded YouTube as a **white screen
-  with only audio** — a known WebView limitation, not a board bug. On the Fire
-  Stick, prefer an `.mp4`.
+- **A YouTube link** — a video, `playlist?list=…`, `/live/…`, `/shorts/…`,
+  `youtu.be/…`, or a `youtube.com/channel/UC…/live` URL for a channel's current
+  broadcast. All of those forms are understood.
 
-> **Seeing a white screen with sound on the Fire Stick?** That's the WebView
-> failing to render embedded YouTube (most videos, a few slip through). There's no
-> reliable fix inside the kiosk browser — switch that source to a **direct `.mp4`
-> file** and it will render every time.
+### Why a YouTube link shows a white/pale panel
+
+There are two completely different causes, and they need different fixes.
+
+**1. The channel blocks playback off YouTube (most common).** If the panel shows
+YouTube's *own* screen — the video title, the channel name and avatar, and a
+**“More videos”** button — then the embed loaded fine and **YouTube refused to
+play it**. The uploader has turned off playback on other sites. Official brand
+channels and 24/7 live channels (Pokémon TV, most TV networks, music labels) do
+this as a rule.
+
+> **No setting fixes this** — not in Fully Kiosk, not on the Fire Stick, not in
+> this board. YouTube is enforcing the uploader's choice. Use a channel that
+> allows embedding, or upload the clip yourself and paste the **`.mp4`** link.
+
+The board now detects this and prints the reason in the panel instead of sitting
+blank, **and reports it back to `config.html`** — so you see “⚠ The TV couldn't
+play this: …” on your phone, under the link box, without walking to the TV.
+
+**2. A truly blank/white rectangle with only audio.** No title, no buttons — just
+white. That's the Fire OS WebView failing to render the video surface. Try, in
+order:
+
+1. **Fully Kiosk → Settings → Web Content Settings** — turn on **Enable
+   Hardware Acceleration** and (if present) **Enable Video Hardware Overlays**.
+   Toggling video hardware overlays *off* also fixes it on some Fire OS builds —
+   try both ways.
+2. **Update the WebView.** Fire OS ships an old **Android System WebView**; that
+   is what renders YouTube inside Fully Kiosk. An out-of-date one can't decode
+   what newer uploads and live streams are served as.
+3. If neither helps, switch that source to a **direct `.mp4`** — the native
+   player renders every time.
 
 **What can't play at all:** the linear **“FailArmy TV” / FAST channels** (Pluto
 TV, Samsung TV Plus, Roku, Freevee) don't expose an embeddable stream. Use the
