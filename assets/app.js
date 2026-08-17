@@ -500,6 +500,19 @@
     var videoUrl = document.getElementById("sgVideoUrl");
     var videoSound = document.getElementById("sgVideoSound");
     var videoSave = document.getElementById("sgVideoSave");
+    var videoStatus = document.getElementById("sgVideoStatus");
+
+    // The TV writes /video/status after it tries a link, so a failure is readable
+    // here on the phone instead of only as a blank panel across the room.
+    function paintVideoStatus(st) {
+      if (!videoStatus) return;
+      if (!st || typeof st.ok !== "boolean") { videoStatus.style.display = "none"; return; }
+      videoStatus.style.display = "";
+      videoStatus.style.color = st.ok ? "#22c55e" : "#f87171";
+      videoStatus.textContent = st.ok ? "✓ Playing on the big TV." : ("⚠ The TV couldn't play this: " + (st.note || "unknown error"));
+    }
+    function pollVideoStatus() { fbGet("video/status").then(paintVideoStatus).catch(function () {}); }
+
     if (videoToggle || videoUrl) {
       fbGet("video").then(function (v) {
         v = v || {};
@@ -509,7 +522,10 @@
           videoToggle.checked = v.on === true;
           var row = videoToggle.closest(".sys-card"); if (row) row.setAttribute("data-on", v.on === true ? "true" : "false");
         }
+        paintVideoStatus(v.status);
       });
+      // Follow the TV for a while after a change — it reports within a few seconds.
+      setInterval(pollVideoStatus, 4000);
     }
     if (videoToggle) {
       videoToggle.addEventListener("change", function () {
@@ -523,8 +539,12 @@
     if (videoSave && videoUrl) {
       videoSave.addEventListener("click", function () {
         var url = (videoUrl.value || "").trim();
-        fbUpdate("video", { url: url || null, sound: !!(videoSound && videoSound.checked) })
-          .then(function () { showToast(url ? "Video source saved" : "Video source cleared"); })
+        // Clear the old verdict so a stale "couldn't play" doesn't look like the new link's.
+        fbUpdate("video", { url: url || null, sound: !!(videoSound && videoSound.checked), status: null })
+          .then(function () {
+            paintVideoStatus(null);
+            showToast(url ? "Video source saved — watching the TV for a result" : "Video source cleared");
+          })
           .catch(function () { showToast("Couldn't save the video — try again"); });
       });
     }

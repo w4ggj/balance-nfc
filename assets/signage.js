@@ -612,21 +612,46 @@
   // YouTube is the one embeddable source; the FAST "TV" channels (Pluto/Samsung)
   // don't expose an embeddable stream. Sound needs Fully Kiosk audio-autoplay.
 
-  // Parse any YouTube URL form into { videoId, listId }.
+  // Parse any YouTube URL form into { videoId, listId, channelId, live }.
+  // Covers the formats the YouTube app hands you today — /shorts/, /live/, and a
+  // channel's "live" page — not just /watch?v=. A link this failed to parse used
+  // to fall through to the <video> path below and paint a white panel.
   function ytParse(raw) {
     if (!raw) return null;
     raw = String(raw).trim();
-    var out = { videoId: "", listId: "" }, m;
-    if ((m = raw.match(/[?&]list=([A-Za-z0-9_-]+)/))) out.listId = m[1];
-    if ((m = raw.match(/youtube\.com\/live\/([A-Za-z0-9_-]{6,})/))) out.videoId = m[1];
+    var out = { videoId: "", listId: "", channelId: "", live: false }, m;
+
+    // Playlists: only real, embeddable list ids. An autoplay mix/radio (RD…),
+    // Watch Later (WL) or Liked (LL) id cannot be embedded as a playlist — the
+    // player loads nothing — so ignore it and use the video id such links carry.
+    if ((m = raw.match(/[?&]list=([A-Za-z0-9_-]+)/)) && /^(PL|UU|OL|FL)/.test(m[1])) out.listId = m[1];
+
+    if ((m = raw.match(/youtube\.com\/live\/([A-Za-z0-9_-]{6,})/))) { out.videoId = m[1]; out.live = true; }
+    else if ((m = raw.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/))) out.videoId = m[1];
     else if ((m = raw.match(/[?&]v=([A-Za-z0-9_-]{6,})/))) out.videoId = m[1];
     else if ((m = raw.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/))) out.videoId = m[1];
-    else if ((m = raw.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/)) && m[1] !== "videoseries") out.videoId = m[1];
-    if (!out.videoId && !out.listId) {
-      if (/^PL[A-Za-z0-9_-]+$/.test(raw)) out.listId = raw;
+    else if ((m = raw.match(/youtube(?:-nocookie)?\.com\/(?:embed|v|e)\/([A-Za-z0-9_-]{6,})/)) && m[1] !== "videoseries" && m[1] !== "live_stream") out.videoId = m[1];
+    // A channel's live page carries no video id — YouTube resolves the current
+    // broadcast from the channel id instead.
+    else if ((m = raw.match(/youtube\.com\/channel\/(UC[A-Za-z0-9_-]{10,})\/live/))) { out.channelId = m[1]; out.live = true; }
+    else if ((m = raw.match(/youtube\.com\/embed\/live_stream[^#]*[?&]channel=(UC[A-Za-z0-9_-]{10,})/))) { out.channelId = m[1]; out.live = true; }
+
+    if (!out.videoId && !out.listId && !out.channelId) {
+      if (/^(PL|UU|OL|FL)[A-Za-z0-9_-]+$/.test(raw)) out.listId = raw;
+      else if (/^UC[A-Za-z0-9_-]{10,}$/.test(raw)) { out.channelId = raw; out.live = true; }
       else if (/^[A-Za-z0-9_-]{11}$/.test(raw)) out.videoId = raw;
     }
-    return (out.videoId || out.listId) ? out : null;
+    return (out.videoId || out.listId || out.channelId) ? out : null;
+  }
+
+  // Serialize player vars for an iframe src (the live_stream embed below is built
+  // as a real iframe, so the API can't apply playerVars for us).
+  function ytQuery(vars) {
+    var parts = [];
+    for (var k in vars) if (Object.prototype.hasOwnProperty.call(vars, k)) {
+      parts.push(encodeURIComponent(k) + "=" + encodeURIComponent(vars[k]));
+    }
+    return parts.join("&");
   }
 
   // Load the IFrame API once; queue callers until it's ready.
@@ -652,10 +677,22 @@
   // The video sits INSIDE the right panel (#sgRight); `videoOn` freezes the
   // panel's own repaints so the timer-driven standings refresh won't wipe it.
   var videoEl = null, videoHost = null, videoOn = false;
-  var ytPlayer = null, fileVideo = null, ytPlayerReady = false;
-  var curSig = "", curKind = "", curParsed = null, curFileUrl = "", curSound = false;
+  var ytPlayer = null, fileVideo = null, ytPlayerReady = false, ytEverPlayed = false;
+  var curSig = "", curKind = "", curParsed = null, curFileUrl = "", curSound = false, curBadReason = "";
   var wdTimer = null, wdLastTime = -1, wdStuck = 0, recovering = false;
   var WD_STEP_MS = 10000, WD_STUCK_LIMIT = 30000; // recover after ~30s frozen
+  var buildFails = 0, videoFailed = false, MAX_BUILD_FAILS = 3;
+
+  // YouTube IFrame API error codes. These are permanent for a given link — no
+  // amount of rebuilding fixes them, so say what's wrong and stop retrying.
+  var YT_ERRORS = {
+    2: "YouTube rejected that link — the video ID looks wrong. Re-copy it with the Share button.",
+    100: "That video isn't available — it may be private, deleted, or region-blocked.",
+    101: "The owner doesn't allow this video to be played on other screens. Pick a different video, or upload an .mp4.",
+    150: "The owner doesn't allow this video to be played on other screens. Pick a different video, or upload an .mp4."
+  };
+  // Error 5 is the WebView's HTML5 player giving up — worth a retry, then this.
+  var NOTE_WEBVIEW = "This video won't play in this TV's browser. YouTube embeds often fail on the Fire Stick — upload the clip to Shopify Files and paste its .mp4 link instead.";
 
   function makeVideoEl() {
     var el = document.createElement("div");
@@ -681,8 +718,22 @@
     if (/\.(mp4|m4v|webm|ogv|ogg|mov)(\?|#|$)/i.test(raw)) return { kind: "file", url: raw };
     var yt = ytParse(raw);
     if (yt) return { kind: "yt", parsed: yt };
+    // A YouTube link we can't parse must NOT fall through to the <video> path —
+    // a page URL in a <video> tag is exactly the white panel with no explanation.
+    if (/(^|\/\/|\.)(youtube\.com|youtu\.be|youtube-nocookie\.com)\//i.test(raw)) return { kind: "bad", reason: ytHint(raw) };
     if (/^https?:\/\//i.test(raw)) return { kind: "file", url: raw }; // best-effort: treat any other URL as a file
     return null;
+  }
+
+  // Why a YouTube link is unusable, phrased so whoever is holding the phone can fix it.
+  function ytHint(raw) {
+    if (/youtube\.com\/(@|c\/|user\/)[^/?#]+\/live/i.test(raw))
+      return "A channel @handle link can't be embedded. Open the live stream itself and copy that link (youtube.com/live/…).";
+    if (/[?&]list=(WL|LL)/.test(raw))
+      return "Watch Later and Liked playlists are private, so the TV can't play them. Use a public playlist or a single video.";
+    if (/[?&]list=/.test(raw))
+      return "That link is an autoplay mix, not a real playlist. Copy the video's own link instead.";
+    return "Couldn't read a video ID from that YouTube link. Use YouTube's Share button and paste the youtu.be/… link.";
   }
 
   function buildYT() {
@@ -691,31 +742,62 @@
       autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1,
       iv_load_policy: 3, fs: 0, disablekb: 1, mute: curSound ? 0 : 1
     };
+    // `origin` is required by current YouTube embeds for the JS API handshake;
+    // without it some builds sit on a blank frame forever.
+    try { if (location.origin && location.origin.indexOf("http") === 0) vars.origin = location.origin; } catch (e) {}
     if (curParsed.listId) { vars.listType = "playlist"; vars.list = curParsed.listId; vars.loop = 1; }
-    else { vars.loop = 1; vars.playlist = curParsed.videoId; } // single-video loop
-    var mount = document.createElement("div");
-    mount.style.cssText = "width:100%;height:100%;";
+    // No loop=1&playlist=<id> hack for a single video: YouTube mishandles it on a
+    // live stream (it tries to wrap the broadcast in a one-item playlist and
+    // renders nothing at all). Looping is done from onStateChange/ENDED instead.
+
+    var mount, onIframe = false;
+    if (curParsed.channelId && !curParsed.videoId) {
+      // A channel's live page has no video id, so use YouTube's live_stream embed,
+      // which resolves the channel's current broadcast. Building the player on an
+      // existing iframe keeps the watchdog working — that needs enablejsapi=1.
+      vars.enablejsapi = 1;
+      mount = document.createElement("iframe");
+      mount.setAttribute("allow", "autoplay; encrypted-media");
+      mount.setAttribute("allowfullscreen", "");
+      mount.setAttribute("frameborder", "0");
+      mount.style.cssText = "width:100%;height:100%;border:0;display:block;";
+      mount.src = "https://www.youtube.com/embed/live_stream?channel=" + encodeURIComponent(curParsed.channelId) + "&" + ytQuery(vars);
+      onIframe = true;
+    } else {
+      mount = document.createElement("div");
+      mount.style.cssText = "width:100%;height:100%;";
+    }
     videoHost.innerHTML = ""; videoHost.appendChild(mount);
-    ytPlayerReady = false; wdLastTime = -1; wdStuck = 0;
-    try {
-      ytPlayer = new global.YT.Player(mount, {
-        width: "100%", height: "100%",
-        videoId: curParsed.videoId || undefined,
-        playerVars: vars,
-        events: {
-          onReady: function (e) {
-            ytPlayerReady = true;
-            try { if (curSound) e.target.unMute(); else e.target.mute(); } catch (x) {}
-            try { e.target.playVideo(); } catch (x) {}
-          },
-          onStateChange: function (e) {
-            var S = global.YT.PlayerState;
-            if (e.data === S.ENDED || e.data === S.PAUSED) { try { ytPlayer.playVideo(); } catch (x) {} }
-          },
-          onError: function () { recoverVideo(); }
+    ytPlayerReady = false; ytEverPlayed = false; wdLastTime = -1; wdStuck = 0;
+
+    var opts = {
+      events: {
+        onReady: function (e) {
+          ytPlayerReady = true;
+          try { if (curSound) e.target.unMute(); else e.target.mute(); } catch (x) {}
+          try { e.target.playVideo(); } catch (x) {}
+        },
+        onStateChange: function (e) {
+          var S = global.YT.PlayerState;
+          if (e.data === S.PLAYING) { ytEverPlayed = true; buildFails = 0; reportVideoStatus(true, ""); return; }
+          // Loop a finished video by seeking back to the start; nudge a pause.
+          if (e.data === S.ENDED) { try { ytPlayer.seekTo(0, true); } catch (x) {} }
+          if (e.data === S.ENDED || e.data === S.PAUSED) { try { ytPlayer.playVideo(); } catch (x) {} }
+        },
+        onError: function (e) {
+          var msg = YT_ERRORS[e && e.data];
+          if (msg) failVideo(msg); else recoverVideo();
         }
-      });
-    } catch (e) { recoverVideo(); }
+      }
+    };
+    // On an existing iframe the API ignores these — the src already carries them.
+    if (!onIframe) {
+      opts.width = "100%"; opts.height = "100%";
+      opts.videoId = curParsed.videoId || undefined;
+      opts.playerVars = vars;
+    }
+    try { ytPlayer = new global.YT.Player(mount, opts); }
+    catch (e) { recoverVideo(); }
   }
 
   function buildFile() {
@@ -731,8 +813,11 @@
     var play = function () { try { var p = v.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} };
     v.addEventListener("loadedmetadata", play);
     v.addEventListener("canplay", play);
+    v.addEventListener("playing", function () { ytEverPlayed = true; buildFails = 0; reportVideoStatus(true, ""); });
     v.addEventListener("ended", play);            // loop should cover it; belt-and-suspenders
-    v.addEventListener("error", function () { recoverVideo(); });
+    v.addEventListener("error", function () {
+      recoverVideo("Couldn't load that video file. Check the link is public and points straight at an .mp4.");
+    });
     play();
   }
 
@@ -745,24 +830,54 @@
     try { if (ytPlayer && ytPlayer.destroy) ytPlayer.destroy(); } catch (e) {}
     ytPlayer = null;
     if (fileVideo) { try { fileVideo.pause(); fileVideo.removeAttribute("src"); fileVideo.load(); } catch (e) {} fileVideo = null; }
-    ytPlayerReady = false;
+    ytPlayerReady = false; ytEverPlayed = false;
   }
 
-  function recoverVideo() {
-    if (recovering) return;
+  // Push the outcome to Firebase so config.html can show it on the phone. The TV
+  // is across the room and has no console — without this, every failure mode looks
+  // the same from where the link was pasted.
+  var lastStatus = null, lastNote = "";
+  function reportVideoStatus(ok, msg) {
+    var s = ok ? "ok" : ("fail:" + msg);
+    if (!ok) lastNote = msg || "";
+    if (s === lastStatus || !global.BGF || !BGF.fbSet) return;
+    lastStatus = s;
+    try { BGF.fbSet("video/status", { ok: !!ok, note: msg || "", at: Date.now() }).catch(function () {}); }
+    catch (e) {}
+  }
+
+  // Give up on this link and say why, in the panel where the video would be. A
+  // white rectangle is indistinguishable from a broken TV; a sentence isn't.
+  function failVideo(msg) {
+    videoFailed = true;
+    reportVideoStatus(false, msg);
+    destroyPlayers();
+    if (!videoHost) return;
+    videoHost.innerHTML = "";
+    var box = document.createElement("div");
+    box.style.cssText = "width:100%;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;" +
+      "padding:5%;box-sizing:border-box;line-height:1.35;font-weight:600;font-size:22px;font-size:clamp(14px,1.7vw,26px);color:#fff;opacity:.92;";
+    box.textContent = msg;
+    videoHost.appendChild(box);
+  }
+
+  function recoverVideo(reason) {
+    if (recovering || videoFailed) return;
+    // A rebuild loop that never succeeds just holds a blank panel — cap it.
+    if (++buildFails > MAX_BUILD_FAILS) { failVideo(reason || NOTE_WEBVIEW); return; }
     recovering = true;
     wdLastTime = -1; wdStuck = 0;
     destroyPlayers();
     setTimeout(function () {
       recovering = false;
-      if (videoOn) buildActive();
+      if (videoOn && !videoFailed) buildActive();
     }, 2500);
   }
 
   // Watchdog: if playback should be advancing but currentTime is frozen (buffering
   // forever / blank surface), rebuild the player; if paused/ended, nudge it.
   function videoWatchdog() {
-    if (!videoOn || recovering) return;
+    if (!videoOn || recovering || videoFailed) return;
     if (curKind === "file") {
       if (!fileVideo) return;
       var ft = fileVideo.currentTime, paused = fileVideo.paused, paused2 = fileVideo.ended;
@@ -776,18 +891,24 @@
     var S = global.YT.PlayerState, st, t;
     try { st = ytPlayer.getPlayerState(); t = ytPlayer.getCurrentTime(); }
     catch (e) { recoverVideo(); return; }
+    if (st === S.PLAYING) ytEverPlayed = true;
     if (st === S.PLAYING || st === S.BUFFERING) {
       if (typeof t === "number" && Math.abs(t - wdLastTime) < 0.2) wdStuck += WD_STEP_MS; else wdStuck = 0;
       wdLastTime = (typeof t === "number") ? t : wdLastTime;
-      if (wdStuck >= WD_STUCK_LIMIT) recoverVideo();
+      if (wdStuck >= WD_STUCK_LIMIT) recoverVideo(ytEverPlayed ? null : NOTE_WEBVIEW);
     } else {
-      wdStuck = 0; wdLastTime = -1;
+      // UNSTARTED/CUED/PAUSED/ENDED: nudge it, but keep counting. This branch used
+      // to reset the counter, so a player that never started was never rebuilt —
+      // it just held a white panel indefinitely.
+      wdStuck += WD_STEP_MS; wdLastTime = -1;
       try { ytPlayer.playVideo(); } catch (e) {}
+      if (wdStuck >= WD_STUCK_LIMIT) recoverVideo(ytEverPlayed ? null : NOTE_WEBVIEW);
     }
   }
 
   function teardownVideo() {
-    videoOn = false; curSig = ""; curParsed = null; curFileUrl = ""; curKind = "";
+    videoOn = false; curSig = ""; curParsed = null; curFileUrl = ""; curKind = ""; curBadReason = "";
+    buildFails = 0; videoFailed = false;
     destroyPlayers();
     if (videoEl && videoEl.parentNode) videoEl.parentNode.removeChild(videoEl);
     rightActive = null; // force loadRight to treat this as a change and repaint
@@ -803,17 +924,31 @@
       var src = (v.on === true) ? classifyVideo(v.url) : null;
       if (!src) { if (videoOn) teardownVideo(); return; } // off or unrecognized URL
       var sound = (v.sound === true);
-      var sig = src.kind + "|" + (src.kind === "file" ? src.url : (src.parsed.videoId + "|" + src.parsed.listId)) + "|" + (sound ? 1 : 0);
+      var ident = src.kind === "file" ? src.url
+        : src.kind === "bad" ? src.reason
+        : (src.parsed.videoId + "|" + src.parsed.listId + "|" + src.parsed.channelId);
+      var sig = src.kind + "|" + ident + "|" + (sound ? 1 : 0);
       // Same video already running — leave it completely alone (never reload on poll).
-      if (videoOn && sig === curSig && videoEl && videoEl.parentNode === right) return;
+      if (videoOn && sig === curSig && videoEl && videoEl.parentNode === right) {
+        // A re-save from the phone clears /video/status; re-publish the verdict we
+        // already have so the panel there doesn't sit blank forever.
+        if (!v.status && (videoFailed || ytEverPlayed)) {
+          lastStatus = null;
+          reportVideoStatus(!videoFailed, videoFailed ? lastNote : "");
+        }
+        return;
+      }
       curSig = sig; curKind = src.kind; curSound = sound;
       curParsed = (src.kind === "yt") ? src.parsed : null;
       curFileUrl = (src.kind === "file") ? src.url : "";
+      curBadReason = (src.kind === "bad") ? src.reason : "";
       videoOn = true;
+      buildFails = 0; videoFailed = false; lastStatus = null; // new link: fresh retries, re-report
       if (!videoEl) videoEl = makeVideoEl();
       if (videoEl.parentNode !== right) { right.innerHTML = ""; right.appendChild(videoEl); }
-      if (!wdTimer) wdTimer = setInterval(videoWatchdog, WD_STEP_MS);
       destroyPlayers();  // clear any previous player before building the new one
+      if (curKind === "bad") { failVideo(curBadReason); return; }
+      if (!wdTimer) wdTimer = setInterval(videoWatchdog, WD_STEP_MS);
       buildActive();
     }).catch(function () {});
   }
