@@ -644,6 +644,23 @@
     return (out.videoId || out.listId || out.channelId) ? out : null;
   }
 
+  // Fire OS decode workaround. The Fire Stick's WebView plays newer uploads and
+  // live streams with sound but paints the video area white, while older uploads
+  // render fine — the difference is the codec YouTube serves. Newer/live content
+  // is VP9/AV1; older content still carries an H.264 rendition, which is what this
+  // WebView can actually composite. Lower resolutions are far likelier to have an
+  // H.264 rendition, so `?vq=medium` on the TV's start URL asks for one.
+  // Values: small (240p) · medium (360p) · large (480p) · hd720. Desktop browsers
+  // don't need it — leave the param off there and quality stays automatic.
+  var VQ = (function () {
+    var v = qp("vq") || "";
+    return /^(small|medium|large|hd720|hd1080|default)$/.test(v) ? v : "";
+  })();
+  function applyVQ(p) {
+    if (!VQ || !p) return;
+    try { if (p.setPlaybackQuality) p.setPlaybackQuality(VQ); } catch (e) {}
+  }
+
   // Serialize player vars for an iframe src (the live_stream embed below is built
   // as a real iframe, so the API can't apply playerVars for us).
   function ytQuery(vars) {
@@ -775,11 +792,13 @@
         onReady: function (e) {
           ytPlayerReady = true;
           try { if (curSound) e.target.unMute(); else e.target.mute(); } catch (x) {}
+          applyVQ(e.target);
           try { e.target.playVideo(); } catch (x) {}
         },
         onStateChange: function (e) {
           var S = global.YT.PlayerState;
-          if (e.data === S.PLAYING) { ytEverPlayed = true; buildFails = 0; reportVideoStatus(true, ""); return; }
+          // Re-assert quality on every start: YouTube renegotiates upward on its own.
+          if (e.data === S.PLAYING) { ytEverPlayed = true; buildFails = 0; applyVQ(ytPlayer); reportVideoStatus(true, ""); return; }
           // Loop a finished video by seeking back to the start; nudge a pause.
           if (e.data === S.ENDED) { try { ytPlayer.seekTo(0, true); } catch (x) {} }
           if (e.data === S.ENDED || e.data === S.PAUSED) { try { ytPlayer.playVideo(); } catch (x) {} }
@@ -891,7 +910,7 @@
     var S = global.YT.PlayerState, st, t;
     try { st = ytPlayer.getPlayerState(); t = ytPlayer.getCurrentTime(); }
     catch (e) { recoverVideo(); return; }
-    if (st === S.PLAYING) ytEverPlayed = true;
+    if (st === S.PLAYING) { ytEverPlayed = true; applyVQ(ytPlayer); } // ABR climbs back up; hold it down
     if (st === S.PLAYING || st === S.BUFFERING) {
       if (typeof t === "number" && Math.abs(t - wdLastTime) < 0.2) wdStuck += WD_STEP_MS; else wdStuck = 0;
       wdLastTime = (typeof t === "number") ? t : wdLastTime;

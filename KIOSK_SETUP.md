@@ -113,19 +113,43 @@ The board now detects this and prints the reason in the panel instead of sitting
 blank, **and reports it back to `config.html`** — so you see “⚠ The TV couldn't
 play this: …” on your phone, under the link box, without walking to the TV.
 
-**2. A truly blank/white rectangle with only audio.** No title, no buttons — just
-white. That's the Fire OS WebView failing to render the video surface. Try, in
-order:
+**2. The video plays — you can hear it — but its area is white.** This is the
+Fire Stick one, and the tell is that **sound works** and **older videos on the
+same stick are fine**. It's a **codec** problem, not a link problem:
 
-1. **Fully Kiosk → Settings → Web Content Settings** — turn on **Enable
-   Hardware Acceleration** and (if present) **Enable Video Hardware Overlays**.
-   Toggling video hardware overlays *off* also fixes it on some Fire OS builds —
-   try both ways.
-2. **Update the WebView.** Fire OS ships an old **Android System WebView**; that
-   is what renders YouTube inside Fully Kiosk. An out-of-date one can't decode
-   what newer uploads and live streams are served as.
-3. If neither helps, switch that source to a **direct `.mp4`** — the native
-   player renders every time.
+- Older uploads still carry an **H.264** rendition, which the Fire OS WebView can
+  decode *and* paint.
+- Newer uploads and live streams are served as **VP9 / AV1**. The WebView decodes
+  the audio happily and leaves the video plane blank — hence sound with a white
+  rectangle.
+
+That's also why the same link plays fine in the **Preview 75″ board** on a
+computer: a desktop browser handles VP9/AV1 without blinking. The link, the board
+and the embed are all fine — only the Fire Stick's decoder is short.
+
+Try these in order:
+
+1. **Ask YouTube for a lower resolution — add `&vq=medium` to the start URL:**
+   `…signage.html?screen=main&vq=medium`
+   Lower resolutions are much likelier to have an H.264 rendition, which is the
+   one this WebView can paint. Try `&vq=large` (480p) first if 360p looks soft,
+   or `&vq=small` (240p) if `medium` still whites out. It re-asserts the cap
+   during playback, since YouTube otherwise climbs back up on its own.
+   **This is the one to try first — it's just a URL change on the Fire Stick.**
+2. **Update the WebView.** Fire OS ships an old **Android System WebView**, and
+   that is what renders YouTube inside Fully Kiosk. A newer one may add the
+   missing codec support. Check for a Fire OS system update.
+3. **Fully Kiosk → Settings → Web Content Settings** — try flipping **hardware
+   acceleration** (there's a toggle for it; try it both ways, since either state
+   fixes it on some builds).
+4. **Use a direct `.mp4`.** Guaranteed — it plays through the native player,
+   never the YouTube embed. This is why `.mp4` is the recommended Fire Stick
+   source.
+
+> **Note:** the board can't *detect* this one. YouTube reports the video as
+> playing — because it is — so `config.html` will show “✓ Playing on the big TV”
+> even while the panel looks white. If you have sound but no picture, it's this,
+> and the reporting can't see it.
 
 **What can't play at all:** the linear **“FailArmy TV” / FAST channels** (Pluto
 TV, Samsung TV Plus, Roku, Freevee) don't expose an embeddable stream. Use the
