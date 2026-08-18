@@ -28,10 +28,24 @@
   function storeHour() { return parseInt(fmt(new Date(), { hour: "2-digit", hourCycle: "h23" }), 10); }
   function dayKey(d) { return fmt(d, { year: "numeric", month: "2-digit", day: "2-digit" }); }
   function isToday(d) { return dayKey(d) === dayKey(new Date()); }
+  function isTomorrow(d) { var t = new Date(); t.setDate(t.getDate() + 1); return dayKey(d) === dayKey(t); }
+  // Parse an event start. All-day events arrive as a date-only string
+  // ("2026-08-23"); `new Date()` reads that as UTC midnight, which shows as the
+  // day before in US timezones — anchor it at local noon so the date is right.
+  function evStart(ev) {
+    var s = ev && ev.start;
+    if (ev && ev.allDay && typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s + "T12:00:00");
+    return new Date(s);
+  }
   function whenLine(ev, d) {
-    var day = isToday(d) ? "Tonight" : fmt(d, { weekday: "short" });
+    // Show the calendar date so a recurring event reads as its NEXT occurrence
+    // (the Worker expands recurring events, so each listed start is a real date).
     var time = ev.allDay ? "All day" : fmt(d, { hour: "numeric", minute: "2-digit" });
-    return day + " · " + time;
+    if (isToday(d)) return "Tonight · " + time;
+    if (isTomorrow(d)) return "Tomorrow, " + fmt(d, { month: "short", day: "numeric" }) + " · " + time;
+    var wk = fmt(d, { weekday: "short" });
+    var date = fmt(d, { month: "short", day: "numeric" }); // e.g. "Aug 22"
+    return wk + ", " + date + " · " + time;
   }
   function statusWord(ev) {
     if (ev.status === "sold-out") return "sold out";
@@ -112,7 +126,7 @@
     if (!events.length) { track.appendChild(emptyCard("No upcoming events", "See the counter for today's schedule.")); host.appendChild(track); return; }
 
     events.forEach(function (ev) {
-      var d = new Date(ev.start);
+      var d = evStart(ev);
       var card = el("div", "sg-ev" + (isToday(d) ? " featured" : ""));
       card.appendChild(el("div", "sg-ev-when", whenLine(ev, d)));
       card.appendChild(el("div", "sg-ev-name", cleanName(ev.name)));
@@ -269,7 +283,7 @@
     var it = items[showcaseIdx % items.length];
     if (it.kind === "fun") { paintFunCard(right, it.text); return; }
     right.style.setProperty("--ev", "#a07bff");
-    var ev = it.ev, d = new Date(ev.start);
+    var ev = it.ev, d = evStart(ev);
     right.innerHTML = "";
     var head = el("div", "sg-r-head");
     head.appendChild(el("div", "sg-r-title", isToday(d) ? "Happening Today" : "Upcoming Event"));
@@ -434,7 +448,7 @@
     right.appendChild(head);
 
     if (match) {
-      right.appendChild(eventCardEls(match, new Date(match.start), match.game));
+      right.appendChild(eventCardEls(match, evStart(match), match.game));
     } else {
       var card = el("div", "sg-r-event");
       card.appendChild(el("div", "sg-re-name", "See the upcoming events"));
@@ -486,7 +500,7 @@
   function tonightRegisterUrl() {
     var soonest = null;
     for (var i = 0; i < lastEvents.length; i++) {
-      if (lastEvents[i].registerUrl) { soonest = lastEvents[i].registerUrl; if (isToday(new Date(lastEvents[i].start))) return lastEvents[i].registerUrl; }
+      if (lastEvents[i].registerUrl) { soonest = lastEvents[i].registerUrl; if (isToday(evStart(lastEvents[i]))) return lastEvents[i].registerUrl; }
     }
     return soonest;
   }
