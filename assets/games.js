@@ -118,6 +118,28 @@
     // 1) tonight's event
     var tonight = el("div"); body.appendChild(tonight); loadTonight(game, tonight);
 
+    // 1b) "Share your photos" — shows only when a link is set in the control
+    // panel (/photoUpload). Customers who scanned a table tag are already on this
+    // page on their phone, so it's a tap, not a QR. Per-game link if one is set,
+    // otherwise the shared link.
+    var photoWrap = el("div"); body.appendChild(photoWrap);
+    if (global.BGF && BGF.fbGet) {
+      BGF.fbGet("photoUpload").then(function (p) {
+        var url = "";
+        if (typeof p === "string") url = p;
+        else if (p && typeof p === "object") url = p[game] || p.all || p.url || "";
+        url = (url || "").trim();
+        if (!url) return;
+        photoWrap.appendChild(sec("Share your photos"));
+        var note = el("p", "hint"); note.style.margin = "0 2px 10px";
+        note.textContent = "Got a great shot tonight? Send it our way — we might feature it.";
+        photoWrap.appendChild(note);
+        var act = el("div", "event-actions");
+        act.appendChild(linkBtn("📸 Share your photos", url, { cls: "primary wide", blank: true }));
+        photoWrap.appendChild(act);
+      }).catch(function () {});
+    }
+
     // 2) pairings app pointer (Magic / One Piece)
     if (G.app) {
       var note = el("div", "notice");

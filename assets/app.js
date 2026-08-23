@@ -549,6 +549,23 @@
       });
     }
 
+    // Share-your-photos link (shown as a button on the game pages) — /photoUpload
+    var photoUrl = document.getElementById("sgPhotoUrl");
+    var photoSave = document.getElementById("sgPhotoSave");
+    if (photoUrl) {
+      fbGet("photoUpload").then(function (u) {
+        photoUrl.value = (typeof u === "string") ? u : (u && (u.all || u.url)) || "";
+      });
+    }
+    if (photoSave && photoUrl) {
+      photoSave.addEventListener("click", function () {
+        var v = (photoUrl.value || "").trim();
+        fbSet("photoUpload", v || null)
+          .then(function () { showToast(v ? "Photo link saved — button is live on the game pages" : "Photo link cleared"); })
+          .catch(function () { showToast("Couldn't save — try again"); });
+      });
+    }
+
     // Featured event (Shopify handle, or blank = auto)
     var featInput = document.getElementById("sgFeatured");
     var featSave = document.getElementById("sgFeaturedSave");
