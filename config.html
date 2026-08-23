@@ -76,10 +76,17 @@
     </div>
 
     <div class="sys-card" style="margin-top:18px">
-      <div class="sys-head"><span class="sys-title">Share-your-photos link <small>appears on every game page</small></span></div>
-      <p class="hint" style="margin:10px 0 12px">Paste an upload link and a <b>📸 Share your photos</b> button shows on the game page customers land on after scanning a table tag. Use a link that needs <b>no account</b> to upload — a <b>OneDrive or Dropbox “file request”</b> works great. Leave blank to hide the button.</p>
-      <input class="field" id="sgPhotoUrl" placeholder="https://…  (OneDrive/Dropbox file request, or an upload form)" style="margin-top:0" />
-      <div class="event-actions"><button class="btn primary" id="sgPhotoSave" type="button">Save photo link</button></div>
+      <div class="sys-head"><span class="sys-title">Share-your-photos links <small>one per game — shows a 📸 button on that game's page</small></span></div>
+      <p class="hint" style="margin:10px 0 12px">Give each game its own upload link so photos land in that game's folder. Use links that need <b>no account</b> to upload — a <b>OneDrive or Dropbox “file request”</b> works great. Leave a game blank to hide its button.</p>
+      <label class="cl-flabel" for="sgPhotoPokemon" style="margin:8px 0 4px;display:block">Pokémon TCG</label>
+      <input class="field" id="sgPhotoPokemon" data-game="pokemon" placeholder="https://…  (file request for Pokémon photos)" style="margin-top:0" />
+      <label class="cl-flabel" for="sgPhotoOnepiece" style="margin:12px 0 4px;display:block">One Piece TCG</label>
+      <input class="field" id="sgPhotoOnepiece" data-game="onepiece" placeholder="https://…  (file request for One Piece photos)" style="margin-top:0" />
+      <label class="cl-flabel" for="sgPhotoRiftbound" style="margin:12px 0 4px;display:block">Riftbound</label>
+      <input class="field" id="sgPhotoRiftbound" data-game="riftbound" placeholder="https://…  (file request for Riftbound photos)" style="margin-top:0" />
+      <label class="cl-flabel" for="sgPhotoMtg" style="margin:12px 0 4px;display:block">Magic: The Gathering</label>
+      <input class="field" id="sgPhotoMtg" data-game="mtg" placeholder="https://…  (file request for Magic photos)" style="margin-top:0" />
+      <div class="event-actions"><button class="btn primary" id="sgPhotoSave" type="button">Save photo links</button></div>
     </div>
 
     </section>

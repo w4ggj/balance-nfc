@@ -549,19 +549,22 @@
       });
     }
 
-    // Share-your-photos link (shown as a button on the game pages) — /photoUpload
-    var photoUrl = document.getElementById("sgPhotoUrl");
+    // Share-your-photos links — one per game. Stored as /photoUpload = { pokemon,
+    // onepiece, riftbound, mtg }; each game page shows a 📸 button to its own link.
     var photoSave = document.getElementById("sgPhotoSave");
-    if (photoUrl) {
+    if (photoSave) {
+      var fields = Array.prototype.slice.call(document.querySelectorAll("[id^='sgPhoto'][data-game]"));
       fbGet("photoUpload").then(function (u) {
-        photoUrl.value = (typeof u === "string") ? u : (u && (u.all || u.url)) || "";
+        // Accept the new per-game object, or an older single string (→ apply to all).
+        var map = (u && typeof u === "object") ? u : {};
+        var shared = (typeof u === "string") ? u : (u && (u.all || u.url)) || "";
+        fields.forEach(function (f) { f.value = (map[f.getAttribute("data-game")] || shared || "").trim(); });
       });
-    }
-    if (photoSave && photoUrl) {
       photoSave.addEventListener("click", function () {
-        var v = (photoUrl.value || "").trim();
-        fbSet("photoUpload", v || null)
-          .then(function () { showToast(v ? "Photo link saved — button is live on the game pages" : "Photo link cleared"); })
+        var out = {};
+        fields.forEach(function (f) { var v = (f.value || "").trim(); if (v) out[f.getAttribute("data-game")] = v; });
+        fbSet("photoUpload", Object.keys(out).length ? out : null)
+          .then(function () { showToast(Object.keys(out).length ? "Photo links saved" : "Photo links cleared"); })
           .catch(function () { showToast("Couldn't save — try again"); });
       });
     }
