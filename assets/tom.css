@@ -61,21 +61,33 @@ body.tom {
 .board { padding: 20px 22px 8px; }
 
 /* ---- Split board: pairings (left) + standings (right), no flipping ---- */
-.board.split { display: flex; gap: 2vw; align-items: flex-start; }
-.board.split .split-col { flex: 1 1 50%; min-width: 0; }
+/* In split mode the page is a fixed-height flex column so each side gets a real
+   bounded height to auto-scroll within (no page overflow on a kiosk). */
+body.tomsplit { display: flex; flex-direction: column; height: 100dvh; min-height: 0; overflow: hidden; }
+body.tomsplit .tom-header, body.tomsplit .tom-foot, body.tomsplit .credit { flex: 0 0 auto; }
+body.tomsplit .board { flex: 1 1 auto; min-height: 0; }
+
+.board.split { display: flex; gap: 2vw; align-items: stretch; min-height: 0; }
+.board.split .split-col { flex: 1 1 50%; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .board.split .split-col.left { flex-basis: 52%; }   /* pairings a touch wider */
 .split-h {
+  flex: 0 0 auto;
   font-size: clamp(13px, 1.3vw, 20px); text-transform: uppercase; letter-spacing: .14em;
   font-weight: 800; color: var(--muted); margin: 0 0 12px; padding-bottom: 8px;
   border-bottom: 1px solid var(--line);
 }
+/* Each column is a viewport; its content (.sections) is translated up/down to
+   auto-scroll when it's taller than the column. */
+.board.split .split-board { flex: 1 1 auto; min-height: 0; overflow: hidden; position: relative; }
+.board.split .split-board > .sections { will-change: transform; }
 /* Inside a half-width column, stack divisions/groups vertically and keep pairings
    to a single column so names don't get squeezed. */
 .board.split .sections { flex-direction: column; flex-wrap: nowrap; gap: 14px; align-items: stretch; }
-.board.split .section { flex: 1 1 auto; min-width: 0; }
+.board.split .section { flex: 0 0 auto; min-width: 0; }
 .board.split .pcols.two { grid-template-columns: 1fr; }
 .board.split .pcols.two .pcol + .pcol { border-left: none; }
-.board.split .scroller { max-height: 78vh; }
+/* Let standings flow full-length; the column viewport handles the scrolling. */
+.board.split .scroller { max-height: none; overflow: visible; }
 
 /* ---- Side-by-side sections (divisions / groups) ---- */
 .sections { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }

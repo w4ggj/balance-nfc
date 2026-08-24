@@ -391,8 +391,41 @@
     if (!snap || !snap.meta) return false;
     return (Date.now() - (snap.meta.updatedMs || 0)) < LIVE_WINDOW_MS;
   }
+  // Auto-scroll each split column when its content is taller than the column.
+  // A generation counter supersedes old loops on the next rebuild (no leaks).
+  var scrollGen = 0, lastSplitMs = -1;
+  function stopAutoScroll() { scrollGen++; }
+  function startAutoScroll(root) {
+    scrollGen++; var myGen = scrollGen;
+    Array.prototype.forEach.call(root.querySelectorAll(".split-board"), function (vp) {
+      var content = vp.firstElementChild;
+      if (!content) return;
+      content.style.transform = "translateY(0)";
+      var overflow = content.scrollHeight - vp.clientHeight;
+      if (overflow <= 4) return;                 // fits — no scroll needed
+      var pos = 0, dir = 1, pause = 110;          // ~1.8s pause at each end
+      function step() {
+        if (myGen !== scrollGen) return;          // superseded by a rebuild
+        if (pause > 0) { pause--; }
+        else {
+          pos += dir * 0.5;                        // ~30 px/s
+          if (pos >= overflow) { pos = overflow; dir = -1; pause = 140; }
+          else if (pos <= 0) { pos = 0; dir = 1; pause = 140; }
+        }
+        content.style.transform = "translateY(" + (-pos) + "px)";
+        requestAnimationFrame(step);
+      }
+      step();
+    });
+  }
+
   function renderSplit(snap) {
     var host = document.getElementById("board");
+    var ms = (snap && snap.meta && snap.meta.updatedMs) || 0;
+    var haveShell = !!host.querySelector(".split-col.left .split-board");
+    if (haveShell && ms === lastSplitMs) return;  // unchanged — keep auto-scroll running
+    lastSplitMs = ms;
+    document.body.classList.add("tomsplit");
     fillHeader(document.getElementById("hdr"), snap, "Round");
     fillFooter(document.getElementById("foot"), snap);
     var lb = host.querySelector(".split-col.left .split-board");
@@ -405,12 +438,19 @@
     }
     renderPairings(snap, lb);
     renderStandings(snap, rb);
+    requestAnimationFrame(function () { startAutoScroll(host); });
+  }
+
+  function leaveSplit() {
+    document.body.classList.remove("tomsplit");
+    document.getElementById("board").classList.remove("split");
+    stopAutoScroll(); lastSplitMs = -1;
   }
 
   function initBoardSplit() {
     function draw() {
       fetchSnapshot().then(function (snap) {
-        if (!isFresh(snap)) { document.getElementById("board").classList.remove("split"); renderIdle(); return; }
+        if (!isFresh(snap)) { leaveSplit(); renderIdle(); return; }
         renderSplit(snap);
       });
     }
@@ -427,8 +467,8 @@
     var demo = qp("demo") != null;
     function clear() {
       document.body.classList.remove("showing");
+      leaveSplit();
       var hd = document.getElementById("hdr"), bd = document.getElementById("board"), ft = document.getElementById("foot");
-      if (bd) bd.classList.remove("split");
       if (hd) hd.innerHTML = ""; if (ft) ft.innerHTML = ""; if (bd) bd.innerHTML = "";
     }
     function draw() {
