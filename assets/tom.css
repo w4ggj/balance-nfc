@@ -89,6 +89,16 @@ body.tomsplit .board { flex: 1 1 auto; min-height: 0; }
 /* Let standings flow full-length; the column viewport handles the scrolling. */
 .board.split .scroller { max-height: none; overflow: visible; }
 
+/* Smaller, tighter type on the split board so more fits before it scrolls. */
+.board.split .section > .stitle { padding-top: 12px; padding-bottom: 12px; }
+.board.split .section > .stitle .t { font-size: clamp(15px, 1.5vw, 21px); }
+.board.split .srow { font-size: clamp(12px, 1.05vw, 15px); padding: 5px 14px; }
+.board.split .srow.head { font-size: 10px; }
+.board.split .prow { padding: 6px 14px; grid-template-columns: 44px 1fr 20px; gap: 8px; }
+.board.split .tbadge { font-size: 15px; padding: 6px 0; }
+.board.split .pl .pn { font-size: clamp(13px, 1.1vw, 16px); }
+.board.split .pl .pr { font-size: 11px; }
+
 /* ---- Side-by-side sections (divisions / groups) ---- */
 .sections { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
 .section {
