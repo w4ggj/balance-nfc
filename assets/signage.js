@@ -992,6 +992,10 @@
   // the rotating pairings ↔ standings). Commander/Swiss keep their in-panel
   // standings (handled by loadRight), so this is scoped to Pokémon only.
   var tvOvEl = null, tvOvFrame = null, tvOvSrc = "";
+  // Stable per page-load cache-buster so a reload picks up a new board.html,
+  // but the src stays constant across polls (no reload loop). Refreshes on the
+  // page's hourly self-reload.
+  var tvCb = String(Date.now());
   function ensureTvOverlay() {
     if (tvOvEl) return;
     tvOvEl = document.createElement("div");
@@ -1020,8 +1024,8 @@
       if (on && active === "pokemon" && BGF.latestLiveTournament) {
         BGF.latestLiveTournament().then(function (live) {
           // Carry a rotate param through so a portrait-mounted TV still reads right.
-          var q = location.search || "";
-          applyTvOverlay(live ? ("board.html" + q) : "");
+          var q = location.search ? ("&" + location.search.slice(1)) : "";
+          applyTvOverlay(live ? ("board.html?t=" + tvCb + q) : "");
         }).catch(function () { applyTvOverlay(""); });
       } else {
         applyTvOverlay("");

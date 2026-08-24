@@ -385,30 +385,33 @@
 
   // ---- Split board -----------------------------------------------------
   // Pairings (left) and standings (right) on screen at once — no flipping.
-  // One shared header/footer; each side refreshes in place every poll.
-  function initBoardSplit() {
-    var demo = qp("demo") != null;
-    function fresh(snap) {
-      if (demo) return true;
-      if (!snap || !snap.meta) return false;
-      return (Date.now() - (snap.meta.updatedMs || 0)) < LIVE_WINDOW_MS;
+  // Shared by board.html (initBoardSplit) and overlay.html (initOverlay).
+  function isFresh(snap) {
+    if (qp("demo") != null) return true;
+    if (!snap || !snap.meta) return false;
+    return (Date.now() - (snap.meta.updatedMs || 0)) < LIVE_WINDOW_MS;
+  }
+  function renderSplit(snap) {
+    var host = document.getElementById("board");
+    fillHeader(document.getElementById("hdr"), snap, "Round");
+    fillFooter(document.getElementById("foot"), snap);
+    var lb = host.querySelector(".split-col.left .split-board");
+    var rb = host.querySelector(".split-col.right .split-board");
+    if (!lb || !rb) {                       // build the two-column shell once
+      host.classList.add("split"); host.innerHTML = "";
+      var L = h("div", "split-col left"); L.appendChild(h("div", "split-h", "Pairings")); lb = h("div", "split-board"); L.appendChild(lb);
+      var R = h("div", "split-col right"); R.appendChild(h("div", "split-h", "Standings")); rb = h("div", "split-board"); R.appendChild(rb);
+      host.appendChild(L); host.appendChild(R);
     }
+    renderPairings(snap, lb);
+    renderStandings(snap, rb);
+  }
+
+  function initBoardSplit() {
     function draw() {
-      var host = document.getElementById("board");
-      var hdr = document.getElementById("hdr"), foot = document.getElementById("foot");
       fetchSnapshot().then(function (snap) {
-        if (!fresh(snap)) { host.classList.remove("split"); renderIdle(); return; }
-        fillHeader(hdr, snap, "Round"); fillFooter(foot, snap);
-        var lb = host.querySelector(".split-col.left .split-board");
-        var rb = host.querySelector(".split-col.right .split-board");
-        if (!lb || !rb) {                       // build the two-column shell once
-          host.classList.add("split"); host.innerHTML = "";
-          var L = h("div", "split-col left"); L.appendChild(h("div", "split-h", "Pairings")); lb = h("div", "split-board"); L.appendChild(lb);
-          var R = h("div", "split-col right"); R.appendChild(h("div", "split-h", "Standings")); rb = h("div", "split-board"); R.appendChild(rb);
-          host.appendChild(L); host.appendChild(R);
-        }
-        renderPairings(snap, lb);
-        renderStandings(snap, rb);
+        if (!isFresh(snap)) { document.getElementById("board").classList.remove("split"); renderIdle(); return; }
+        renderSplit(snap);
       });
     }
     draw();
@@ -417,23 +420,15 @@
 
   // ---- Overlay for DakBoard (transparent when off) ---------------------
   // Embedded as a full-screen Web Frame ON TOP of the store's DakBoard design.
-  // Shows the rotating board only when the staff toggle (/display/board) is on
-  // AND a tournament is live; otherwise the page is fully transparent so the
+  // Shows the split board only when the staff toggle (/display/board) is on AND
+  // a tournament is live; otherwise the page is fully transparent so the
   // DakBoard design shows through. Instant switch, no DakBoard API.
   function initOverlay() {
-    var secs = parseInt(qp("rotate"), 10); if (!secs || secs < 5) secs = 20;
     var demo = qp("demo") != null;
-    var views = [renderPairings, renderStandings];
-    var idx = 0;
-
-    function fresh(snap) {
-      if (demo) return true;
-      if (!snap || !snap.meta) return false;
-      return (Date.now() - (snap.meta.updatedMs || 0)) < LIVE_WINDOW_MS;
-    }
     function clear() {
       document.body.classList.remove("showing");
       var hd = document.getElementById("hdr"), bd = document.getElementById("board"), ft = document.getElementById("foot");
+      if (bd) bd.classList.remove("split");
       if (hd) hd.innerHTML = ""; if (ft) ft.innerHTML = ""; if (bd) bd.innerHTML = "";
     }
     function draw() {
@@ -441,15 +436,14 @@
       wanted.then(function (on) {
         if (on !== true) { clear(); return; }
         fetchSnapshot().then(function (snap) {
-          if (!fresh(snap)) { clear(); return; }   // armed, but nothing live yet → stay see-through
+          if (!isFresh(snap)) { clear(); return; }   // armed, but nothing live yet → stay see-through
           document.body.classList.add("showing");
-          views[idx](snap);
+          renderSplit(snap);
         });
       });
     }
     draw();
     setInterval(draw, POLL_MS);
-    setInterval(function () { idx = (idx + 1) % views.length; draw(); }, secs * 1000);
   }
 
   // ---- public inits ----------------------------------------------------

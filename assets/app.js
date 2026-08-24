@@ -608,16 +608,20 @@
     var demo = new URLSearchParams(location.search).get("demo") != null;
     var passQuery = location.search || "";
     var current = null;
+    // Stable per page-load cache-buster so a reload picks up new board pages,
+    // while the src stays constant across polls (no reload loop).
+    var cb = "cb=" + Date.now();
+    function withCb(u) { return u + (u.indexOf("?") === -1 ? "?" : "&") + cb; }
 
     // Choose the fullscreen page for an active event (null = hide the overlay).
     function targetFor(active, live) {
       switch (active) {
-        case "commander-league": return "commander-board.html";
-        case "tournament":       return "swiss-board.html" + passQuery;
-        case "pokemon":          return (live ? "board.html" + passQuery : "event-tv.html?game=pokemon");
-        case "onepiece":         return "event-tv.html?game=onepiece";
-        case "riftbound":        return "event-tv.html?game=riftbound";
-        case "mtg":              return "event-tv.html?game=mtg";
+        case "commander-league": return withCb("commander-board.html");
+        case "tournament":       return withCb("swiss-board.html" + passQuery);
+        case "pokemon":          return withCb(live ? ("board.html" + passQuery) : "event-tv.html?game=pokemon");
+        case "onepiece":         return withCb("event-tv.html?game=onepiece");
+        case "riftbound":        return withCb("event-tv.html?game=riftbound");
+        case "mtg":              return withCb("event-tv.html?game=mtg");
         default:                 return null; // main / unknown
       }
     }
