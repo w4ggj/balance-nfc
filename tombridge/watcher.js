@@ -27,26 +27,47 @@ const SUFFIXES = {
   rosterHtml: 'roster.html',
 };
 
-function latestBySuffix(dir, suffix) {
-  let best = null, bestM = -1;
-  let entries;
-  try { entries = fs.readdirSync(dir); } catch { return null; }
-  for (const f of entries) {
-    if (!f.toLowerCase().endsWith(suffix)) continue;
-    // avoid matchrecord.html matching "record.html"? suffixes are distinct here; guard match_slips
-    const full = path.join(dir, f);
-    let m;
-    try { m = fs.statSync(full).mtimeMs; } catch { continue; }
-    if (m > bestM) { bestM = m; best = full; }
-  }
-  return best;
-}
+// Collect all reports for ONE tournament — the current (newest) event.
+//
+// TOM prefixes every report with the tournament name (e.g.
+// "Pitch_Black_Prereleasestandings.html"). Picking the newest file of each type
+// INDEPENDENTLY is wrong: a brand-new event has pairings/details but no
+// standings yet, so the newest standings.html is the PREVIOUS event's, and it
+// gets stapled onto the new event's snapshot (stale standings in round 1).
+//
+// Instead: find the newest "anchor" report (one a live event always has), take
+// its tournament-name prefix, and read only the reports that share that prefix.
+// A report the current event hasn't produced yet stays null — so the board
+// shows "Waiting for standings…" instead of a prior event's numbers.
+function statMs(f) { try { return fs.statSync(path.join(REPORTS_DIR, f)).mtimeMs; } catch { return -1; } }
 
 function collectReports() {
+  let entries;
+  try { entries = fs.readdirSync(REPORTS_DIR); } catch { entries = []; }
+  const lower = entries.map(f => f.toLowerCase());
+
+  // Anchor = newest file among the types a running event always writes.
+  const anchorSuffixes = [SUFFIXES.pairingsHtml, SUFFIXES.detailsHtml, SUFFIXES.standingsHtml, SUFFIXES.rosterHtml];
+  let prefix = null, anchorM = -1;
+  entries.forEach((f, i) => {
+    const suf = anchorSuffixes.find(s => lower[i].endsWith(s));
+    if (!suf) return;
+    const m = statMs(f);
+    if (m > anchorM) { anchorM = m; prefix = lower[i].slice(0, lower[i].length - suf.length); }
+  });
+  if (prefix == null) return { detailsHtml: null, standingsHtml: null, pairingsHtml: null, rosterHtml: null };
+
+  // For each type, take the same-prefix file (newest if TOM left duplicates).
   const out = {};
   for (const [key, suffix] of Object.entries(SUFFIXES)) {
-    const file = latestBySuffix(REPORTS_DIR, suffix);
-    out[key] = file ? fs.readFileSync(file, 'utf8') : null;
+    let best = null, bestM = -1;
+    entries.forEach((f, i) => {
+      if (!lower[i].endsWith(suffix)) return;
+      if (lower[i].slice(0, lower[i].length - suffix.length) !== prefix) return; // different tournament
+      const m = statMs(f);
+      if (m > bestM) { bestM = m; best = f; }
+    });
+    out[key] = best ? fs.readFileSync(path.join(REPORTS_DIR, best), 'utf8') : null;
   }
   return out;
 }
