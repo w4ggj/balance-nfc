@@ -215,3 +215,28 @@ body.overlay.showing { background: var(--bg); }
 .credit { text-align: center; color: var(--muted); font-size: 11px; padding: 4px 0 16px; opacity: .85; }
 .credit a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
 @media (hover: hover) { .credit a:hover { color: var(--text); } }
+
+/* ---- Phone layout: standings/pairings pages opened from an NFC tap ----
+   Placed at the end so it overrides the wall grids at equal specificity. */
+@media (max-width: 560px) {
+  .board { padding: 12px 10px; }
+  .tom-header { padding: 12px 14px; gap: 12px; }
+  .tom-header .logo { height: 38px; }
+  .sections { gap: 12px; }
+  .section { min-width: 0; flex-basis: auto; }
+  .scroller { max-height: none; overflow: visible; }   /* let the page scroll, not clip */
+
+  /* Standings: compact 4 columns (#, Player, Record, Pts); drop the % tiebreakers
+     so the name has room and never stacks one letter per line. */
+  .srow { grid-template-columns: 26px minmax(0, 1fr) auto auto; gap: 8px; padding: 11px 12px; font-size: 15px; }
+  .srow .nm { font-size: 15px; }
+  .srow .pt { font-size: 16px; }
+  .srow .rec { font-size: 13px; }
+  .srow .om, .srow .oom { display: none; }
+
+  /* Pairings: stack the two players so long names get the full width. */
+  .prow { grid-template-columns: 40px 1fr 16px; padding: 10px 12px; gap: 8px; }
+  .pmatch { grid-template-columns: 1fr; gap: 3px; }
+  .pl.right { text-align: left; }
+  .vsep { justify-self: start; padding: 1px 0; }
+}
