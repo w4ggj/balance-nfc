@@ -986,6 +986,49 @@
     }).catch(function () {});
   }
 
+  // ---- Live tournament overlay (Pokémon / TOM) -------------------------
+  // When the "Live event on TV" toggle (display/board) is on AND a Pokémon TOM
+  // tournament is live, overlay the full-screen tournament board (board.html —
+  // the rotating pairings ↔ standings). Commander/Swiss keep their in-panel
+  // standings (handled by loadRight), so this is scoped to Pokémon only.
+  var tvOvEl = null, tvOvFrame = null, tvOvSrc = "";
+  function ensureTvOverlay() {
+    if (tvOvEl) return;
+    tvOvEl = document.createElement("div");
+    tvOvEl.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#0b0d12;display:none;z-index:9500;";
+    tvOvFrame = document.createElement("iframe");
+    tvOvFrame.setAttribute("scrolling", "no");
+    tvOvFrame.setAttribute("title", "Live tournament board");
+    tvOvFrame.style.cssText = "width:100%;height:100%;border:0;display:block;";
+    tvOvEl.appendChild(tvOvFrame);
+    document.body.appendChild(tvOvEl);
+  }
+  function applyTvOverlay(src) {
+    ensureTvOverlay();
+    if (!src) {
+      if (tvOvSrc) { tvOvSrc = ""; tvOvFrame.src = "about:blank"; tvOvEl.style.display = "none"; }
+      return;
+    }
+    tvOvEl.style.display = "block";
+    if (src !== tvOvSrc) { tvOvSrc = src; tvOvFrame.src = src; }
+  }
+  function loadTourneyOverlay() {
+    if (!global.BGF) return;
+    Promise.all([BGF.fbGet("display/board"), BGF.getConfig()]).then(function (r) {
+      var on = r[0] === true;
+      var active = (r[1] && r[1].active) || "main";
+      if (on && active === "pokemon" && BGF.latestLiveTournament) {
+        BGF.latestLiveTournament().then(function (live) {
+          // Carry a rotate param through so a portrait-mounted TV still reads right.
+          var q = location.search || "";
+          applyTvOverlay(live ? ("board.html" + q) : "");
+        }).catch(function () { applyTvOverlay(""); });
+      } else {
+        applyTvOverlay("");
+      }
+    }).catch(function () {});
+  }
+
   // ---- init ------------------------------------------------------------
   function init() {
     var screen = (qp("screen") === "entrance") ? "entrance" : "main";
@@ -1009,6 +1052,8 @@
       loadPresent(); setInterval(loadPresent, 1500);
       // Video mode: a YouTube background overlays the board when turned on.
       loadVideo(); setInterval(loadVideo, 1500);
+      // Live Pokémon tournament: overlay the TOM pairings/standings board.
+      loadTourneyOverlay(); setInterval(loadTourneyOverlay, 5000);
     }
 
     // Unattended signage: reload hourly with a cache-buster so future updates
