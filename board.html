@@ -7,18 +7,17 @@
   <meta name="theme-color" content="#0b0d10" />
   <meta name="robots" content="noindex" />
   <link rel="icon" type="image/png" href="assets/logo.png" />
-  <link rel="stylesheet" href="assets/tom.css" />
+  <script>document.write('<link rel="stylesheet" href="assets/tom.css?t=' + Date.now() + '">');</script>
 </head>
 <body class="tom wall">
-  <!-- Auto-rotating pairings ↔ standings for DakBoard / wall signage.
-       ?rotate=N sets seconds per view (default 20). ?demo=1 previews the sample. -->
+  <!-- Split board: pairings (left) + standings (right) on screen at once, no
+       flipping. ?demo=1 previews the sample. -->
   <header class="tom-header" id="hdr"></header>
   <main class="board" id="board"></main>
   <footer class="tom-foot" id="foot"></footer>
   <p class="credit">Designed by <a href="https://tavaone.com" target="_blank" rel="noopener">Tava One LLC</a></p>
 
-  <script src="assets/app.js"></script>
-  <script src="assets/tom.js"></script>
-  <script>TOM.initBoard();</script>
+  <script>(function () { var t = Date.now(); ["assets/app.js", "assets/tom.js"].forEach(function (s) { document.write('<scr' + 'ipt src="' + s + '?t=' + t + '"><\/scr' + 'ipt>'); }); })();</script>
+  <script>TOM.initBoardSplit();</script>
 </body>
 </html>

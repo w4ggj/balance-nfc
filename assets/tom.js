@@ -97,9 +97,10 @@
   function recText(rec) { return (rec && (rec.text || ((rec.w != null) ? (rec.w + "/" + rec.l + "/" + rec.t + " (" + rec.points + ")") : ""))) || ""; }
 
   // ---- Pairings board --------------------------------------------------
-  function renderPairings(snap) {
-    var hdr = document.getElementById("hdr"), board = document.getElementById("board"), foot = document.getElementById("foot");
-    fillHeader(hdr, snap, "Round"); fillFooter(foot, snap);
+  function renderPairings(snap, boardEl) {
+    var board = boardEl || document.getElementById("board");
+    // In split mode the caller owns the shared header/footer — don't touch them.
+    if (!boardEl) { fillHeader(document.getElementById("hdr"), snap, "Round"); fillFooter(document.getElementById("foot"), snap); }
     board.innerHTML = "";
     var groups = snap && snap.pairings && snap.pairings.groups;
     if (!groups || !Object.keys(groups).length) { board.appendChild(emptyState("Waiting for pairings…", "Pairings will appear here when TOM posts the round.")); return; }
@@ -171,9 +172,9 @@
   }
 
   // ---- Standings board -------------------------------------------------
-  function renderStandings(snap) {
-    var hdr = document.getElementById("hdr"), board = document.getElementById("board"), foot = document.getElementById("foot");
-    fillHeader(hdr, snap, "After rd"); fillFooter(foot, snap);
+  function renderStandings(snap, boardEl) {
+    var board = boardEl || document.getElementById("board");
+    if (!boardEl) { fillHeader(document.getElementById("hdr"), snap, "After rd"); fillFooter(document.getElementById("foot"), snap); }
     board.innerHTML = "";
     var st = snap && snap.standings;
     if (!st || !Object.keys(st).length) { board.appendChild(emptyState("Waiting for standings…", "Standings appear here after each round is posted.")); return; }
@@ -382,6 +383,38 @@
     setInterval(function () { idx = (idx + 1) % views.length; draw(); }, secs * 1000);
   }
 
+  // ---- Split board -----------------------------------------------------
+  // Pairings (left) and standings (right) on screen at once — no flipping.
+  // One shared header/footer; each side refreshes in place every poll.
+  function initBoardSplit() {
+    var demo = qp("demo") != null;
+    function fresh(snap) {
+      if (demo) return true;
+      if (!snap || !snap.meta) return false;
+      return (Date.now() - (snap.meta.updatedMs || 0)) < LIVE_WINDOW_MS;
+    }
+    function draw() {
+      var host = document.getElementById("board");
+      var hdr = document.getElementById("hdr"), foot = document.getElementById("foot");
+      fetchSnapshot().then(function (snap) {
+        if (!fresh(snap)) { host.classList.remove("split"); renderIdle(); return; }
+        fillHeader(hdr, snap, "Round"); fillFooter(foot, snap);
+        var lb = host.querySelector(".split-col.left .split-board");
+        var rb = host.querySelector(".split-col.right .split-board");
+        if (!lb || !rb) {                       // build the two-column shell once
+          host.classList.add("split"); host.innerHTML = "";
+          var L = h("div", "split-col left"); L.appendChild(h("div", "split-h", "Pairings")); lb = h("div", "split-board"); L.appendChild(lb);
+          var R = h("div", "split-col right"); R.appendChild(h("div", "split-h", "Standings")); rb = h("div", "split-board"); R.appendChild(rb);
+          host.appendChild(L); host.appendChild(R);
+        }
+        renderPairings(snap, lb);
+        renderStandings(snap, rb);
+      });
+    }
+    draw();
+    setInterval(draw, POLL_MS);
+  }
+
   // ---- Overlay for DakBoard (transparent when off) ---------------------
   // Embedded as a full-screen Web Frame ON TOP of the store's DakBoard design.
   // Shows the rotating board only when the staff toggle (/display/board) is on
@@ -427,7 +460,7 @@
   global.TOM = {
     TAG_TO_TABLE: TAG_TO_TABLE, LIVE_WINDOW_MS: LIVE_WINDOW_MS,
     initPairings: initPairings, initStandings: initStandings, initTable: initTable,
-    initBoard: initBoard, initOverlay: initOverlay, loadLatest: loadLatest
+    initBoard: initBoard, initBoardSplit: initBoardSplit, initOverlay: initOverlay, loadLatest: loadLatest
   };
   if (typeof module !== "undefined" && module.exports) module.exports = global.TOM;
 
