@@ -18,6 +18,11 @@
   <p class="credit">Designed by <a href="https://tavaone.com" target="_blank" rel="noopener">Tava One LLC</a></p>
 
   <script>(function () { var t = Date.now(); ["assets/app.js", "assets/tom.js"].forEach(function (s) { document.write('<scr' + 'ipt src="' + s + '?t=' + t + '"><\/scr' + 'ipt>'); }); })();</script>
-  <script>TOM.initBoardSplit();</script>
+  <script>
+    TOM.initBoardSplit();
+    // Unattended kiosk: reload hourly so it re-picks the latest event and pulls
+    // any code updates without anyone touching the stick.
+    setTimeout(function () { try { location.reload(); } catch (e) {} }, 60 * 60 * 1000);
+  </script>
 </body>
 </html>

@@ -25,19 +25,33 @@
   // Otherwise pick the most recently updated tournament under /tournaments.
   var resolvedPath = null;
 
-  function loadLatest() {
+  // Fetch ONLY the latest tournament, not the whole /tournaments pile — a weak
+  // kiosk (Fire Stick) can time out reading every past event at once. Get a tiny
+  // shallow list of keys, pick the newest TOM id (sanctioning numbers increase
+  // over time), then read just that one snapshot. Falls back to the old full
+  // scan if the shallow read or id-pick doesn't pan out.
+  function fullScanLatest() {
     return BGF.fbGet("tournaments").then(function (all) {
       if (!all) return null;
       var bestKey = null, best = null;
       Object.keys(all).forEach(function (k) {
         var t = all[k];
-        if (t && t.meta) {
-          if (!best || (t.meta.updatedMs || 0) > (best.meta.updatedMs || 0)) { best = t; bestKey = k; }
-        }
+        if (t && t.meta && (!best || (t.meta.updatedMs || 0) > (best.meta.updatedMs || 0))) { best = t; bestKey = k; }
       });
       if (bestKey) resolvedPath = "tournaments/" + bestKey;
       return best;
     });
+  }
+  function loadLatest() {
+    if (!BGF.fbShallow) return fullScanLatest();
+    return BGF.fbShallow("tournaments").then(function (keys) {
+      var ks = keys ? Object.keys(keys) : [];
+      var tom = ks.filter(function (k) { return /^\d{2}-\d{2}-\d+$/.test(k); }).sort();
+      if (!tom.length) return fullScanLatest();
+      var latest = tom[tom.length - 1];
+      resolvedPath = "tournaments/" + latest;
+      return BGF.fbGet(resolvedPath);
+    }).catch(function () { return fullScanLatest(); });
   }
 
   function fetchSnapshot() {

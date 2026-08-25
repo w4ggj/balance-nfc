@@ -121,6 +121,13 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .catch(function () { return null; });
   }
+  // Shallow read: returns just the child keys ({key:true,...}), not their data —
+  // a tiny request even when a node holds many large children.
+  function fbShallow(path) {
+    return fetch(dbBase() + path + ".json?shallow=true", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+  }
   function fbSet(path, value) {
     return fetch(dbBase() + path + ".json", {
       method: "PUT",
@@ -587,7 +594,7 @@
   window.BGF = {
     EVENTS: EVENTS, LABELS: LABELS, COLORS: COLORS, MAX_TABLES: MAX_TABLES, BOARD_API: BOARD_API,
     getTable: getTable, getConfig: getConfig, setActive: setActive,
-    fbGet: fbGet, fbSet: fbSet, fbUpdate: fbUpdate,
+    fbGet: fbGet, fbShallow: fbShallow, fbSet: fbSet, fbUpdate: fbUpdate,
     routeHome: routeHome, initEvent: initEvent, initConfig: initConfig,
     initBigScreen: initBigScreen, latestLiveTournament: latestLiveTournament,
     initDisplay: initDisplay, mountEventOverlay: mountEventOverlay, initSignage: initSignage
