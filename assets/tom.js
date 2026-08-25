@@ -403,7 +403,13 @@
   function isFresh(snap) {
     if (qp("demo") != null) return true;
     if (!snap || !snap.meta) return false;
-    return (Date.now() - (snap.meta.updatedMs || 0)) < LIVE_WINDOW_MS;
+    // Show whenever there's real tournament content. We deliberately do NOT gate
+    // on the device clock — a wrong kiosk clock was false-idling LIVE events
+    // (the board judged fresh data as "too old"). loadLatest already returns only
+    // the newest event, so content-present == show it.
+    var hasPairings = snap.pairings && snap.pairings.groups && Object.keys(snap.pairings.groups).length > 0;
+    var hasStandings = snap.standings && Object.keys(snap.standings).length > 0;
+    return !!(hasPairings || hasStandings);
   }
   // Auto-scroll each split column when its content is taller than the column.
   // A generation counter supersedes old loops on the next rebuild (no leaks).
