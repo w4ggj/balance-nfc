@@ -1065,7 +1065,7 @@
     setTimeout(function () {
       try { var u = new URL(location.href); u.searchParams.set("t", String(Date.now())); location.replace(u.toString()); }
       catch (e) { location.reload(); }
-    }, 60 * 60 * 1000);
+    }, 20 * 60 * 1000);  // every ~20 min: frees Chromium memory on low-RAM kiosks (512MB Pi, Fire Stick)
   }
 
   global.Signage = { init: init };

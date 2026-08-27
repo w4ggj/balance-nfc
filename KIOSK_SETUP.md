@@ -24,8 +24,9 @@ work — pick per screen:
 > These are plain pages on GitHub Pages. Anything like `…workers.dev/display/TOKEN`
 > is a **different project** — not this system — and will show a blank screen.
 
-The page already self-reloads hourly with a cache-buster, so once a device is
-running it keeps itself current with no maintenance.
+The page already self-reloads every ~20 minutes with a cache-buster, so once a
+device is running it keeps itself current (and frees browser memory) with no
+maintenance.
 
 ---
 
@@ -374,3 +375,62 @@ curl -sI https://nfc.balancegamingfl.com/signage.html | head -1   # page reachab
 To see the page's own state, open either URL in a normal desktop browser —
 it renders identically there, so if it looks right on a laptop the issue is
 the Pi/display, not the page.
+
+---
+
+## Keeping the screens up 24/7 (stability)
+
+The boards self-reload **every ~20 minutes** (cache-busted), which frees browser
+memory before it builds up. That helps low-RAM devices, but the two cheapest
+options still have hard limits — here's how to squeeze the most out of each, and
+when to just upgrade.
+
+> **The real fix for constant crashes/reboots is more RAM.** A **Fire Stick** and
+> a **512 MB Pi (Zero / Zero 2 W)** are at their ceiling running a browser all
+> day. A **Pi 4 (2 GB+)**, a **mini PC (~$120)**, or an **Onn/Google TV 4K box
+> (~$30–50)** running Chrome/Fully Kiosk is set-and-forget. If a screen keeps
+> dying, that upgrade ends it for good — the tips below only stretch weak hardware.
+
+### Fire TV Stick keeps dropping to the Fire TV home screen
+Fully Kiosk is being backgrounded or killed (usually low memory). In **Fully
+Kiosk → Settings**, turn on:
+- **Kiosk Mode** → ON
+- **Device Management → Restart on Crash / Auto-Restart** → ON (relaunches if it dies)
+- **Advanced Web / Kiosk → Keep in Foreground / Bring to Front** → ON (snaps back
+  if the home screen appears)
+- **Web Content Settings → Reload on Screen On / low memory** if present
+- **Fire TV → Settings → Display & Sounds → Screensaver → Start time → Never**
+
+The cheap one-time **PLUS single-device license** firms up auto-start and
+foreground locking — worth it for a permanent install. If it still drops out,
+the stick is running out of memory (especially with a video background running) —
+that's a hardware ceiling, not a setting.
+
+### Raspberry Pi shows "not recommended … less than 1GB of RAM" and goes blank
+That popup means this Pi has **512 MB** (a Zero / Zero 2 W). Chromium slowly eats
+memory until the tab crashes → blank screen → you reboot. Stretch it as far as it
+goes, but a 512 MB Pi will always be fragile:
+
+**Add swap** (buys headroom before an OOM crash):
+```
+sudo dphys-swapfile swapoff
+sudo sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=1024/' /etc/dphys-swapfile
+sudo dphys-swapfile setup && sudo dphys-swapfile swapon
+free -h        # confirm ~1.0 Gi of swap
+```
+
+**Trim Chromium's memory** — on **FullPageOS**, add flags in `/boot/fullpageos.txt`
+(or the Chromium launch config); on a manual Pi setup, add them to the
+`chromium-browser` line:
+```
+--disable-gpu --disable-dev-shm-usage --process-per-site --renderer-process-limit=1 --disable-features=Translate --no-memcheck
+```
+`--no-memcheck` also suppresses that "<1GB RAM" popup so an unattended boot
+doesn't wait on it.
+
+**Refresh more often:** the page already reloads every ~20 min on its own, which
+helps. FullPageOS also has its own periodic-refresh setting — set it to ~15–20 min
+as a backstop.
+
+If it still blanks within an hour after all that, it's simply out of RAM — move
+that screen to a **Pi 4 / mini PC** and the reboots stop.
