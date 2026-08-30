@@ -215,6 +215,26 @@
         <div class="event-actions"><button class="btn primary" id="sgVideoSave" type="button">Save video</button></div>
       </div>
 
+      <div class="sys-card" style="--rowc:#a855f7">
+        <div class="sys-head"><span class="sys-title">Lounge TV <small>its own rotating images — separate from the boards</small></span></div>
+        <p class="hint" style="margin:10px 0 12px">A standalone screen for the lounge. Paste <b>image URLs, one per line</b> — the TV rotates through them. Nothing here touches the game/entrance boards. Upload images to <b>Shopify → Content → Files</b> (portrait images fit best) and paste the links. Leave blank to show a placeholder.</p>
+        <textarea class="field" id="sgLoungeImages" rows="5" placeholder="https://…/promo-1.png&#10;https://…/promo-2.png&#10;https://…/event-flyer.png" style="margin-top:0;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px"></textarea>
+        <div class="sg-tadd" style="margin-top:12px;align-items:center">
+          <label class="cl-flabel" for="sgLoungeSeconds" style="margin:0;flex:0 0 auto">Seconds per image</label>
+          <select class="field" id="sgLoungeSeconds" style="margin:0;flex:1 1 auto">
+            <option value="6">6s</option>
+            <option value="10" selected>10s</option>
+            <option value="15">15s</option>
+            <option value="30">30s</option>
+            <option value="60">60s</option>
+          </select>
+        </div>
+        <div class="event-actions">
+          <button class="btn primary" id="sgLoungeSave" type="button">Save lounge images</button>
+          <a class="btn ghost" href="lounge.html" target="_blank" rel="noopener">Preview lounge screen ↗</a>
+        </div>
+      </div>
+
       <div class="event-actions">
         <a class="btn ghost" href="signage.html?screen=main" target="_blank" rel="noopener">Preview 75″ board ↗</a>
         <a class="btn ghost" href="signage.html?screen=entrance" target="_blank" rel="noopener">Preview entrance board ↗</a>

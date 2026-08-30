@@ -11,9 +11,15 @@ work — pick per screen:
   The original **Pi Zero W (ARMv6, no NEON) can NOT run this** — modern Chromium
   won't install and the page won't render.
 
-> **The two URLs (no tokens, no Worker):**
+> **The URLs (no tokens, no Worker):**
 > - **75″ landscape** → `https://nfc.balancegamingfl.com/signage.html?screen=main`
 > - **40″ portrait**  → `https://nfc.balancegamingfl.com/signage.html?screen=entrance`
+> - **Lounge TV (portrait)** → `https://nfc.balancegamingfl.com/lounge.html?rotate=ccw`
+>   A **standalone** image screen — its own rotating images, set in the control
+>   panel (**config.html → Lounge TV**), independent of the game/entrance boards.
+>   Drop `?rotate=ccw` (or `cw`) for a portrait TV on a Fire Stick; add `&fit=cover`
+>   to fill edge-to-edge instead of letterboxing. Needs a one-time Firebase rule:
+>   `"lounge": { ".read": true, ".write": true }`.
 >
 > **Portrait TV on a landscape-only device (Fire Stick)?** Add `&rotate=ccw` to
 > rotate the whole board 90° counter-clockwise in the browser, so a device that

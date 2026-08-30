@@ -576,6 +576,32 @@
       });
     }
 
+    // Lounge TV — its own rotating images, independent of the boards. /lounge
+    // { images:[url,...], seconds }.
+    var loungeImages = document.getElementById("sgLoungeImages");
+    var loungeSeconds = document.getElementById("sgLoungeSeconds");
+    var loungeSave = document.getElementById("sgLoungeSave");
+    if (loungeImages) {
+      fbGet("lounge").then(function (l) {
+        l = l || {};
+        loungeImages.value = Array.isArray(l.images) ? l.images.filter(Boolean).join("\n") : "";
+        if (loungeSeconds && l.seconds) {
+          var opts = Array.prototype.map.call(loungeSeconds.options, function (o) { return Number(o.value); });
+          var best = opts.reduce(function (a, b) { return Math.abs(b - l.seconds) < Math.abs(a - l.seconds) ? b : a; }, opts[0]);
+          loungeSeconds.value = String(best);
+        }
+      });
+    }
+    if (loungeSave && loungeImages) {
+      loungeSave.addEventListener("click", function () {
+        var images = (loungeImages.value || "").split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+        var secs = loungeSeconds ? (Number(loungeSeconds.value) || 10) : 10;
+        fbUpdate("lounge", { images: images.length ? images : null, seconds: secs })
+          .then(function () { showToast(images.length ? (images.length + " lounge image" + (images.length === 1 ? "" : "s") + " saved") : "Lounge images cleared"); })
+          .catch(function () { showToast("Couldn't save the lounge images — try again"); });
+      });
+    }
+
     // Featured event (Shopify handle, or blank = auto)
     var featInput = document.getElementById("sgFeatured");
     var featSave = document.getElementById("sgFeaturedSave");
