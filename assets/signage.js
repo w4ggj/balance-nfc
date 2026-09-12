@@ -108,8 +108,90 @@
     if (!api || /__FILL_IN/.test(api)) { renderEvents(null); return; }
     fetch(api, { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then(function (data) { lastEvents = (data && data.events) || []; renderEvents(lastEvents); })
+      .then(function (data) {
+        lastEvents = (data && data.events) || [];
+        renderEvents(lastEvents);
+        // Best-effort: if the feed marked a real paid event as Free (its Shopify
+        // product isn't in the "events" collection the Worker reads), look the
+        // price up directly in the store's public product list and fill it in.
+        enrichFreeEvents(lastEvents);
+      })
       .catch(function () { renderEvents(null); });
+  }
+
+  // ---- client-side price fallback --------------------------------------
+  // The Worker only prices events whose Shopify product lives in the "events"
+  // collection. Uncategorized products slip through as "Free". As a safety net
+  // the board reads the store's public /products.json (all products, any
+  // collection) and matches an un-ticketed event to a product by DATE + name —
+  // the same rule the Worker uses. Fully best-effort: any failure (CORS, offline)
+  // is swallowed and the board keeps whatever the feed said. No regression.
+  var storeProducts = null;      // cached [{title,handle,price,date}] or null
+  var storeProductsAt = 0;
+  function normName(s) {
+    return String(s == null ? "" : s).toLowerCase()
+      .replace(/[‘’“”]/g, "")     // curly quotes
+      .replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
+  }
+  // Pull a yyyy-mm-dd from a handle prefix or a yyyy/mm/dd (or -) in the title.
+  function dateFromProduct(p) {
+    var h = String(p.handle || "");
+    var m = h.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return m[1] + "-" + m[2] + "-" + m[3];
+    var t = String(p.title || "").match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+    if (t) { var mo = ("0" + t[2]).slice(-2), da = ("0" + t[3]).slice(-2); return t[1] + "-" + mo + "-" + da; }
+    return null;
+  }
+  function loadStoreProducts() {
+    // Refresh at most every 5 min; reuse the cache otherwise.
+    if (storeProducts && Date.now() - storeProductsAt < 300000) return Promise.resolve(storeProducts);
+    return fetch(MAIN_SITE + "/products.json?limit=250", { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (data) {
+        var list = (data && data.products) || [];
+        storeProducts = list.map(function (p) {
+          var v = (p.variants && p.variants[0]) || {};
+          var price = v.price != null ? String(v.price).replace(/\.00$/, "") : null;
+          return { title: p.title, handle: p.handle, price: price, date: dateFromProduct(p) };
+        });
+        storeProductsAt = Date.now();
+        return storeProducts;
+      });
+  }
+  function localDay(ev) {
+    var d = evStart(ev);
+    return isNaN(d) ? null : fmt(d, { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/(\d+)\/(\d+)\/(\d+)/, "$3-$1-$2");
+  }
+  function matchProduct(ev, products) {
+    var evDate = ev.allDay && typeof ev.start === "string" ? String(ev.start).slice(0, 10) : localDay(ev);
+    if (!evDate) return null;
+    var key = normName(cleanName(ev.name));
+    for (var i = 0; i < products.length; i++) {
+      var p = products[i];
+      if (!p.date || p.date !== evDate) continue;
+      if (!p.price || !(Number(p.price) > 0)) continue;
+      var pn = normName(cleanName(p.title));
+      if (pn && key && (pn.indexOf(key) !== -1 || key.indexOf(pn) !== -1)) return p;
+    }
+    return null;
+  }
+  function enrichFreeEvents(events) {
+    if (!events || !events.length) return;
+    var need = events.filter(function (ev) { return !(ev.ticketed && Number(ev.price) > 0); });
+    if (!need.length) return;
+    loadStoreProducts().then(function (products) {
+      var changed = false;
+      need.forEach(function (ev) {
+        var p = matchProduct(ev, products);
+        if (p) {
+          ev.ticketed = true;
+          ev.price = p.price;
+          if (!ev.registerUrl) ev.registerUrl = MAIN_SITE + "/products/" + p.handle;
+          changed = true;
+        }
+      });
+      if (changed) { lastEventsSig = null; renderEvents(lastEvents); if (typeof renderShowcase === "function" && rightLive === false) renderShowcase(); }
+    }).catch(function () { /* CORS/offline — keep the feed's values */ });
   }
   function renderEvents(events) {
     var host = document.getElementById("sgEvents");
