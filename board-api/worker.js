@@ -128,9 +128,24 @@ async function fetchCalendar(id, apiKey, timeMin, timeMax) {
 async function loadShopify(env) {
   if (!env.SHOPIFY_SHOP || !env.SHOPIFY_ADMIN_TOKEN) return [];
 
-  let res = await shopifyFetch(env, true);       // try with exact inventory
-  if (res.denied) res = await shopifyFetch(env, false); // token has no read_inventory → fall back
-  const nodes = res.nodes || [];
+  // Page through the WHOLE Events collection, not just the newest 120. The
+  // store keeps every past and future event in this collection, so a product
+  // for a near-term event can be created weeks earlier and fall outside any
+  // fixed slice — which made real paid events show as "Free". Cursor-paginate
+  // (250/page) up to a safety cap so every upcoming event's product is seen.
+  let withInventory = true;
+  let cursor = null;
+  const nodes = [];
+  for (let page = 0; page < 8; page++) {              // cap: 8 * 250 = 2000 products
+    let res = await shopifyFetch(env, withInventory, cursor);
+    if (res.denied) {                                 // token has no read_inventory → drop the field
+      withInventory = false;
+      res = await shopifyFetch(env, false, cursor);
+    }
+    (res.nodes || []).forEach(function (n) { nodes.push(n); });
+    if (!res.hasNextPage || !res.endCursor) break;
+    cursor = res.endCursor;
+  }
 
   return nodes.map(function (p) {
     let seats = 0, tracked = false, price = null, available = false;
@@ -152,12 +167,13 @@ async function loadShopify(env) {
   });
 }
 
-async function shopifyFetch(env, withInventory) {
+async function shopifyFetch(env, withInventory, cursor) {
   const ver = env.SHOPIFY_API_VERSION || "2024-10";
   const handle = env.EVENTS_COLLECTION_HANDLE || "events";
   const invField = withInventory ? " inventoryQuantity" : "";
   const query =
-    "query($handle:String!){collectionByHandle(handle:$handle){products(first:120,sortKey:CREATED,reverse:true){nodes{" +
+    "query($handle:String!,$cursor:String){collectionByHandle(handle:$handle){products(first:250,after:$cursor,sortKey:CREATED,reverse:true){" +
+    "pageInfo{hasNextPage endCursor} nodes{" +
     "title handle onlineStoreUrl featuredImage{url} " +
     "variants(first:10){nodes{title price availableForSale" + invField + "}}}}}}";
 
@@ -167,7 +183,7 @@ async function shopifyFetch(env, withInventory) {
       "Content-Type": "application/json",
       "X-Shopify-Access-Token": env.SHOPIFY_ADMIN_TOKEN
     },
-    body: JSON.stringify({ query: query, variables: { handle: handle } })
+    body: JSON.stringify({ query: query, variables: { handle: handle, cursor: cursor || null } })
   });
   if (!r.ok) throw new Error("Shopify Admin " + r.status);
   const data = await r.json();
@@ -178,9 +194,10 @@ async function shopifyFetch(env, withInventory) {
     if (withInventory) return { denied: true };
     throw new Error("Shopify GraphQL: " + JSON.stringify(data.errors).slice(0, 200));
   }
-  const nodes = (data && data.data && data.data.collectionByHandle &&
-    data.data.collectionByHandle.products && data.data.collectionByHandle.products.nodes) || [];
-  return { nodes: nodes };
+  const conn = (data && data.data && data.data.collectionByHandle &&
+    data.data.collectionByHandle.products) || {};
+  const info = conn.pageInfo || {};
+  return { nodes: conn.nodes || [], hasNextPage: !!info.hasNextPage, endCursor: info.endCursor || null };
 }
 
 /* ---- Merge ------------------------------------------------------------
