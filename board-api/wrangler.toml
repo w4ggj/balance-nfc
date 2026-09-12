@@ -14,7 +14,7 @@ SHOPIFY_API_VERSION    = "2024-10"
 # Fill these in (calendar id + shop domain are not secret):
 # One calendar per game? List all their IDs comma-separated — they're merged.
 #   e.g. "magic@group.calendar.google.com, pokemon@group.calendar.google.com"
-GCAL_CALENDAR_ID       = "PUT_YOUR_CALENDAR_IDS_HERE"
+GCAL_CALENDAR_ID       = "893f080baf7b0e26ababf3cece50c602d49c187c35d3db2c70706f63f8414594@group.calendar.google.com,b65abb82a8cdd41084a4b5b071bf7be9fc65b3fffec1cdbb9b10bda84140a694@group.calendar.google.com,d227452215d8fbd3dc67a158a8e7d052734e2d182637e3b7f9b68107d3f76f52@group.calendar.google.com,3b7361d603e12baefe99073054d83c4da2722b96570eabb8999e37dc3358f648@group.calendar.google.com,54038e4d3e8341ea9f2f05ec08d93acf8bb5471d414a69298b27a90c5a2fa631@group.calendar.google.com,da70ab063fca8bae6d63bcc07d4744fff1e2e58c7aaa0c1f551a8e79a51b2d3e@group.calendar.google.com"
 SHOPIFY_SHOP           = "d94663-4.myshopify.com"
 
 # SECRETS — do NOT put these here. Set them with:
