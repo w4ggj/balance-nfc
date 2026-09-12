@@ -224,15 +224,20 @@ function merge(calEvents, shopEvents, env, tz) {
       else if (match.available === true) status = "open";
       else if (match.available === false) status = "sold-out";
     }
+    // No Shopify product matched? Honor what the calendar event itself says —
+    // read the price and register link from its description so a paid event
+    // never shows as "Free" just because the product wasn't matched.
+    const descPrice = match ? null : priceFromText(ev.description);
+
     return {
       name: ev.name,
       game: ev.game || null,          // which per-game calendar it came from
       start: ev.start,
       end: ev.end,
       allDay: ev.allDay,
-      ticketed: !!match,
-      price: match ? match.price : null,
-      registerUrl: match ? match.url : null,
+      ticketed: !!match || !!descPrice,
+      price: match ? match.price : descPrice,
+      registerUrl: match ? match.url : (urlFromText(ev.description) || null),
       // An "image: <url>" in the calendar event description wins; otherwise the
       // matched Shopify product's image. Lets any event (even non-ticketed) have art.
       image: imageFromText(ev.description) || (match ? match.image : null),
@@ -296,4 +301,17 @@ function imageFromText(text) {
   m = t.match(/(https?:\/\/[^\s"'<>]+\.(?:png|jpe?g|gif|webp|avif)(?:\?[^\s"'<>]*)?)/i);
   if (m) return m[1];
   return null;
+}
+
+// Fallback price straight from the calendar description ("$10 entry", "Entry: $5").
+// Returns the amount as a string (e.g. "10"), or null if none / explicitly free.
+function priceFromText(text) {
+  const m = String(text || "").match(/\$\s*(\d+(?:\.\d{1,2})?)/);
+  return (m && Number(m[1]) > 0) ? m[1] : null;
+}
+
+// Fallback register link from the description (a store /products/ URL).
+function urlFromText(text) {
+  const m = String(text || "").match(/https?:\/\/[^\s"'<>]+\/products\/[a-z0-9\-]+/i);
+  return m ? m[0] : null;
 }
