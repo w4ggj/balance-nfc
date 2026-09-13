@@ -86,13 +86,28 @@ function getDb() {
   return db;
 }
 
+// Firebase rejects a whole write if any value is NaN/Infinity/undefined. One bad
+// cell (e.g. an unparsed points value) would otherwise freeze the entire board.
+// Scrub the snapshot to null before writing so a stray bad value can't take the
+// live board down — the row just shows blank for that field instead.
+function sanitize(v) {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  if (Array.isArray(v)) return v.map(sanitize);
+  if (v && typeof v === 'object') {
+    const out = {};
+    for (const k of Object.keys(v)) { if (v[k] !== undefined) out[k] = sanitize(v[k]); }
+    return out;
+  }
+  return v === undefined ? null : v;
+}
+
 async function run() {
   const reports = collectReports();
   if (!reports.standingsHtml && !reports.pairingsHtml) {
     console.warn(`[tombridge] no standings/pairings found in ${REPORTS_DIR} yet — generate a report in TOM.`);
     return;
   }
-  const snap = buildSnapshot({ ...reports, config });
+  const snap = sanitize(buildSnapshot({ ...reports, config }));
   const id = snap.meta.tournamentId || config.tournamentId || 'current';
 
   if (DRY) {

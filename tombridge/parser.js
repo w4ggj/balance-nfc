@@ -27,6 +27,14 @@ function parsePercent(text) {
   return m ? parseFloat(m[1]) : null;
 }
 
+// parseInt that returns null (never NaN) for empty/non-numeric cells. Firebase
+// rejects any write containing NaN, so an unparsed rank/points cell must become
+// null, not NaN, or the whole snapshot .set() is refused and the board freezes.
+function intOrNull(text) {
+  const n = parseInt(norm(text), 10);
+  return Number.isFinite(n) ? n : null;
+}
+
 // Footer timestamp, e.g. "07/06/2026 20:30:42"
 function parseGeneratedAt($) {
   const t = norm($('.footer td[align="right"] b').first().text());
@@ -98,12 +106,12 @@ function parseStandings(html) {
       if (td.length < 8) return;
       const rec = parseRecord($(td[4]).text());
       rows.push({
-        rank: parseInt(norm($(td[0]).text()), 10),
+        rank: intOrNull($(td[0]).text()),
         name: norm($(td[1]).text()),
         flight: norm($(td[2]).text()) || null,
         dropRound: norm($(td[3]).text()) || null,
         record: rec,
-        points: parseInt(norm($(td[5]).text()), 10),
+        points: intOrNull($(td[5]).text()),
         omw: parsePercent($(td[6]).text()),
         oomw: parsePercent($(td[7]).text()),
       });
