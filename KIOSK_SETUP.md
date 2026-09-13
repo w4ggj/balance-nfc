@@ -184,6 +184,30 @@ goes right back to standings/events.
 
 ---
 
+## Refresh all TVs from your phone
+
+When you push an update, or a screen gets stuck showing old content, you don't
+need to physically reach it (handy for a ceiling-mounted TV with no keyboard).
+
+Open **`config.html` → Board & signage → `↻ Refresh all TVs`**. Every screen —
+both signage boards **and** the lounge TV — reloads itself within a few seconds,
+pulling the newest code with a cache-buster.
+
+**How it works:** the button bumps `/display/reloadAt` in Firebase to the current
+time; each kiosk page watches that value and reloads when it increases. It's
+loop-safe — a screen reloads only when you tap the button, never on its own.
+
+**One catch:** the button can only reload screens already running the code that
+contains the listener. After any screen's next automatic 20-minute reload (or a
+manual reload) it has the listener, and from then on the button works on it. A
+brand-new screen therefore needs one reload the old-fashioned way before the
+button can drive it.
+
+No Firebase rule change is needed — `/display` is already open read/write (the
+same rule the "Live event on TV" toggle uses).
+
+---
+
 ## Option A — Amazon Fire TV Stick (easiest)
 
 The signage page is just a website, so a Fire Stick + a kiosk browser runs it.
