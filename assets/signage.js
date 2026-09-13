@@ -1125,6 +1125,7 @@
     if (rot === "cw" || rot === "ccw") document.body.setAttribute("data-rotate", rot);
 
     startClock();
+    if (global.BGF && BGF.initRemoteReload) BGF.initRemoteReload(); // phone → "Refresh all TVs"
     loadEvents(); setInterval(loadEvents, POLL_EVENTS_MS);
     loadTicker(); loadFun(); loadJokeFile();
     setInterval(function () { loadTicker(); loadFun(); }, POLL_FB_MS);

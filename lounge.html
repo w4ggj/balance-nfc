@@ -59,6 +59,8 @@
       if (rot === "cw" || rot === "ccw") document.body.setAttribute("data-rotate", rot);
       if (params.get("fit") === "cover") document.body.setAttribute("data-fit", "cover");
 
+      if (BGF.initRemoteReload) BGF.initRemoteReload(); // phone → "Refresh all TVs"
+
       var imgs = [], idx = 0, sig = "", intervalMs = 10000, timer = null;
 
       function show() {

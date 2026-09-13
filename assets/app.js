@@ -353,7 +353,49 @@
         .catch(function () { paint(!on); showToast("Couldn't switch the display — try again"); })
         .then(function () { busy = false; });
     });
+
+    // "Refresh all TVs" — bumps /display/reloadAt to now(); every kiosk page
+    // sees the change on its next poll and reloads itself. Lets staff push a
+    // reload to ceiling-mounted screens with no keyboard, from their phone.
+    var refreshBtn = document.getElementById("refreshTvsBtn");
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", function () {
+        if (refreshBtn.disabled) return;
+        refreshBtn.disabled = true;
+        refreshAllTVs()
+          .then(function () { showToast("Refreshing all TVs…"); })
+          .catch(function () { showToast("Couldn't refresh — try again"); })
+          .then(function () { setTimeout(function () { refreshBtn.disabled = false; }, 4000); });
+      });
+    }
   }
+
+  // ---- Remote "Refresh all TVs" ---------------------------------------
+  // Every kiosk page (signage, lounge) watches /display/reloadAt. The config
+  // button bumps it to now(); each screen sees the change on its next poll and
+  // reloads with a cache-buster. Loop-safe: a page records the value it first
+  // sees as its baseline and reloads only when the value INCREASES past it, so
+  // it never reloads on its own load and never loops after reloading.
+  function forceReload() {
+    try {
+      var u = new URL(location.href);
+      u.searchParams.set("t", String(Date.now()));
+      location.replace(u.toString());
+    } catch (e) { location.reload(); }
+  }
+  function initRemoteReload() {
+    var baseline = null;
+    function check() {
+      fbGet("display/reloadAt").then(function (v) {
+        var n = Number(v) || 0;
+        if (baseline === null) { baseline = n; return; }   // first read = baseline
+        if (n > baseline) { baseline = n; forceReload(); }
+      }).catch(function () {});
+    }
+    check();
+    setInterval(check, 15000);
+  }
+  function refreshAllTVs() { return fbSet("display/reloadAt", Date.now()); }
 
   // ---- Board & signage controls (config.html) -------------------------
   // Staff-edited content for the signage TVs, stored under /signage:
@@ -642,7 +684,8 @@
     fbGet: fbGet, fbShallow: fbShallow, fbSet: fbSet, fbUpdate: fbUpdate,
     routeHome: routeHome, initEvent: initEvent, initConfig: initConfig,
     initBigScreen: initBigScreen, latestLiveTournament: latestLiveTournament,
-    initDisplay: initDisplay, mountEventOverlay: mountEventOverlay, initSignage: initSignage
+    initDisplay: initDisplay, mountEventOverlay: mountEventOverlay, initSignage: initSignage,
+    initRemoteReload: initRemoteReload, refreshAllTVs: refreshAllTVs
   };
 
   // ---- Shared event overlay (overlay.html + signage.html main mode) ---
