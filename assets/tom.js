@@ -58,8 +58,11 @@
     if (qp("demo") != null) {
       return fetch("tombridge/sample-snapshot.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
     }
+    // Only treat "t" as a tournament PIN when it looks like a real TOM id
+    // (MM-DD-number). A bare number is a cache-buster, not a tournament — reading
+    // tournaments/<timestamp> returned nothing and idled the board.
     var pin = qp("t");
-    if (pin) { resolvedPath = "tournaments/" + pin; return BGF.fbGet(resolvedPath); }
+    if (pin && /^\d{2}-\d{2}-\d+$/.test(pin)) { resolvedPath = "tournaments/" + pin; return BGF.fbGet(resolvedPath); }
     if (resolvedPath) return BGF.fbGet(resolvedPath);
     return loadLatest();
   }

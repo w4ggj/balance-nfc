@@ -1105,9 +1105,17 @@
       var active = (r[1] && r[1].active) || "main";
       if (on && active === "pokemon" && BGF.latestLiveTournament) {
         BGF.latestLiveTournament().then(function (live) {
-          // Carry a rotate param through so a portrait-mounted TV still reads right.
-          var q = location.search ? ("&" + location.search.slice(1)) : "";
-          applyTvOverlay(live ? ("board.html?t=" + tvCb + q) : "");
+          if (!live) { applyTvOverlay(""); return; }
+          // Cache-bust with "cb", NOT "t": board.html reads "t" as a tournament
+          // PIN (tournaments/<t>), so a "t" cache-buster pinned the board to a
+          // nonexistent id and left it stuck on the idle screen. Forward only the
+          // params the board actually uses (rotate/fit for portrait TVs); never
+          // forward "t"/"cb" from this page's own URL for the same reason.
+          var p = new URLSearchParams(location.search), extra = "";
+          ["rotate", "fit", "demo"].forEach(function (k) {
+            if (p.has(k)) extra += "&" + k + "=" + encodeURIComponent(p.get(k));
+          });
+          applyTvOverlay("board.html?cb=" + tvCb + extra);
         }).catch(function () { applyTvOverlay(""); });
       } else {
         applyTvOverlay("");
