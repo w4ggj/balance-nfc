@@ -218,10 +218,14 @@
 
       (d.rows || []).forEach(function (r) {
         var row = h("div", "srow" + (r.dropRound != null ? " dropped" : ""));
-        row.appendChild(h("span", "rk", String(r.rank)));
-        row.appendChild(h("span", "nm", r.name + (r.dropRound != null ? " (drop)" : "")));
+        // Once players lock into the top cut, TOM's report drops their standalone
+        // Points/OMW/OOMW columns (tiebreakers no longer matter). Fall back to the
+        // points inside the record so the Pts column is never blank/"undefined".
+        var pts = (r.points != null) ? r.points : (r.record && r.record.points);
+        row.appendChild(h("span", "rk", (r.rank != null ? String(r.rank) : "")));
+        row.appendChild(h("span", "nm", (r.name || "") + (r.dropRound != null ? " (drop)" : "")));
         row.appendChild(h("span", "rec", recText(r.record)));
-        row.appendChild(h("span", "pt", String(r.points)));
+        row.appendChild(h("span", "pt", (pts != null ? String(pts) : "—")));
         row.appendChild(h("span", "om", fmtPct(r.omw)));
         row.appendChild(h("span", "oom", fmtPct(r.oomw)));
         inner.appendChild(row);
