@@ -187,9 +187,18 @@
   }
 
   // Returns the most-recently-updated tournament if it was posted within the
-  // live window (default 12h), else null. Used to decide Pokémon routing.
+  // live window (default 12h), else null. Used to decide Pokémon routing AND to
+  // gate the live-tournament overlay on the shop TVs.
   var TOM_LIVE_WINDOW_MS = 12 * 3600 * 1000;
-  function latestLiveTournament() {
+  function withinWindow(t) {
+    if (!t || !t.meta) return null;
+    var age = Date.now() - (t.meta.updatedMs || 0);
+    return age < TOM_LIVE_WINDOW_MS ? t : null;
+  }
+  // Fallback: read the whole pile and pick the freshest. Fine on a fast browser;
+  // avoided on weak kiosks (Fire Stick) because parsing every past event can time
+  // out — which silently returned null and left the TV with no board overlay.
+  function fullScanLiveTournament() {
     return fbGet("tournaments").then(function (all) {
       if (!all) return null;
       var best = null;
@@ -197,10 +206,20 @@
         var t = all[k];
         if (t && t.meta && (!best || (t.meta.updatedMs || 0) > (best.meta.updatedMs || 0))) best = t;
       });
-      if (!best || !best.meta) return null;
-      var age = Date.now() - (best.meta.updatedMs || 0);
-      return age < TOM_LIVE_WINDOW_MS ? best : null;
+      return withinWindow(best);
     }).catch(function () { return null; });
+  }
+  function latestLiveTournament() {
+    // Prefer a tiny shallow key list, then read ONLY the newest tournament — the
+    // same lightweight path board.html uses, so weak kiosks don't choke on the
+    // full /tournaments history just to learn whether an event is live.
+    if (!fbShallow) return fullScanLiveTournament();
+    return fbShallow("tournaments").then(function (keys) {
+      var ks = keys ? Object.keys(keys) : [];
+      var tom = ks.filter(function (k) { return /^\d{2}-\d{2}-\d+$/.test(k); }).sort();
+      if (!tom.length) return fullScanLiveTournament();
+      return fbGet("tournaments/" + tom[tom.length - 1]).then(withinWindow);
+    }).catch(function () { return fullScanLiveTournament(); });
   }
 
   // ---- Event page init (pokemon.html, etc.) ---------------------------
