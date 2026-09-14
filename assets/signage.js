@@ -1103,20 +1103,23 @@
     Promise.all([BGF.fbGet("display/board"), BGF.getConfig()]).then(function (r) {
       var on = r[0] === true;
       var active = (r[1] && r[1].active) || "main";
-      if (on && active === "pokemon" && BGF.latestLiveTournament) {
-        BGF.latestLiveTournament().then(function (live) {
-          if (!live) { applyTvOverlay(""); return; }
-          // Cache-bust with "cb", NOT "t": board.html reads "t" as a tournament
-          // PIN (tournaments/<t>), so a "t" cache-buster pinned the board to a
-          // nonexistent id and left it stuck on the idle screen. Forward only the
-          // params the board actually uses (rotate/fit for portrait TVs); never
-          // forward "t"/"cb" from this page's own URL for the same reason.
-          var p = new URLSearchParams(location.search), extra = "";
-          ["rotate", "fit", "demo"].forEach(function (k) {
-            if (p.has(k)) extra += "&" + k + "=" + encodeURIComponent(p.get(k));
-          });
-          applyTvOverlay("board.html?cb=" + tvCb + extra);
-        }).catch(function () { applyTvOverlay(""); });
+      if (on && active === "pokemon") {
+        // Show the tournament board whenever the toggle is on and Pokémon is the
+        // active game — identical to opening board.html directly. The board page
+        // itself renders live pairings/standings when a tournament is posted, or
+        // its "Tournament Boards" placeholder until then. Previously this was
+        // gated on a tournament updated within the last 12h, so the TV stayed
+        // blank while the computer link showed the placeholder — now they match,
+        // and the toggle alone controls whether the board is up.
+        // Cache-bust with "cb", NOT "t": board.html reads "t" as a tournament
+        // PIN, so a "t" cache-buster pinned the board to a nonexistent id and
+        // idled it. Forward only params the board uses (rotate/fit for portrait
+        // TVs); never forward "t"/"cb" from this page's own URL.
+        var p = new URLSearchParams(location.search), extra = "";
+        ["rotate", "fit", "demo"].forEach(function (k) {
+          if (p.has(k)) extra += "&" + k + "=" + encodeURIComponent(p.get(k));
+        });
+        applyTvOverlay("board.html?cb=" + tvCb + extra);
       } else {
         applyTvOverlay("");
       }
