@@ -83,11 +83,17 @@ on/off flag, and the current slide number. No player or account data.)
 > it's almost always the host blocking CORS — re-host it or fall back to images.
 
 **Speaker notes (optional, phone-only).** In **config.html → Presentation** there's
-a *Speaker notes* box. Paste your notes and separate each slide with a line
-containing just `---` (three dashes) — slide 1's notes, then `---`, then slide 2's,
-etc. They show **only on the phone remote**, synced to the slide/page you're on,
-and never appear on the TV. A normal PDF export has no notes in it, so this box is
-how you get them onto your phone.
+a *Speaker notes* box. They show **only on the phone remote**, synced to the
+slide/page you're on, and never appear on the TV. Two ways to fill it:
+- **Auto (recommended):** if you exported the PDF with your PowerPoint notes *as
+  comments* (each slide's notes become a PDF comment annotation), tap **Pull notes
+  from PDF** — it reads the comments and fills the box for you, aligned to slides.
+- **Manual:** type them, separating each slide with a line containing just `---`
+  (three dashes) — slide 1's notes, then `---`, then slide 2's, etc.
+
+> A plain *Save As → PDF* usually drops notes entirely (nothing to pull). Export
+> with notes as comments/annotations (some tools call it "export comments" or
+> "presenter notes as comments") for the auto-pull to find them.
 
 **Run it during class.**
 1. On your phone open **`present-remote.html`** (there's an *Open phone remote ↗*

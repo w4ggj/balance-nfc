@@ -599,6 +599,31 @@
           .catch(function () { showToast("Couldn't save notes — try again"); });
       });
     }
+    // "Pull notes from PDF": PowerPoint speaker notes exported as PDF comment
+    // annotations (one per page) are invisible on the TV but readable with
+    // pdf.js. Extract each page's comment text, fill the notes box, and save —
+    // so the phone remote shows them with zero manual typing.
+    var presentNotesPull = document.getElementById("sgPresentNotesPull");
+    if (presentNotesPull && presentNotes) {
+      presentNotesPull.addEventListener("click", function () {
+        var url = ((presentPdf && presentPdf.value) || "").trim();
+        var pull = function (u) {
+          if (!u) { showToast("Add and save a PDF link first"); return; }
+          presentNotesPull.disabled = true;
+          showToast("Reading notes from the PDF…");
+          notesFromPdf(u).then(function (notes) {
+            var hasAny = notes.some(function (c) { return c && c.trim(); });
+            if (!hasAny) { showToast("No speaker notes found in that PDF"); presentNotesPull.disabled = false; return; }
+            presentNotes.value = notes.map(function (n) { return (n || "").trim(); }).join("\n---\n");
+            fbUpdate("present", { notes: notes })
+              .then(function () { showToast("Pulled notes for " + notes.length + " slide" + (notes.length === 1 ? "" : "s")); })
+              .catch(function () { showToast("Read the notes, but couldn't save — tap Save notes"); })
+              .then(function () { presentNotesPull.disabled = false; });
+          }).catch(function () { showToast("Couldn't read that PDF (link or CORS) — check the link"); presentNotesPull.disabled = false; });
+        };
+        if (url) pull(url); else fbGet("present/pdf").then(function (u) { pull((typeof u === "string" ? u : "").trim()); });
+      });
+    }
 
     // Video background (YouTube on the main board) — /video { on, url, sound }
     var videoToggle = document.getElementById("sgVideoToggle");
@@ -712,6 +737,57 @@
           .catch(function () { showToast("Couldn't save — try again"); });
       });
     }
+  }
+
+  // ---- PDF speaker-note extraction (config page) ----------------------
+  // Lazy-load pdf.js (only when someone pulls notes) and read each page's
+  // comment annotations — that's where PowerPoint speaker notes land when a
+  // deck is exported to PDF with notes as comments. Returns per-page text.
+  var PDFJS_VER = "3.11.174";
+  var pdfjsLoad = { state: "idle", api: null, cbs: [] };
+  function loadPdfJs(cb) {
+    if (pdfjsLoad.state === "ready") return cb(pdfjsLoad.api);
+    if (pdfjsLoad.state === "failed") return cb(null);
+    pdfjsLoad.cbs.push(cb);
+    if (pdfjsLoad.state === "loading") return;
+    pdfjsLoad.state = "loading";
+    var s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/" + PDFJS_VER + "/pdf.min.js";
+    s.onload = function () {
+      var api = window.pdfjsLib || null;
+      if (api) {
+        try { api.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/" + PDFJS_VER + "/pdf.worker.min.js"; } catch (e) {}
+        pdfjsLoad.state = "ready"; pdfjsLoad.api = api;
+      } else { pdfjsLoad.state = "failed"; }
+      var cbs = pdfjsLoad.cbs; pdfjsLoad.cbs = []; cbs.forEach(function (f) { f(pdfjsLoad.api); });
+    };
+    s.onerror = function () { pdfjsLoad.state = "failed"; var cbs = pdfjsLoad.cbs; pdfjsLoad.cbs = []; cbs.forEach(function (f) { f(null); }); };
+    document.head.appendChild(s);
+  }
+  function notesFromPdf(url) {
+    return new Promise(function (resolve, reject) {
+      loadPdfJs(function (api) {
+        if (!api) return reject(new Error("pdfjs unavailable"));
+        api.getDocument(url).promise.then(function (doc) {
+          var tasks = [];
+          for (var i = 1; i <= doc.numPages; i++) tasks.push(doc.getPage(i).then(function (p) { return p.getAnnotations(); }));
+          return Promise.all(tasks);
+        }).then(function (annPerPage) {
+          resolve(annPerPage.map(function (anns) {
+            var out = [];
+            (anns || []).forEach(function (a) {
+              var sub = a.subtype || "";
+              if (sub === "Link" || sub === "Popup" || sub === "Widget") return;
+              var c = a.contents;
+              if (!c && a.contentsObj) c = a.contentsObj.str;
+              c = (c || "").replace(/\r/g, "\n").trim();
+              if (c && out.indexOf(c) === -1) out.push(c);
+            });
+            return out.join("\n");
+          }));
+        }).catch(reject);
+      });
+    });
   }
 
   // ---- Expose ----------------------------------------------------------
