@@ -562,6 +562,22 @@
           .catch(function () { showToast("Couldn't save slides — try again"); });
       });
     }
+    // PDF deck: one link (a PowerPoint exported to PDF). Takes precedence over
+    // image slides on the board; idx becomes the page number. Saving resets to
+    // page 1 and clears the old page count so the remote re-reads it.
+    var presentPdf = document.getElementById("sgPresentPdf");
+    var presentPdfSave = document.getElementById("sgPresentPdfSave");
+    if (presentPdf) {
+      fbGet("present/pdf").then(function (u) { presentPdf.value = (typeof u === "string") ? u : ""; });
+    }
+    if (presentPdfSave && presentPdf) {
+      presentPdfSave.addEventListener("click", function () {
+        var url = (presentPdf.value || "").trim();
+        fbUpdate("present", { pdf: url || null, idx: 0, pages: null })
+          .then(function () { showToast(url ? "PDF saved — turn on Presentation to show it" : "PDF cleared"); })
+          .catch(function () { showToast("Couldn't save the PDF link — try again"); });
+      });
+    }
 
     // Video background (YouTube on the main board) — /video { on, url, sound }
     var videoToggle = document.getElementById("sgVideoToggle");

@@ -672,7 +672,7 @@
   // slide overlay covers the board and shows slides[idx]; the phone remote
   // (present-remote.html) advances idx live. Nothing to relaunch — the board
   // just overlays and un-overlays. Main screen only.
-  var presentEl = null, presentImg = null, lastPresentSig = "";
+  var presentEl = null, presentImg = null, presentCanvas = null, lastPresentSig = "";
   function ensurePresentEl() {
     if (presentEl) return;
     presentEl = document.createElement("div");
@@ -683,19 +683,101 @@
     presentEl.appendChild(presentImg);
     document.body.appendChild(presentEl);
   }
+  function ensurePresentCanvas() {
+    ensurePresentEl();
+    if (presentCanvas) return;
+    presentCanvas = document.createElement("canvas");
+    presentCanvas.style.cssText = "max-width:100%;max-height:100%;width:auto;height:auto;display:block;";
+    presentEl.appendChild(presentCanvas);
+  }
+
+  // pdf.js is loaded lazily — only when a PDF deck is actually in use — from the
+  // CDN (the signage pages aren't under an artifact CSP, so external scripts are
+  // fine). UMD 3.x exposes the global `pdfjsLib`.
+  var PDFJS_VER = "3.11.174";
+  var pdfLib = { state: "idle", api: null, cbs: [] };  // idle | loading | ready | failed
+  function ensurePdfLib(cb) {
+    if (pdfLib.state === "ready") return cb(pdfLib.api);
+    if (pdfLib.state === "failed") return cb(null);
+    pdfLib.cbs.push(cb);
+    if (pdfLib.state === "loading") return;
+    pdfLib.state = "loading";
+    var s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/" + PDFJS_VER + "/pdf.min.js";
+    s.onload = function () {
+      var api = global.pdfjsLib || null;
+      if (api) {
+        try { api.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/" + PDFJS_VER + "/pdf.worker.min.js"; } catch (e) {}
+        pdfLib.state = "ready"; pdfLib.api = api;
+      } else { pdfLib.state = "failed"; }
+      var cbs = pdfLib.cbs; pdfLib.cbs = []; cbs.forEach(function (f) { f(pdfLib.api); });
+    };
+    s.onerror = function () {
+      pdfLib.state = "failed";
+      var cbs = pdfLib.cbs; pdfLib.cbs = []; cbs.forEach(function (f) { f(null); });
+    };
+    document.head.appendChild(s);
+  }
+
+  // One loaded PDF document at a time; re-render only when the page (or deck) changes.
+  var pdfDoc = { url: "", doc: null, loading: false, renderedSig: "" };
+  function showPdfPage(url, idx) {
+    ensurePdfLib(function (api) {
+      if (!api) return;                         // pdf.js unavailable — leave the black overlay
+      ensurePresentCanvas();
+      if (presentImg) presentImg.hidden = true;
+      presentCanvas.hidden = false;
+      if (pdfDoc.url !== url) {
+        if (pdfDoc.loading) return;
+        pdfDoc.loading = true; pdfDoc.doc = null; pdfDoc.renderedSig = "";
+        api.getDocument(url).promise.then(function (doc) {
+          pdfDoc.doc = doc; pdfDoc.url = url; pdfDoc.loading = false;
+          if (BGF.fbSet) BGF.fbSet("present/pages", doc.numPages);  // let the phone remote bound its page count
+          renderPdfPage(idx);
+        }).catch(function () { pdfDoc.loading = false; });
+        return;
+      }
+      renderPdfPage(idx);
+    });
+  }
+  function renderPdfPage(idx) {
+    var doc = pdfDoc.doc; if (!doc) return;
+    var pageNum = Math.min(Math.max(1, (idx | 0) + 1), doc.numPages);
+    var sig = pdfDoc.url + "|" + pageNum;
+    if (sig === pdfDoc.renderedSig) return;    // same page already shown — don't re-render every poll
+    pdfDoc.renderedSig = sig;
+    doc.getPage(pageNum).then(function (page) {
+      var base = page.getViewport({ scale: 1 });
+      var sw = window.innerWidth || 1920, sh = window.innerHeight || 1080;
+      var scale = Math.min(sw / base.width, sh / base.height) * (window.devicePixelRatio || 1);
+      if (!isFinite(scale) || scale <= 0) scale = 1.5;
+      var vp = page.getViewport({ scale: scale });
+      presentCanvas.width = Math.floor(vp.width);
+      presentCanvas.height = Math.floor(vp.height);
+      page.render({ canvasContext: presentCanvas.getContext("2d"), viewport: vp });
+    }).catch(function () { pdfDoc.renderedSig = ""; });  // allow a retry on the next poll
+  }
+
   function loadPresent() {
     if (!global.BGF) return;
     BGF.fbGet("present").then(function (p) {
       p = p || {};
       ensurePresentEl();
+      var pdfUrl = (typeof p.pdf === "string" && p.pdf.trim()) ? p.pdf.trim() : "";
       var slides = (p.slides && p.slides.length) ? p.slides.filter(Boolean) : [];
-      var on = p.on === true && slides.length > 0;
+      var on = p.on === true && (pdfUrl || slides.length > 0);
       if (!on) { presentEl.style.display = "none"; lastPresentSig = ""; return; }
-      var idx = p.idx || 0;
-      if (idx < 0) idx = 0; if (idx > slides.length - 1) idx = slides.length - 1;
-      var url = slides[idx], sig = idx + "|" + url;
       presentEl.style.display = "flex";
-      if (sig !== lastPresentSig) { lastPresentSig = sig; presentImg.src = url; }
+      var idx = p.idx || 0; if (idx < 0) idx = 0;
+      if (pdfUrl) {                              // PDF deck wins over image slides
+        showPdfPage(pdfUrl, idx);
+      } else {
+        if (idx > slides.length - 1) idx = slides.length - 1;
+        if (presentCanvas) presentCanvas.hidden = true;
+        presentImg.hidden = false;
+        var url = slides[idx], sig = "img|" + idx + "|" + url;
+        if (sig !== lastPresentSig) { lastPresentSig = sig; presentImg.src = url; }
+      }
     }).catch(function () {});
   }
 

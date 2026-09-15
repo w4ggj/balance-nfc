@@ -199,8 +199,16 @@
           <span class="sys-title">Presentation <small>classroom slides on the main TV</small></span>
           <label class="toggle"><input type="checkbox" id="sgPresentToggle" aria-label="Presentation mode"><span class="track"></span><span class="knob"></span></label>
         </div>
-        <p class="hint" style="margin:10px 0 12px">Turn on to overlay slides on the 75″ board — no need to touch the Fire Stick. Paste one <b>image URL per line</b> (export your slides as images and upload them to Shopify Files, then paste the links). Then open the phone remote to tap through them live.</p>
-        <textarea class="field" id="sgPresentSlides" rows="6" placeholder="https://…/slide-1.png&#10;https://…/slide-2.png&#10;https://…/slide-3.png" style="margin-top:0;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px"></textarea>
+        <p class="hint" style="margin:10px 0 12px">Turn on to overlay a deck on the 75″ board — no need to touch the TV. The phone remote taps through it live.</p>
+
+        <p class="hint" style="margin:0 0 6px"><b>Easiest — a PDF (recommended).</b> In PowerPoint: <i>File → Save As → PDF</i>. Upload the PDF to Shopify Files (or any public link) and paste it here. The board shows the pages and the phone remote flips them.</p>
+        <input class="field" id="sgPresentPdf" type="url" placeholder="https://…/deck.pdf" style="margin-top:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px" />
+        <div class="event-actions" style="margin-bottom:14px">
+          <button class="btn primary" id="sgPresentPdfSave" type="button">Save PDF</button>
+        </div>
+
+        <p class="hint" style="margin:0 0 6px"><b>Or images</b> — one <b>image URL per line</b> (export each slide as a PNG, upload to Shopify Files). Used only when no PDF is set above.</p>
+        <textarea class="field" id="sgPresentSlides" rows="5" placeholder="https://…/slide-1.png&#10;https://…/slide-2.png&#10;https://…/slide-3.png" style="margin-top:0;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px"></textarea>
         <div class="event-actions">
           <button class="btn primary" id="sgPresentSave" type="button">Save slides</button>
           <a class="btn ghost" id="sgPresentRemote" href="present-remote.html" target="_blank" rel="noopener">Open phone remote ↗</a>

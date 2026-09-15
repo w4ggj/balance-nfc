@@ -60,14 +60,27 @@ Nothing to relaunch, no HDMI cable, no input switching.
 (Open read/write like `/signage` and `/display` — it only holds a slide list, an
 on/off flag, and the current slide number. No player or account data.)
 
-**Prepare slides (once per deck).**
-1. Export your PowerPoint/Google Slides as **images** — in PowerPoint, *File →
-   Export → Change File Type → PNG → All Slides*. (Images load on the TV without
-   any cross-origin/CORS trouble that a raw PDF would hit.)
-2. Upload the PNGs to **Shopify → Content → Files** (or any public host) and copy
-   each file's URL.
-3. Open **`config.html` → Presentation**, paste the URLs **one per line in slide
-   order**, and click **Save slides**.
+**Prepare a deck — two ways.**
+
+*Easiest — a PDF (recommended, needs a real-browser TV like the Linux PC).*
+1. In PowerPoint: *File → Save As → PDF* (one file, all slides). Speaker notes are
+   NOT included in a normal Save-As-PDF, so only the slides show — which is what
+   you want on a public screen.
+2. Upload the PDF to **Shopify → Content → Files** (or any public host with open
+   CORS) and copy its link.
+3. Open **`config.html` → Presentation**, paste the link in **the PDF box**, and
+   click **Save PDF**. The board renders the pages; the phone remote flips them.
+
+*Or images (works on any device, including the old Fire Stick).*
+1. Export your slides as **PNGs** — in PowerPoint, *File → Export → Change File
+   Type → PNG → All Slides*.
+2. Upload the PNGs to Shopify Files (or any public host) and copy each URL.
+3. In **config.html → Presentation**, paste the URLs **one per line in order** in
+   the images box and click **Save slides**. (Used only when no PDF is set.)
+
+> The board renders the PDF with pdf.js, loaded on demand. The PDF host must allow
+> cross-origin fetches (Shopify Files does). If a PDF ever shows a black screen,
+> it's almost always the host blocking CORS — re-host it or fall back to images.
 
 **Run it during class.**
 1. On your phone open **`present-remote.html`** (there's an *Open phone remote ↗*
