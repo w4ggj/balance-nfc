@@ -53,6 +53,10 @@
     .rm-hint { color: var(--muted); font-size: 12px; text-align: center; line-height: 1.5; }
     .rm-hint a { color: #7ab8ff; }
 
+    .rm-notes-h { font-weight: 600; font-size: 12px; color: var(--muted); margin: 0 0 8px; text-transform: uppercase; letter-spacing: .6px; }
+    .rm-notes { font-size: 17px; line-height: 1.55; white-space: pre-wrap; word-wrap: break-word; max-height: 40vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .rm-notes.empty { color: #7a8090; font-style: italic; }
+
     .toggle { position: relative; display: inline-flex; align-items: center; flex: 0 0 auto; width: 58px; height: 34px; cursor: pointer; }
     .toggle input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
     .toggle .track { position: absolute; inset: 0; background: #3a3f4a; border-radius: 999px; transition: background .15s; }
@@ -88,7 +92,12 @@
       </div>
     </div>
 
-    <p class="rm-hint">Slides come from the <a href="config.html">control panel</a> → Presentation.<br>Keep this tab open while you teach — it follows the TV live.</p>
+    <div class="rm-card" id="rmNotesCard" hidden>
+      <div class="rm-notes-h">Speaker notes — this slide</div>
+      <div class="rm-notes" id="rmNotes"></div>
+    </div>
+
+    <p class="rm-hint">Slides &amp; notes come from the <a href="config.html">control panel</a> → Presentation.<br>Keep this tab open while you teach — it follows the TV live.</p>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -113,8 +122,11 @@
       var countEl = document.getElementById("rmCount");
       var prevBtn = document.getElementById("rmPrev");
       var nextBtn = document.getElementById("rmNext");
+      var notesCard = document.getElementById("rmNotesCard");
+      var notesEl = document.getElementById("rmNotes");
 
       var slides = [];
+      var notes = [];      // speaker notes, one entry per slide/page (from the config panel)
       var idx = 0;
       var on = false;
       var isPdf = false;
@@ -145,6 +157,22 @@
           empty.textContent = "No deck yet — add a PDF or image URLs in the control panel.";
           countEl.innerHTML = "Slide <small>—</small> / <small>—</small>";
         }
+        renderNote();
+      }
+
+      function renderNote() {
+        var hasAny = notes.length > 0;
+        notesCard.hidden = !hasAny;
+        if (!hasAny) return;
+        var n = notes[idx];
+        if (n != null && String(n).trim()) {
+          notesEl.textContent = String(n);
+          notesEl.classList.remove("empty");
+        } else {
+          notesEl.textContent = "(No notes for this slide)";
+          notesEl.classList.add("empty");
+        }
+        notesEl.scrollTop = 0;
       }
 
       function pull() {
@@ -154,6 +182,7 @@
           isPdf = !!(typeof p.pdf === "string" && p.pdf.trim());
           pages = Number(p.pages) || 0;
           slides = Array.isArray(p.slides) ? p.slides.filter(Boolean) : [];
+          notes = Array.isArray(p.notes) ? p.notes : [];
           idx = clamp(p.idx || 0);
           on = p.on === true;
           render();

@@ -82,9 +82,17 @@ on/off flag, and the current slide number. No player or account data.)
 > cross-origin fetches (Shopify Files does). If a PDF ever shows a black screen,
 > it's almost always the host blocking CORS — re-host it or fall back to images.
 
+**Speaker notes (optional, phone-only).** In **config.html → Presentation** there's
+a *Speaker notes* box. Paste your notes and separate each slide with a line
+containing just `---` (three dashes) — slide 1's notes, then `---`, then slide 2's,
+etc. They show **only on the phone remote**, synced to the slide/page you're on,
+and never appear on the TV. A normal PDF export has no notes in it, so this box is
+how you get them onto your phone.
+
 **Run it during class.**
 1. On your phone open **`present-remote.html`** (there's an *Open phone remote ↗*
-   button in the Presentation card — bookmark it).
+   button in the Presentation card — bookmark it). It shows the current slide's
+   speaker notes under the controls.
 2. Flip **Show on the big TV** on. The board switches to slide 1.
 3. Tap **Next ▶ / ◀ Prev** to move through the deck — the TV follows live. A
    Bluetooth presenter clicker works too (arrow / page keys).

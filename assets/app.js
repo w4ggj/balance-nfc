@@ -578,6 +578,27 @@
           .catch(function () { showToast("Couldn't save the PDF link — try again"); });
       });
     }
+    // Speaker notes: one block per slide/page, separated by a line of "---".
+    // Stored as /present/notes = [note, note, …] and shown ONLY on the phone
+    // remote (never on the TV). Empty blocks are kept so notes stay aligned to
+    // their slide number.
+    var presentNotes = document.getElementById("sgPresentNotes");
+    var presentNotesSave = document.getElementById("sgPresentNotesSave");
+    if (presentNotes) {
+      fbGet("present/notes").then(function (n) { presentNotes.value = Array.isArray(n) ? n.join("\n---\n") : ""; });
+    }
+    if (presentNotesSave && presentNotes) {
+      presentNotesSave.addEventListener("click", function () {
+        var chunks = (presentNotes.value || "")
+          .split(/^[ \t]*-{3,}[ \t]*$/m)
+          .map(function (s) { return s.replace(/^\s+|\s+$/g, ""); });
+        while (chunks.length && chunks[chunks.length - 1] === "") chunks.pop();
+        var hasAny = chunks.some(function (c) { return c !== ""; });
+        fbUpdate("present", { notes: hasAny ? chunks : null })
+          .then(function () { showToast(hasAny ? ("Notes saved for " + chunks.length + " slide" + (chunks.length === 1 ? "" : "s")) : "Notes cleared"); })
+          .catch(function () { showToast("Couldn't save notes — try again"); });
+      });
+    }
 
     // Video background (YouTube on the main board) — /video { on, url, sound }
     var videoToggle = document.getElementById("sgVideoToggle");
