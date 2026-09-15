@@ -33,7 +33,7 @@
       position: relative; background: #000; border-radius: 12px; overflow: hidden;
       aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center;
     }
-    .rm-stage img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+    .rm-stage img, .rm-stage canvas { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
     .rm-stage .empty { color: #7a8090; font-size: 13px; text-align: center; padding: 0 18px; }
 
     .rm-count { text-align: center; font-size: 15px; font-weight: 600; margin: 12px 0 2px; }
@@ -84,7 +84,7 @@
     </div>
 
     <div class="rm-card">
-      <div class="rm-stage"><img id="rmThumb" alt="" hidden /><div class="empty" id="rmEmpty">No slides yet — add image URLs in the control panel.</div></div>
+      <div class="rm-stage"><img id="rmThumb" alt="" hidden /><canvas id="rmCanvas" hidden></canvas><div class="empty" id="rmEmpty">No slides yet — add image URLs in the control panel.</div></div>
       <div class="rm-count" id="rmCount">Slide — / —</div>
       <div class="rm-nav">
         <button class="prev" id="rmPrev" type="button">◀ Prev</button>
@@ -122,6 +122,7 @@
       var countEl = document.getElementById("rmCount");
       var prevBtn = document.getElementById("rmPrev");
       var nextBtn = document.getElementById("rmNext");
+      var canvas = document.getElementById("rmCanvas");
       var notesCard = document.getElementById("rmNotesCard");
       var notesEl = document.getElementById("rmNotes");
 
@@ -130,8 +131,64 @@
       var idx = 0;
       var on = false;
       var isPdf = false;
+      var pdfUrl = "";     // the PDF deck's URL (rendered as a preview on this phone)
       var pages = 0;       // PDF page count, reported by the board once it loads the file
       var pushing = false; // don't let a poll clobber a tap mid-flight
+
+      // Lazy pdf.js — only when previewing a PDF deck on the phone.
+      var PDFJS_VER = "3.11.174";
+      var pdfjsState = { s: "idle", api: null, cbs: [] };
+      function loadPdfJs(cb) {
+        if (pdfjsState.s === "ready") return cb(pdfjsState.api);
+        if (pdfjsState.s === "failed") return cb(null);
+        pdfjsState.cbs.push(cb);
+        if (pdfjsState.s === "loading") return;
+        pdfjsState.s = "loading";
+        var sc = document.createElement("script");
+        sc.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/" + PDFJS_VER + "/pdf.min.js";
+        sc.onload = function () {
+          var api = window.pdfjsLib || null;
+          if (api) { try { api.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/" + PDFJS_VER + "/pdf.worker.min.js"; } catch (e) {} pdfjsState.s = "ready"; pdfjsState.api = api; }
+          else { pdfjsState.s = "failed"; }
+          var cbs = pdfjsState.cbs; pdfjsState.cbs = []; cbs.forEach(function (f) { f(pdfjsState.api); });
+        };
+        sc.onerror = function () { pdfjsState.s = "failed"; var cbs = pdfjsState.cbs; pdfjsState.cbs = []; cbs.forEach(function (f) { f(null); }); };
+        document.head.appendChild(sc);
+      }
+      var pdfPrev = { url: "", doc: null, loading: false, sig: "" };
+      function previewPdf(url, i) {
+        loadPdfJs(function (api) {
+          if (!api) return;                       // no preview available — leave the label
+          empty.hidden = true; thumb.hidden = true; canvas.hidden = false;
+          if (pdfPrev.url !== url) {
+            if (pdfPrev.loading) return;
+            pdfPrev.loading = true; pdfPrev.doc = null; pdfPrev.sig = "";
+            api.getDocument(url).promise.then(function (doc) {
+              pdfPrev.doc = doc; pdfPrev.url = url; pdfPrev.loading = false;
+              if (!pages) { pages = doc.numPages; render(); }
+              drawPdf(i);
+            }).catch(function () { pdfPrev.loading = false; });
+            return;
+          }
+          drawPdf(i);
+        });
+      }
+      function drawPdf(i) {
+        var doc = pdfPrev.doc; if (!doc) return;
+        var n = Math.min(Math.max(1, (i | 0) + 1), doc.numPages);
+        var sig = pdfPrev.url + "|" + n;
+        if (sig === pdfPrev.sig) return;
+        pdfPrev.sig = sig;
+        doc.getPage(n).then(function (page) {
+          var base = page.getViewport({ scale: 1 });
+          var w = canvas.parentNode.clientWidth || 400;
+          var scale = (w / base.width) * (window.devicePixelRatio || 1);
+          if (!isFinite(scale) || scale <= 0) scale = 1;
+          var vp = page.getViewport({ scale: scale });
+          canvas.width = Math.floor(vp.width); canvas.height = Math.floor(vp.height);
+          page.render({ canvasContext: canvas.getContext("2d"), viewport: vp });
+        }).catch(function () { pdfPrev.sig = ""; });
+      }
 
       function maxIdx() { return isPdf ? (pages > 0 ? pages - 1 : 199) : (slides.length - 1); }
       function clamp(i) { if (i < 0) i = 0; var m = maxIdx(); if (i > m) i = m; return i; }
@@ -145,15 +202,20 @@
         prevBtn.disabled = !has || idx <= 0;
         nextBtn.disabled = !has || (!isPdf && idx >= slides.length - 1) || (isPdf && pages > 0 && idx >= pages - 1);
         if (isPdf) {
-          thumb.hidden = true; empty.hidden = false;
-          empty.textContent = "PDF deck — flip pages with the buttons below.";
           countEl.innerHTML = "Page " + (idx + 1) + " / " + (pages > 0 ? pages : "…");
+          if (pdfUrl) {
+            thumb.hidden = true;
+            previewPdf(pdfUrl, idx);            // renders the current page into the preview
+          } else {
+            canvas.hidden = true; thumb.hidden = true; empty.hidden = false;
+            empty.textContent = "PDF deck — flip pages with the buttons below.";
+          }
         } else if (slides.length) {
-          empty.hidden = true; thumb.hidden = false;
+          canvas.hidden = true; empty.hidden = true; thumb.hidden = false;
           if (thumb.getAttribute("src") !== slides[idx]) thumb.setAttribute("src", slides[idx]);
           countEl.innerHTML = "Slide " + (idx + 1) + " / " + slides.length;
         } else {
-          thumb.hidden = true; empty.hidden = false;
+          canvas.hidden = true; thumb.hidden = true; empty.hidden = false;
           empty.textContent = "No deck yet — add a PDF or image URLs in the control panel.";
           countEl.innerHTML = "Slide <small>—</small> / <small>—</small>";
         }
@@ -180,6 +242,7 @@
         BGF.fbGet("present").then(function (p) {
           p = p || {};
           isPdf = !!(typeof p.pdf === "string" && p.pdf.trim());
+          pdfUrl = isPdf ? p.pdf.trim() : "";
           pages = Number(p.pages) || 0;
           slides = Array.isArray(p.slides) ? p.slides.filter(Boolean) : [];
           notes = Array.isArray(p.notes) ? p.notes : [];
