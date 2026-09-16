@@ -62,14 +62,19 @@ on/off flag, and the current slide number. No player or account data.)
 
 **Prepare a deck — two ways.**
 
-*Easiest — a PDF (recommended, needs a real-browser TV like the Linux PC).*
-1. In PowerPoint: *File → Save As → PDF* (one file, all slides). Speaker notes are
-   NOT included in a normal Save-As-PDF, so only the slides show — which is what
-   you want on a public screen.
-2. Upload the PDF to **Shopify → Content → Files** (or any public host with open
-   CORS) and copy its link.
-3. Open **`config.html` → Presentation**, paste the link in **the PDF box**, and
-   click **Save PDF**. The board renders the pages; the phone remote flips them.
+*Easiest — a PDF from the deck library (recommended, needs a real-browser TV like
+the Linux PC).*
+1. In PowerPoint: *File → Save As → PDF* (one file, all slides). Only the slides
+   show on the TV; if you export notes as comments they'll be pulled to the phone
+   remote (see Speaker notes below).
+2. Upload the PDF to the **education repo's `presentations/` folder** on GitHub
+   (drag-and-drop via github.com — no git needed).
+3. Open **`config.html` → Presentation** and pick the deck from the **dropdown**
+   (it auto-lists that folder; tap ↻ after a new upload). Selecting it loads the
+   deck on the TV and pulls its notes — done.
+
+> Prefer another host? Paste any public, CORS-friendly PDF link into the **PDF box**
+> below the dropdown and click **Save PDF** instead.
 
 *Or images (works on any device, including the old Fire Stick).*
 1. Export your slides as **PNGs** — in PowerPoint, *File → Export → Change File

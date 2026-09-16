@@ -624,6 +624,59 @@
         if (url) pull(url); else fbGet("present/pdf").then(function (u) { pull((typeof u === "string" ? u : "").trim()); });
       });
     }
+    // Deck library: list the PDFs in the education repo's presentations/ folder
+    // (GitHub's public contents API, CORS-enabled) so staff just pick the day's
+    // deck from a dropdown. Picking one loads it on the TV and pulls its notes.
+    var LIB = { owner: "w4ggj", repo: "tavaone-education", branch: "main", dir: "presentations" };
+    function libUrl(name) {
+      return "https://cdn.jsdelivr.net/gh/" + LIB.owner + "/" + LIB.repo + "@" + LIB.branch + "/" + LIB.dir + "/" +
+        name.split("/").map(encodeURIComponent).join("/");
+    }
+    var pdfPick = document.getElementById("sgPresentPdfPick");
+    var pdfRefresh = document.getElementById("sgPresentPdfRefresh");
+    function fillPdfList() {
+      if (!pdfPick) return;
+      var api = "https://api.github.com/repos/" + LIB.owner + "/" + LIB.repo + "/contents/" + LIB.dir + "?ref=" + LIB.branch;
+      fetch(api, { cache: "no-store", headers: { "Accept": "application/vnd.github+json" } })
+        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function (list) {
+          var pdfs = (Array.isArray(list) ? list : [])
+            .filter(function (f) { return f.type === "file" && /\.pdf$/i.test(f.name); })
+            .map(function (f) { return f.name; }).sort();
+          pdfPick.innerHTML = "";
+          var o0 = document.createElement("option");
+          o0.value = ""; o0.textContent = pdfs.length ? "— choose a deck —" : "— no PDFs found —";
+          pdfPick.appendChild(o0);
+          pdfs.forEach(function (n) {
+            var o = document.createElement("option"); o.value = n; o.textContent = n.replace(/\.pdf$/i, "");
+            pdfPick.appendChild(o);
+          });
+          var cur = (presentPdf && presentPdf.value || "").trim();  // reflect the loaded deck
+          pdfs.forEach(function (n) { if (libUrl(n) === cur) pdfPick.value = n; });
+        })
+        .catch(function () { pdfPick.innerHTML = "<option value=''>— couldn't load list (tap ↻) —</option>"; });
+    }
+    if (pdfPick) {
+      fillPdfList();
+      pdfPick.addEventListener("change", function () {
+        var name = pdfPick.value; if (!name) return;
+        var url = libUrl(name);
+        if (presentPdf) presentPdf.value = url;
+        showToast("Loading " + name.replace(/\.pdf$/i, "") + "…");
+        fbUpdate("present", { pdf: url, idx: 0, pages: null }).then(function () {
+          return notesFromPdf(url).then(function (notes) {   // best-effort auto-pull
+            var hasAny = notes.some(function (c) { return c && c.trim(); });
+            if (hasAny) {
+              if (presentNotes) presentNotes.value = notes.map(function (n) { return (n || "").trim(); }).join("\n---\n");
+              return fbUpdate("present", { notes: notes }).then(function () { showToast("Deck loaded + notes pulled"); });
+            }
+            if (presentNotes) presentNotes.value = "";
+            return fbUpdate("present", { notes: null }).then(function () { showToast("Deck loaded (no notes in this PDF)"); });
+          }).catch(function () { showToast("Deck loaded (couldn't read notes)"); });
+        }).catch(function () { showToast("Couldn't load that deck — try again"); });
+      });
+    }
+    if (pdfRefresh) pdfRefresh.addEventListener("click", fillPdfList);
 
     // Video background (YouTube on the main board) — /video { on, url, sound }
     var videoToggle = document.getElementById("sgVideoToggle");
