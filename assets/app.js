@@ -637,10 +637,12 @@
         if (url) pull(url); else fbGet("present/pdf").then(function (u) { pull((typeof u === "string" ? u : "").trim()); });
       });
     }
-    // Deck library: list the PDFs in the education repo's presentations/ folder
-    // (GitHub's public contents API, CORS-enabled) so staff just pick the day's
-    // deck from a dropdown. Picking one loads it on the TV and pulls its notes.
+    // Library: list PDFs AND images in the education repo's presentations/ folder
+    // (GitHub's public contents API, CORS-enabled) so staff pick what to show from
+    // one dropdown — a PDF deck, a single static image, or "None" to go back to
+    // normal signage. A PDF loads + pulls notes; an image shows as one slide.
     var LIB = { owner: "w4ggj", repo: "tavaone-education", branch: "main", dir: "presentations" };
+    var IMG_RE = /\.(png|jpe?g|webp|gif)$/i;
     function libUrl(name) {
       return "https://cdn.jsdelivr.net/gh/" + LIB.owner + "/" + LIB.repo + "@" + LIB.branch + "/" + LIB.dir + "/" +
         name.split("/").map(encodeURIComponent).join("/");
@@ -653,19 +655,17 @@
       fetch(api, { cache: "no-store", headers: { "Accept": "application/vnd.github+json" } })
         .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
         .then(function (list) {
-          var pdfs = (Array.isArray(list) ? list : [])
-            .filter(function (f) { return f.type === "file" && /\.pdf$/i.test(f.name); })
+          var files = (Array.isArray(list) ? list : [])
+            .filter(function (f) { return f.type === "file" && (/\.pdf$/i.test(f.name) || IMG_RE.test(f.name)); })
             .map(function (f) { return f.name; }).sort();
           pdfPick.innerHTML = "";
-          var o0 = document.createElement("option");
-          o0.value = ""; o0.textContent = pdfs.length ? "— choose a deck —" : "— no PDFs found —";
-          pdfPick.appendChild(o0);
-          pdfs.forEach(function (n) {
-            var o = document.createElement("option"); o.value = n; o.textContent = n.replace(/\.pdf$/i, "");
-            pdfPick.appendChild(o);
-          });
-          var cur = (presentPdf && presentPdf.value || "").trim();  // reflect the loaded deck
-          pdfs.forEach(function (n) { if (libUrl(n) === cur) pdfPick.value = n; });
+          function opt(v, t) { var o = document.createElement("option"); o.value = v; o.textContent = t; pdfPick.appendChild(o); }
+          opt("", files.length ? "— choose what to show —" : "— nothing in the folder —");
+          if (files.length) opt("__none__", "— None (back to normal signage) —");
+          files.forEach(function (n) { opt(n, n.replace(/\.[^.]+$/, "") + (IMG_RE.test(n) ? "  ·  image" : "  ·  PDF")); });
+          var cur = (presentPdf && presentPdf.value || "").trim();
+          var curImg = (((presentSlides && presentSlides.value) || "").split("\n")[0] || "").trim();
+          files.forEach(function (n) { if (libUrl(n) === cur || libUrl(n) === curImg) pdfPick.value = n; });
         })
         .catch(function () { pdfPick.innerHTML = "<option value=''>— couldn't load list (tap ↻) —</option>"; });
     }
@@ -673,10 +673,29 @@
       fillPdfList();
       pdfPick.addEventListener("change", function () {
         var name = pdfPick.value; if (!name) return;
+        if (name === "__none__") {                       // clear everything → normal signage
+          if (presentPdf) presentPdf.value = "";
+          if (presentSlides) presentSlides.value = "";
+          if (presentNotes) presentNotes.value = "";
+          fbUpdate("present", { pdf: null, slides: null, notes: null, pages: null, idx: 0 })
+            .then(function () { showToast("Cleared — board back to normal signage"); })
+            .catch(function () { showToast("Couldn't clear — try again"); });
+          return;
+        }
         var url = libUrl(name);
+        if (IMG_RE.test(name)) {                          // image → show as one static slide
+          if (presentSlides) presentSlides.value = url;
+          if (presentPdf) presentPdf.value = "";
+          if (presentNotes) presentNotes.value = "";
+          fbUpdate("present", { slides: [url], pdf: null, pages: null, idx: 0, notes: null })
+            .then(function () { showToast("Image loaded — showing on the board"); })
+            .catch(function () { showToast("Couldn't load that image — try again"); });
+          return;
+        }
+        // PDF → load deck and auto-pull its notes
         if (presentPdf) presentPdf.value = url;
-        showToast("Loading " + name.replace(/\.pdf$/i, "") + "…");
         if (presentSlides) presentSlides.value = "";
+        showToast("Loading " + name.replace(/\.pdf$/i, "") + "…");
         fbUpdate("present", { pdf: url, slides: null, idx: 0, pages: null }).then(function () {
           return notesFromPdf(url).then(function (notes) {   // best-effort auto-pull
             var hasAny = notes.some(function (c) { return c && c.trim(); });
