@@ -557,9 +557,17 @@
     if (presentSave && presentSlides) {
       presentSave.addEventListener("click", function () {
         var slides = (presentSlides.value || "").split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
-        fbUpdate("present", { slides: slides.length ? slides : null, idx: 0 })
-          .then(function () { showToast(slides.length ? (slides.length + " slide" + (slides.length === 1 ? "" : "s") + " saved") : "Slides cleared"); })
-          .catch(function () { showToast("Couldn't save slides — try again"); });
+        // Saving images makes images the active deck: clear any PDF so the board
+        // actually shows them (PDF otherwise wins). Last thing you save is what shows.
+        var payload = slides.length
+          ? { slides: slides, pdf: null, pages: null, idx: 0 }
+          : { slides: null, idx: 0 };
+        fbUpdate("present", payload)
+          .then(function () {
+            if (slides.length && presentPdf) presentPdf.value = "";
+            showToast(slides.length ? (slides.length + " image" + (slides.length === 1 ? "" : "s") + " saved — showing on the board") : "Images cleared");
+          })
+          .catch(function () { showToast("Couldn't save images — try again"); });
       });
     }
     // PDF deck: one link (a PowerPoint exported to PDF). Takes precedence over
@@ -573,8 +581,13 @@
     if (presentPdfSave && presentPdf) {
       presentPdfSave.addEventListener("click", function () {
         var url = (presentPdf.value || "").trim();
-        fbUpdate("present", { pdf: url || null, idx: 0, pages: null })
-          .then(function () { showToast(url ? "PDF saved — turn on Presentation to show it" : "PDF cleared"); })
+        // Saving a PDF makes it the active deck: clear image slides so the PDF shows.
+        var payload = url ? { pdf: url, slides: null, idx: 0, pages: null } : { pdf: null, idx: 0, pages: null };
+        fbUpdate("present", payload)
+          .then(function () {
+            if (url && presentSlides) presentSlides.value = "";
+            showToast(url ? "PDF saved — turn on Presentation to show it" : "PDF cleared");
+          })
           .catch(function () { showToast("Couldn't save the PDF link — try again"); });
       });
     }
@@ -663,7 +676,8 @@
         var url = libUrl(name);
         if (presentPdf) presentPdf.value = url;
         showToast("Loading " + name.replace(/\.pdf$/i, "") + "…");
-        fbUpdate("present", { pdf: url, idx: 0, pages: null }).then(function () {
+        if (presentSlides) presentSlides.value = "";
+        fbUpdate("present", { pdf: url, slides: null, idx: 0, pages: null }).then(function () {
           return notesFromPdf(url).then(function (notes) {   // best-effort auto-pull
             var hasAny = notes.some(function (c) { return c && c.trim(); });
             if (hasAny) {
