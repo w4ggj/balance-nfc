@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Trivia — Play</title>
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="../assets/logo.png" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100vh; background: #0b1020; color: #eaf0ff;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    #app { min-height: 100vh; display: flex; flex-direction: column; padding: 16px; }
+    .pl-card { margin: auto; text-align: center; max-width: 420px; width: 100%;
+      background: #121a30; border: 1px solid #2a3860; border-radius: 18px; padding: 28px 20px; }
+    .pl-card.good { background: #17341f; border-color: #2ec27e; }
+    .pl-card.bad { background: #351a1f; border-color: #e2445c; }
+    .pl-logo { width: 72px; height: 72px; margin-bottom: 8px; }
+    .pl-card h1 { font-size: 26px; margin: 6px 0; }
+    .pl-card h2 { font-size: 22px; margin: 6px 0; }
+    .pl-sub { color: #9fb2d8; font-size: 15px; margin: 8px 0 16px; }
+    .pl-input { width: 100%; font-size: 20px; padding: 14px; border-radius: 12px; border: 1px solid #2a3860;
+      background: #0e1527; color: #fff; text-align: center; margin-bottom: 14px; }
+    .pl-btn { width: 100%; font-size: 20px; font-weight: 800; padding: 16px; border: 0; border-radius: 14px;
+      background: linear-gradient(180deg,#3aa0ff,#2b7fe0); color: #fff; }
+    .pl-result { font-size: 30px; font-weight: 900; margin: 6px 0; }
+    .pl-locked-letter { font-size: 56px; font-weight: 900; }
+
+    .pl-top { display: flex; justify-content: space-between; align-items: center; font-size: 15px; color: #9fb2d8; margin-bottom: 12px; }
+    .pl-q { font-weight: 800; color: #9ec5ff; }
+    .pl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: 1; }
+    .pl-ans { border: 0; border-radius: 16px; color: #fff; font-weight: 800; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px; padding: 18px 10px; min-height: 28vh;
+      font-size: 18px; touch-action: manipulation; }
+    .pl-ans:active { filter: brightness(1.15); transform: translateY(1px); }
+    .pl-ans-letter { font-size: 28px; font-weight: 900; background: rgba(0,0,0,.22); border-radius: 10px; padding: 2px 14px; }
+    .pl-ans-text { font-size: 17px; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    (function () {
+      var t = Date.now();
+      ["../assets/app.js", "../assets/trivia.js"].forEach(function (s) {
+        document.write('<scr' + 'ipt src="' + s + '?t=' + t + '"><\/scr' + 'ipt>');
+      });
+    })();
+  </script>
+  <script>
+    (function boot() {
+      if (!window.BGF || !window.Trivia) { setTimeout(boot, 60); return; }
+      Trivia.play();
+    })();
+  </script>
+</body>
+</html>

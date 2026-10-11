@@ -240,6 +240,35 @@ same rule the "Live event on TV" toggle uses).
 
 ---
 
+## Live Trivia (Kahoot-style)
+
+A phone-played trivia game that runs on a TV. Three pages, all under `/trivia/`:
+- **`nfc.balancegamingfl.com/trivia/config.html`** — host: write the question bank and run the game.
+- **`nfc.balancegamingfl.com/trivia/board.html`** — the TV screen: question, timer, join QR, leaderboard.
+- **`nfc.balancegamingfl.com/trivia/play.html`** — a player's phone (this is what the join QR / NFC tag points to).
+
+**One-time Firebase rule.** Add alongside the other top-level rules (don't replace the ruleset):
+
+```json
+"trivia": {
+  ".read": true,
+  ".write": true
+}
+```
+
+**Set up the questions (once):** open `trivia/config.html` → **Add question**, type the question + up to four answers, click the dot next to the correct one, set the seconds to answer → **Save bank**.
+
+**Run a game:**
+1. Put `trivia/board.html` on a TV (same as any signage page).
+2. On the host page tap **New game / open lobby** — the TV shows a **QR code** (and a room code). Point an NFC tag at `trivia/play.html` if you want tap-to-join.
+3. Players scan/tap, enter a name, and appear in the lobby.
+4. **Start questions** → each question goes live on the TV and on phones. Tap **Reveal answer** to show the correct one and score everyone, then **Next question ▶**.
+5. After the last question (or **End game**) the TV shows the final leaderboard.
+
+> Scoring is Kahoot-style: a correct answer is worth 500 points plus a speed bonus up to 500 (faster = more). Scores are computed by the host on "Reveal," so players can't pad their own.
+
+---
+
 ## Option A — Amazon Fire TV Stick (easiest)
 
 The signage page is just a website, so a Fire Stick + a kiosk browser runs it.

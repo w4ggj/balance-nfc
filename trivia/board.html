@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trivia Board</title>
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="../assets/logo.png" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #0b1020; color: #eaf0ff; overflow: hidden;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    #stage { position: fixed; inset: 0; display: flex; flex-direction: column; padding: 3vh 3vw; }
+    .tv-head { display: flex; align-items: center; gap: 1.2vw; margin-bottom: 2vh; }
+    .tv-logo { width: 5vh; height: 5vh; }
+    .tv-logo-lg { width: 16vh; height: 16vh; margin-bottom: 2vh; }
+    .tv-title { font-size: 3.2vh; font-weight: 800; letter-spacing: .5px; color: #9ec5ff; text-transform: uppercase; }
+    .tv-center { margin: auto; text-align: center; }
+    .tv-big { font-size: 7vh; font-weight: 900; }
+    .tv-sub { font-size: 3vh; color: #9fb2d8; }
+    .tv-hint { color: #7a89ad; }
+
+    .q-text { font-size: 5.2vh; font-weight: 800; line-height: 1.15; margin: 1vh 0; }
+    .q-timer { font-size: 4vh; font-weight: 900; color: #ffd369; margin: 1vh 0 2vh; }
+    .ans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2vh; flex: 1; }
+    .ans { border-radius: 2vh; display: flex; align-items: center; gap: 2vw; padding: 2vh 2.5vw;
+      font-size: 4vh; font-weight: 800; color: #fff; position: relative; }
+    .ans.dim { opacity: .35; }
+    .ans.correct { outline: .7vh solid #fff; background: #2ec27e; }
+    .ans-letter { font-weight: 900; background: rgba(0,0,0,.25); border-radius: 1vh; padding: .3vh 1.6vh; }
+    .ans-check { position: absolute; right: 2vw; font-size: 5vh; }
+    .ans-count { text-align: center; font-size: 3vh; color: #9fb2d8; margin-top: 2vh; }
+
+    .lobby { display: flex; gap: 4vw; flex: 1; align-items: center; }
+    .lobby-join { text-align: center; flex: 0 0 42%; }
+    .qrbox { background: #fff; border-radius: 2vh; padding: 2vh; display: inline-block; }
+    .qrbox svg { width: 34vh; height: 34vh; display: block; }
+    .code { font-size: 5vh; font-weight: 900; letter-spacing: .4vw; color: #ffd369; margin-top: 1.5vh; }
+    .lobby-players { flex: 1; }
+    .pgrid { display: flex; flex-wrap: wrap; gap: 1.2vh; margin-top: 2vh; }
+    .pchip { background: #16203c; border: 1px solid #2a3860; border-radius: 1.4vh; padding: 1vh 2vh; font-size: 2.6vh; }
+
+    .mini-lb { margin-top: 2vh; max-width: 70vw; align-self: center; width: 70vw; }
+    .lb-row { display: grid; grid-template-columns: 4vw 1fr auto; gap: 2vw; align-items: center;
+      background: #121a30; border-radius: 1.2vh; padding: 1.2vh 2vw; margin-bottom: 1vh; font-size: 3.2vh; }
+    .lb-rk { color: #ffd369; font-weight: 900; text-align: center; }
+    .lb-nm { font-weight: 700; }
+    .lb-sc { font-weight: 900; color: #9ec5ff; }
+    .winner { text-align: center; margin: 2vh 0; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <script>
+    (function () {
+      var t = Date.now();
+      ["../assets/qrcode.js", "../assets/app.js", "../assets/trivia.js"].forEach(function (s) {
+        document.write('<scr' + 'ipt src="' + s + '?t=' + t + '"><\/scr' + 'ipt>');
+      });
+    })();
+  </script>
+  <script>
+    (function boot() {
+      if (!window.BGF || !window.Trivia) { setTimeout(boot, 60); return; }
+      Trivia.board();
+    })();
+  </script>
+</body>
+</html>
