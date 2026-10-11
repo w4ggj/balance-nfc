@@ -41,6 +41,17 @@
     .lb-nm { font-weight: 700; }
     .lb-sc { font-weight: 900; color: #9ec5ff; }
     .links a { color: #7ab8ff; font-size: 13px; margin-right: 14px; }
+    .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      background: #0e1527; border: 1px solid #27345c; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+    .switch-row[data-on="true"] { border-color: #2ec27e; }
+    .switch-row .sw-name { font-weight: 700; }
+    .switch-row .sw-name small { display: block; color: #9fb2d8; font-weight: 400; font-size: 12px; margin-top: 2px; }
+    .toggle { position: relative; display: inline-flex; width: 56px; height: 32px; flex: 0 0 auto; cursor: pointer; }
+    .toggle input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+    .toggle .track { position: absolute; inset: 0; background: #3a3f4a; border-radius: 999px; transition: background .15s; }
+    .toggle .knob { position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; background: #fff; border-radius: 50%; transition: transform .15s; }
+    .toggle input:checked ~ .track { background: #2ec27e; }
+    .toggle input:checked ~ .knob { transform: translateX(24px); }
     #toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: #1b2a4a;
       color: #fff; padding: 12px 18px; border-radius: 12px; opacity: 0; transition: opacity .2s;
       pointer-events: none; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
@@ -56,6 +67,10 @@
 
     <div class="card">
       <h2>Run the game</h2>
+      <div class="switch-row" data-on="false">
+        <span class="sw-name">Show on the main TV <small id="triviaShowState">not on the TV</small></span>
+        <label class="toggle"><input type="checkbox" id="triviaShow" aria-label="Show trivia on the main TV"><span class="track"></span><span class="knob"></span></label>
+      </div>
       <div class="status" id="gameStatus">…</div>
       <div class="join" id="joinInfo"></div>
       <div class="btn-row">

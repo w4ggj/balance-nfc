@@ -258,8 +258,10 @@ A phone-played trivia game that runs on a TV. Three pages, all under `/trivia/`:
 
 **Set up the questions (once):** open `trivia/config.html` → **Add question**, type the question + up to four answers, click the dot next to the correct one, set the seconds to answer → **Save bank**.
 
+**Putting it on the main 75″ TV:** you don't need to open `board.html` on that TV yourself — flip **Show on the main TV** on the host page and the trivia board overlays the signage board automatically (like the tournament/presentation modes). Turn it off to go back to normal signage. (You can still open `board.html` directly on a separate screen if you prefer.)
+
 **Run a game:**
-1. Put `trivia/board.html` on a TV (same as any signage page).
+1. On the host page, flip **Show on the main TV** on (or put `trivia/board.html` on a screen).
 2. On the host page tap **New game / open lobby** — the TV shows a **QR code** (and a room code). Point an NFC tag at `trivia/play.html` if you want tap-to-join.
 3. Players scan/tap, enter a name, and appear in the lobby.
 4. **Start questions** → each question goes live on the TV and on phones. Tap **Reveal answer** to show the correct one and score everyone, then **Next question ▶**.

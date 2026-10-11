@@ -1208,6 +1208,35 @@
     }).catch(function () {});
   }
 
+  // ---- Live trivia overlay ---------------------------------------------
+  // When the trivia host flips "Show on the main TV" (trivia/show === true),
+  // overlay the full-screen trivia board over the signage. Off → back to normal.
+  var triviaOvEl = null, triviaOvFrame = null, triviaOvSrc = "", triviaCb = String(Date.now());
+  function ensureTriviaOverlay() {
+    if (triviaOvEl) return;
+    triviaOvEl = document.createElement("div");
+    triviaOvEl.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#0b1020;display:none;z-index:9600;";
+    triviaOvFrame = document.createElement("iframe");
+    triviaOvFrame.setAttribute("scrolling", "no");
+    triviaOvFrame.setAttribute("title", "Live trivia board");
+    triviaOvFrame.style.cssText = "width:100%;height:100%;border:0;display:block;";
+    triviaOvEl.appendChild(triviaOvFrame);
+    document.body.appendChild(triviaOvEl);
+  }
+  function loadTriviaOverlay() {
+    if (!global.BGF) return;
+    BGF.fbGet("trivia/show").then(function (on) {
+      ensureTriviaOverlay();
+      if (on === true) {
+        var src = "trivia/board.html?t=" + triviaCb;
+        triviaOvEl.style.display = "block";
+        if (src !== triviaOvSrc) { triviaOvSrc = src; triviaOvFrame.src = src; }
+      } else if (triviaOvSrc) {
+        triviaOvSrc = ""; triviaOvFrame.src = "about:blank"; triviaOvEl.style.display = "none";
+      }
+    }).catch(function () {});
+  }
+
   // ---- init ------------------------------------------------------------
   function init() {
     var screen = (qp("screen") === "entrance") ? "entrance" : "main";
@@ -1234,6 +1263,8 @@
       loadVideo(); setInterval(loadVideo, 1500);
       // Live Pokémon tournament: overlay the TOM pairings/standings board.
       loadTourneyOverlay(); setInterval(loadTourneyOverlay, 5000);
+      // Live trivia: overlay the trivia board when the host turns it on.
+      loadTriviaOverlay(); setInterval(loadTriviaOverlay, 5000);
     }
 
     // Unattended signage: reload hourly with a cache-buster so future updates

@@ -116,6 +116,23 @@
     };
     document.getElementById("gEnd").onclick = function () { setPhase({ phase: "ended" }).then(function () { toast("Game ended"); }); };
 
+    // Show-on-TV toggle: overlays the trivia board on the main 75" signage.
+    var showToggle = document.getElementById("triviaShow");
+    function paintShow(on) {
+      if (!showToggle) return;
+      var row = showToggle.closest(".switch-row"); if (row) row.setAttribute("data-on", on ? "true" : "false");
+      var st = document.getElementById("triviaShowState"); if (st) st.textContent = on ? "showing on the 75″ TV" : "not on the TV";
+    }
+    if (showToggle) {
+      BGF().fbGet("trivia/show").then(function (v) { showToggle.checked = v === true; paintShow(v === true); });
+      showToggle.addEventListener("change", function () {
+        var on = showToggle.checked; paintShow(on);
+        BGF().fbSet("trivia/show", on)
+          .then(function () { toast(on ? "Trivia is on the main TV" : "Trivia off the main TV"); })
+          .catch(function () { showToggle.checked = !on; paintShow(!on); toast("Couldn't switch — try again"); });
+      });
+    }
+
     function revealAndScore() {
       Promise.all([BGF().fbGet("trivia/game"), BGF().fbGet("trivia/questions"), BGF().fbGet("trivia/players")]).then(function (r) {
         var g = r[0] || {}, qs = r[1] || [], players = r[2] || {};
