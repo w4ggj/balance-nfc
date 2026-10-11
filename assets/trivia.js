@@ -115,6 +115,8 @@
       });
     };
     document.getElementById("gEnd").onclick = function () { setPhase({ phase: "ended" }).then(function () { toast("Game ended"); }); };
+    var gReset = document.getElementById("gReset");
+    if (gReset) gReset.onclick = function () { setPhase({ phase: "idle" }).then(function () { toast("Back to the Trivia Night screen"); }); };
 
     // Show-on-TV toggle: overlays the trivia board on the main 75" signage.
     var showToggle = document.getElementById("triviaShow");
