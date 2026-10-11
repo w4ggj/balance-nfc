@@ -161,6 +161,10 @@
       return;
     }
 
+    // Live trivia takes over NFC taps: when the host has trivia on the TV, send
+    // scanners straight to the trivia sign-up to put their name in.
+    fbGet("trivia/show").then(function (triviaOn) {
+    if (triviaOn === true) { location.replace("trivia/play.html"); return; }
     getConfig().then(function (cfg) {
       // While a live TOM Pokémon tournament is running, the Pokémon toggle sends
       // scanners to the live table view (their real pairing) instead of the
@@ -183,6 +187,7 @@
       var hub = document.getElementById("hub");
       if (boot) boot.hidden = true;
       if (hub) hub.hidden = false;
+    });
     });
   }
 
