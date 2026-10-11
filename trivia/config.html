@@ -89,11 +89,18 @@
     </div>
 
     <div class="card">
-      <h2>Question bank</h2>
-      <div id="qbank"></div>
+      <h2>Question banks</h2>
+      <p class="tv-hint" style="margin:0 0 10px">Make a bank per round or category. Pick one, edit it, <b>Save bank</b>. <b>Load onto board</b> sends that bank to the game — then use <b>Start questions</b> above. Run several banks back-to-back (without <b>New game</b>) and scores carry across rounds.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <select class="field" id="bankPick" style="flex:1;min-width:160px;margin:0"></select>
+        <button class="btn ghost sm" id="bankDelete" type="button">Delete bank</button>
+      </div>
+      <input class="field" id="bankName" type="text" placeholder="Bank name (e.g. Round 1 — Pokémon)" />
+      <div id="qbank" style="margin-top:10px"></div>
       <div class="btn-row">
         <button class="btn ghost" id="qAdd" type="button">+ Add question</button>
         <button class="btn primary" id="qSave" type="button">Save bank</button>
+        <button class="btn primary" id="bankLoad" type="button">Load onto board ▶</button>
       </div>
     </div>
   </div>

@@ -256,7 +256,7 @@ A phone-played trivia game that runs on a TV. Three pages, all under `/trivia/`:
 }
 ```
 
-**Set up the questions (once):** open `trivia/config.html` → **Add question**, type the question + up to four answers, click the dot next to the correct one, set the seconds to answer → **Save bank**.
+**Set up the questions (banks):** open `trivia/config.html` → **Question banks**. Make a **bank per round or category** — pick **➕ New bank…**, name it (e.g. "Round 1 — Pokémon"), **Add question** (question + up to four answers, click the dot next to the correct one, set seconds), then **Save bank**. Switch banks anytime from the dropdown. When you're ready to play a bank, **Load onto board** sends it to the game, then use **Start questions**. To run multiple rounds in one night, load and play each bank back-to-back **without** tapping **New game** — scores carry across rounds; the bank name shows on the TV.
 
 **Putting it on the main 75″ TV:** you don't need to open `board.html` on that TV yourself — flip **Show on the main TV** on the host page and the trivia board overlays the signage board automatically (like the tournament/presentation modes). Turn it off to go back to normal signage. (You can still open `board.html` directly on a separate screen if you prefer.)
 

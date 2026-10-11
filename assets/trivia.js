@@ -49,7 +49,10 @@
     var statusEl = document.getElementById("gameStatus");
     var joinInfo = document.getElementById("joinInfo");
     if (!bank) return;
-    var questions = [];
+    var bankPick = document.getElementById("bankPick");
+    var bankName = document.getElementById("bankName");
+    var banks = {}, currentBankId = null;
+    var questions = [];                     // editor working copy = selected bank's questions
 
     function blankQ() { return { q: "", choices: ["", "", "", ""], correct: 0, time: 20 }; }
     function renderBank() {
@@ -90,12 +93,73 @@
       });
     }
 
+    function validQ(q) { return (q.q || "").trim() && (q.choices || []).filter(Boolean).length >= 2; }
+    function newId() { return "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
     document.getElementById("qAdd").onclick = function () { questions.push(blankQ()); renderBank(); };
+
+    // ---- Question banks (one per round/category) ----
+    function selectBank(id) {
+      currentBankId = id;
+      var b = banks[id] || { name: "", questions: [] };
+      if (bankName) bankName.value = b.name || "";
+      questions = (b.questions || []).map(function (q) { return { q: q.q, choices: (q.choices || ["", "", "", ""]).slice(), correct: q.correct || 0, time: q.time || 20 }; });
+      renderBank();
+    }
+    function renderBankPicker() {
+      if (!bankPick) return;
+      var ids = Object.keys(banks).sort(function (a, b) { return (banks[a].name || "").localeCompare(banks[b].name || ""); });
+      bankPick.innerHTML = "";
+      ids.forEach(function (id) { var o = el("option"); o.value = id; o.textContent = banks[id].name || "(unnamed)"; bankPick.appendChild(o); });
+      var add = el("option"); add.value = "__new__"; add.textContent = "➕ New bank…"; bankPick.appendChild(add);
+      if (!currentBankId || !banks[currentBankId]) currentBankId = ids[0] || null;
+      if (currentBankId) bankPick.value = currentBankId;
+      selectBank(currentBankId);
+    }
+    function loadBanks() {
+      return BGF().fbGet("trivia/banks").then(function (b) {
+        banks = (b && typeof b === "object") ? b : {};
+        if (Object.keys(banks).length) return;
+        // migrate a pre-existing single bank (/trivia/questions) into a "Main" bank
+        return BGF().fbGet("trivia/questions").then(function (qs) {
+          var id = newId();
+          banks[id] = { name: "Main", questions: Array.isArray(qs) ? qs : [] };
+          currentBankId = id;
+          return BGF().fbSet("trivia/banks", banks);
+        });
+      });
+    }
+    if (bankPick) bankPick.onchange = function () {
+      if (bankPick.value === "__new__") {
+        var id = newId(); banks[id] = { name: "New bank", questions: [] }; currentBankId = id;
+        BGF().fbSet("trivia/banks/" + id, banks[id]).then(function () { renderBankPicker(); if (bankName) bankName.focus(); toast("New bank — name it and add questions"); });
+        return;
+      }
+      selectBank(bankPick.value);
+    };
+    var bankDelete = document.getElementById("bankDelete");
+    if (bankDelete) bankDelete.onclick = function () {
+      if (!currentBankId) return;
+      var id = currentBankId; delete banks[id];
+      BGF().fbSet("trivia/banks/" + id, null).then(function () { currentBankId = null; renderBankPicker(); toast("Bank deleted"); });
+    };
     document.getElementById("qSave").onclick = function () {
-      var clean = questions.filter(function (q) { return (q.q || "").trim() && q.choices.filter(Boolean).length >= 2; });
-      BGF().fbSet("trivia/questions", clean.length ? clean : null)
-        .then(function () { toast(clean.length ? (clean.length + " question" + (clean.length === 1 ? "" : "s") + " saved") : "Question bank cleared"); })
+      if (!currentBankId) { toast("Add a bank first"); return; }
+      var clean = questions.filter(validQ);
+      var nm = (bankName && bankName.value || "").trim() || "Untitled";
+      banks[currentBankId] = { name: nm, questions: clean };
+      BGF().fbSet("trivia/banks/" + currentBankId, banks[currentBankId])
+        .then(function () { renderBankPicker(); toast("Saved “" + nm + "” — " + clean.length + " question" + (clean.length === 1 ? "" : "s")); })
         .catch(function () { toast("Couldn't save — try again"); });
+    };
+    var bankLoad = document.getElementById("bankLoad");
+    if (bankLoad) bankLoad.onclick = function () {
+      var clean = questions.filter(validQ);
+      if (!clean.length) { toast("Add some questions first"); return; }
+      var nm = (bankName && bankName.value || "").trim() || "Bank";
+      BGF().fbSet("trivia/questions", clean)
+        .then(function () { return BGF().fbUpdate("trivia/game", { roundName: nm, updatedMs: Date.now() }); })
+        .then(function () { toast("Loaded “" + nm + "” onto the board — tap Start questions"); })
+        .catch(function () { toast("Couldn't load — try again"); });
     };
 
     // Game controls
@@ -108,9 +172,9 @@
     document.getElementById("gStart").onclick = function () { setPhase({ phase: "question", idx: 0, startedAt: Date.now(), scoredIdx: -1 }).then(function () { toast("Question 1 is live"); }); };
     document.getElementById("gReveal").onclick = revealAndScore;
     document.getElementById("gNext").onclick = function () {
-      BGF().fbGet("trivia/game").then(function (g) {
-        g = g || {}; var next = (g.idx || 0) + 1;
-        if (next >= questions.length) { setPhase({ phase: "ended" }).then(function () { toast("Game over — leaderboard is up"); }); return; }
+      Promise.all([BGF().fbGet("trivia/game"), BGF().fbGet("trivia/questions")]).then(function (r) {
+        var g = r[0] || {}, live = r[1] || [], next = (g.idx || 0) + 1;
+        if (next >= live.length) { setPhase({ phase: "ended" }).then(function () { toast("Game over — leaderboard is up"); }); return; }
         setPhase({ phase: "question", idx: next, startedAt: Date.now() }).then(function () { toast("Question " + (next + 1) + " is live"); });
       });
     };
@@ -184,8 +248,8 @@
     var toastT;
     function toast(m) { var t = document.getElementById("toast"); if (!t) return; t.textContent = m; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove("show"); }, 2400); }
 
-    // load existing bank + poll game state
-    BGF().fbGet("trivia/questions").then(function (qs) { questions = Array.isArray(qs) ? qs : []; renderBank(); });
+    // load banks (migrating any old single bank) + poll game state
+    loadBanks().then(renderBankPicker);
     paintGame(); setInterval(paintGame, POLL_MS);
   }
 
@@ -243,7 +307,7 @@
       if (!q) { renderIdle(); return; }
       if (!samePhase) {
         clearTimer(); stage.innerHTML = "";
-        stage.appendChild(header("Question " + ((g.idx || 0) + 1) + " of " + qs.length));
+        stage.appendChild(header((g.roundName ? g.roundName + " · " : "") + "Question " + ((g.idx || 0) + 1) + " of " + qs.length));
         var qt = el("div", "q-text", q.q); stage.appendChild(qt);
         var timer = el("div", "q-timer"); timer.id = "qTimer"; stage.appendChild(timer);
         var grid = el("div", "ans-grid");
@@ -269,7 +333,7 @@
     function renderReveal(g, qs, players) {
       clearTimer(); stage.innerHTML = "";
       var q = qs[g.idx || 0] || { choices: [] };
-      stage.appendChild(header("Answer — Q" + ((g.idx || 0) + 1)));
+      stage.appendChild(header((g.roundName ? g.roundName + " · " : "") + "Answer — Q" + ((g.idx || 0) + 1)));
       stage.appendChild(el("div", "q-text", q.q || ""));
       var grid = el("div", "ans-grid");
       (q.choices || []).forEach(function (ch, ci) {
