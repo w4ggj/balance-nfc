@@ -30,6 +30,10 @@
   }
   // Points: correct answer = 500 base + up to 500 speed bonus (faster = more).
   function scoreFor(ms, timeMs) { var r = 1 - (ms / timeMs); if (r < 0) r = 0; if (r > 1) r = 1; return 500 + Math.round(500 * r); }
+  // Fill-in-the-blank matching: case/space/punctuation-insensitive; any accepted answer counts.
+  function normTxt(s) { return String(s == null ? "" : s).toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim(); }
+  function matchFill(text, accept) { var t = normTxt(text); if (!t) return false; return (accept || []).some(function (a) { return normTxt(a) === t; }); }
+  function qType(q) { return (q && q.type) === "fill" ? "fill" : "mc"; }
   function leaderboard(players) {
     return Object.keys(players || {}).map(function (id) { return { id: id, p: players[id] || {} }; })
       .sort(function (a, b) { return (b.p.score || 0) - (a.p.score || 0); });
@@ -54,7 +58,7 @@
     var banks = {}, currentBankId = null;
     var questions = [];                     // editor working copy = selected bank's questions
 
-    function blankQ() { return { q: "", choices: ["", "", "", ""], correct: 0, time: 20 }; }
+    function blankQ() { return { q: "", type: "mc", choices: ["", "", "", ""], correct: 0, accept: [], time: 20 }; }
     function renderBank() {
       bank.innerHTML = "";
       if (!questions.length) bank.appendChild(el("p", "tv-hint", "No questions yet — click “Add question”."));
@@ -62,38 +66,56 @@
         var card = el("div", "qcard");
         var head = el("div", "qcard-h");
         head.appendChild(el("span", "qnum", "Q" + (i + 1)));
+        var typeSel = el("select", "field"); typeSel.style.cssText = "width:auto;margin:0;padding:6px 8px;font-size:13px";
+        [["mc", "Multiple choice"], ["fill", "Fill in the blank"]].forEach(function (o) { var op = el("option"); op.value = o[0]; op.textContent = o[1]; typeSel.appendChild(op); });
+        typeSel.value = qType(q);
+        typeSel.onchange = function () { q.type = typeSel.value; renderBank(); };
+        var right = el("div"); right.style.cssText = "display:flex;gap:8px;align-items:center";
         var del = el("button", "btn ghost sm", "Remove");
         del.type = "button"; del.onclick = function () { questions.splice(i, 1); renderBank(); };
-        head.appendChild(del);
+        right.appendChild(typeSel); right.appendChild(del);
+        head.appendChild(right);
         card.appendChild(head);
 
         var qt = el("input", "field"); qt.type = "text"; qt.placeholder = "Question text"; qt.value = q.q || "";
         qt.oninput = function () { q.q = qt.value; };
         card.appendChild(qt);
 
-        q.choices.forEach(function (ch, ci) {
-          var row = el("label", "choice-row");
-          var radio = el("input"); radio.type = "radio"; radio.name = "correct" + i; radio.checked = (q.correct === ci);
-          radio.onchange = function () { q.correct = ci; };
-          var tag = el("span", "choice-letter"); tag.textContent = LETTERS[ci]; tag.style.background = COLORS[ci];
-          var inp = el("input", "field inline"); inp.type = "text"; inp.placeholder = "Answer " + LETTERS[ci]; inp.value = ch || "";
-          inp.oninput = function () { q.choices[ci] = inp.value; };
-          row.appendChild(radio); row.appendChild(tag); row.appendChild(inp);
-          card.appendChild(row);
-        });
+        if (qType(q) === "fill") {
+          var fi = el("input", "field"); fi.type = "text"; fi.placeholder = "Accepted answer(s) — separate with commas";
+          fi.value = (q.accept || []).join(", ");
+          fi.oninput = function () { q.accept = fi.value.split(",").map(function (s) { return s.trim(); }).filter(Boolean); };
+          card.appendChild(fi);
+        } else {
+          q.choices = q.choices || ["", "", "", ""];
+          q.choices.forEach(function (ch, ci) {
+            var row = el("label", "choice-row");
+            var radio = el("input"); radio.type = "radio"; radio.name = "correct" + i; radio.checked = (q.correct === ci);
+            radio.onchange = function () { q.correct = ci; };
+            var tag = el("span", "choice-letter"); tag.textContent = LETTERS[ci]; tag.style.background = COLORS[ci];
+            var inp = el("input", "field inline"); inp.type = "text"; inp.placeholder = "Answer " + LETTERS[ci]; inp.value = ch || "";
+            inp.oninput = function () { q.choices[ci] = inp.value; };
+            row.appendChild(radio); row.appendChild(tag); row.appendChild(inp);
+            card.appendChild(row);
+          });
+        }
 
         var trow = el("div", "qtime");
         trow.appendChild(el("span", null, "Seconds to answer:"));
         var ti = el("input", "field tiny"); ti.type = "number"; ti.min = "5"; ti.max = "120"; ti.value = q.time || 20;
         ti.oninput = function () { q.time = Math.max(5, parseInt(ti.value, 10) || 20); };
         trow.appendChild(ti);
-        trow.appendChild(el("span", "tv-hint", "· the dot marks the correct answer"));
+        trow.appendChild(el("span", "tv-hint", qType(q) === "fill" ? "· players type the answer; any accepted answer counts" : "· the dot marks the correct answer"));
         card.appendChild(trow);
         bank.appendChild(card);
       });
     }
 
-    function validQ(q) { return (q.q || "").trim() && (q.choices || []).filter(Boolean).length >= 2; }
+    function validQ(q) {
+      if (!(q.q || "").trim()) return false;
+      if (qType(q) === "fill") return (q.accept || []).filter(Boolean).length >= 1;
+      return (q.choices || []).filter(Boolean).length >= 2;
+    }
     function newId() { return "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
     document.getElementById("qAdd").onclick = function () { questions.push(blankQ()); renderBank(); };
 
@@ -209,7 +231,8 @@
         if (g.scoredIdx !== idx) {               // score once per question
           Object.keys(players).forEach(function (id) {
             var p = players[id] || {}, last = p.last;
-            if (last && last.idx === idx && last.choice === q.correct) {
+            var ok = last && last.idx === idx && (qType(q) === "fill" ? matchFill(last.text, q.accept) : (last.choice === q.correct));
+            if (ok) {
               var pts = scoreFor(last.ms == null ? timeMs : last.ms, timeMs);
               jobs.push(BGF().fbUpdate("trivia/players/" + id, { score: (p.score || 0) + pts, correctCount: (p.correctCount || 0) + 1 }));
             }
@@ -310,14 +333,19 @@
         stage.appendChild(header((g.roundName ? g.roundName + " · " : "") + "Question " + ((g.idx || 0) + 1) + " of " + qs.length));
         var qt = el("div", "q-text", q.q); stage.appendChild(qt);
         var timer = el("div", "q-timer"); timer.id = "qTimer"; stage.appendChild(timer);
-        var grid = el("div", "ans-grid");
-        (q.choices || []).forEach(function (ch, ci) {
-          var a = el("div", "ans"); a.style.background = COLORS[ci];
-          a.appendChild(el("span", "ans-letter", LETTERS[ci]));
-          a.appendChild(el("span", "ans-text", ch));
-          grid.appendChild(a);
-        });
-        stage.appendChild(grid);
+        if (qType(q) === "fill") {
+          var fh = el("div", "fill-hint", "✍️  Type your answer on your phone");
+          stage.appendChild(fh);
+        } else {
+          var grid = el("div", "ans-grid");
+          (q.choices || []).forEach(function (ch, ci) {
+            var a = el("div", "ans"); a.style.background = COLORS[ci];
+            a.appendChild(el("span", "ans-letter", LETTERS[ci]));
+            a.appendChild(el("span", "ans-text", ch));
+            grid.appendChild(a);
+          });
+          stage.appendChild(grid);
+        }
         var count = el("div", "ans-count"); count.id = "ansCount"; stage.appendChild(count);
         var time = q.time || 20;
         clearTimer();
@@ -335,16 +363,23 @@
       var q = qs[g.idx || 0] || { choices: [] };
       stage.appendChild(header((g.roundName ? g.roundName + " · " : "") + "Answer — Q" + ((g.idx || 0) + 1)));
       stage.appendChild(el("div", "q-text", q.q || ""));
-      var grid = el("div", "ans-grid");
-      (q.choices || []).forEach(function (ch, ci) {
-        var a = el("div", "ans" + (ci === q.correct ? " correct" : " dim"));
-        if (ci !== q.correct) a.style.background = COLORS[ci];
-        a.appendChild(el("span", "ans-letter", LETTERS[ci]));
-        a.appendChild(el("span", "ans-text", ch));
-        if (ci === q.correct) a.appendChild(el("span", "ans-check", "✓"));
-        grid.appendChild(a);
-      });
-      stage.appendChild(grid);
+      if (qType(q) === "fill") {
+        var fa = el("div", "fill-answer");
+        fa.appendChild(el("span", "ans-check", "✓"));
+        fa.appendChild(el("span", "ans-text", (q.accept || []).join("   /   ") || "—"));
+        stage.appendChild(fa);
+      } else {
+        var grid = el("div", "ans-grid");
+        (q.choices || []).forEach(function (ch, ci) {
+          var a = el("div", "ans" + (ci === q.correct ? " correct" : " dim"));
+          if (ci !== q.correct) a.style.background = COLORS[ci];
+          a.appendChild(el("span", "ans-letter", LETTERS[ci]));
+          a.appendChild(el("span", "ans-text", ch));
+          if (ci === q.correct) a.appendChild(el("span", "ans-check", "✓"));
+          grid.appendChild(a);
+        });
+        stage.appendChild(grid);
+      }
       var top = el("div", "mini-lb");
       leaderboard(players).slice(0, 5).forEach(function (row, i) {
         var r = el("div", "lb-row");
@@ -421,17 +456,25 @@
       c.appendChild(go);
       app.appendChild(c);
     }
-    function answer(choiceIdx, q) {
+    function answer(choiceIdx) {
       answeredIdx = seenIdx;
-      lastView = "ans|" + seenIdx + "|" + choiceIdx;         // keep the poll from rebuilding
+      lastView = "ans|" + seenIdx + "|" + LETTERS[choiceIdx];  // keep the poll from rebuilding
       var ms = Date.now() - (localStart || Date.now());
       BGF().fbSet("trivia/players/" + id + "/last", { idx: seenIdx, choice: choiceIdx, ms: ms }).catch(function () {});
-      renderAnswered(choiceIdx, q);
+      renderLocked(LETTERS[choiceIdx]);
     }
-    function renderAnswered(choiceIdx, q) {
+    function answerText(text) {
+      answeredIdx = seenIdx;
+      lastView = "ans|" + seenIdx + "|" + text;
+      var ms = Date.now() - (localStart || Date.now());
+      BGF().fbSet("trivia/players/" + id + "/last", { idx: seenIdx, text: text, ms: ms }).catch(function () {});
+      renderLocked(text);
+    }
+    function renderLocked(label) {
       app.innerHTML = "";
       var c = el("div", "pl-card");
-      c.appendChild(el("div", "pl-locked-letter", LETTERS[choiceIdx]));
+      if ((label || "").length <= 2) c.appendChild(el("div", "pl-locked-letter", label));
+      else c.appendChild(el("div", "pl-locked-text", "“" + label + "”"));
       c.appendChild(el("h2", null, "Locked in!"));
       c.appendChild(el("p", "pl-sub", "Watch the TV for the answer."));
       app.appendChild(c);
@@ -440,13 +483,27 @@
       var q = qs[g.idx || 0]; if (!q) { renderWait("Waiting for the next question…"); return; }
       app.innerHTML = "";
       var top = el("div", "pl-top"); top.appendChild(el("span", null, (name || "You"))); top.appendChild(el("span", "pl-q", "Q" + ((g.idx || 0) + 1))); app.appendChild(top);
+      if (qType(q) === "fill") {
+        var qc = el("div", "pl-card");
+        qc.appendChild(el("p", "pl-sub", q.q || "Type your answer"));
+        var inp = el("input", "pl-input"); inp.type = "text"; inp.placeholder = "Your answer"; inp.setAttribute("autocomplete", "off");
+        qc.appendChild(inp);
+        var btn = el("button", "pl-btn", "Submit"); btn.type = "button";
+        var submit = function () { var t = (inp.value || "").trim(); if (!t) { inp.focus(); return; } answerText(t); };
+        btn.onclick = submit;
+        inp.addEventListener("keydown", function (e) { if (e.key === "Enter") submit(); });
+        qc.appendChild(btn);
+        app.appendChild(qc);
+        setTimeout(function () { try { inp.focus(); } catch (e) {} }, 30);
+        return;
+      }
       var grid = el("div", "pl-grid");
       (q.choices || []).forEach(function (ch, ci) {
         if (!ch) return;
         var b = el("button", "pl-ans"); b.type = "button"; b.style.background = COLORS[ci];
         b.appendChild(el("span", "pl-ans-letter", LETTERS[ci]));
         b.appendChild(el("span", "pl-ans-text", ch));
-        b.onclick = function () { answer(ci, q); };
+        b.onclick = function () { answer(ci); };
         grid.appendChild(b);
       });
       app.appendChild(grid);
@@ -461,10 +518,11 @@
     function renderReveal(g, qs, me) {
       var q = qs[g.idx || 0] || {};
       var last = me && me.last;
-      var gotIt = last && last.idx === (g.idx || 0) && last.choice === q.correct;
+      var answeredThis = last && last.idx === (g.idx || 0);
+      var gotIt = answeredThis && (qType(q) === "fill" ? matchFill(last.text, q.accept) : (last.choice === q.correct));
       app.innerHTML = "";
-      var c = el("div", "pl-card " + (gotIt ? "good" : (last && last.idx === (g.idx || 0) ? "bad" : "")));
-      c.appendChild(el("div", "pl-result", gotIt ? "✓ Correct!" : (last && last.idx === (g.idx || 0) ? "✗ Not this time" : "No answer")));
+      var c = el("div", "pl-card " + (gotIt ? "good" : (answeredThis ? "bad" : "")));
+      c.appendChild(el("div", "pl-result", gotIt ? "✓ Correct!" : (answeredThis ? "✗ Not this time" : "No answer")));
       c.appendChild(el("p", "pl-sub", "Score: " + ((me && me.score) || 0)));
       app.appendChild(c);
     }
@@ -489,17 +547,19 @@
         var idx = g.idx || 0;
         if (phase === "question" && idx !== seenIdx) { seenIdx = idx; localStart = Date.now(); answeredIdx = -1; }
         var answered = phase === "question" && (answeredIdx === idx || (me.last && me.last.idx === idx));
+        var lastAns = (me && me.last) || {};
+        var ansLabel = lastAns.text != null ? lastAns.text : (lastAns.choice != null ? LETTERS[lastAns.choice] : "");
         var sig =
           phase === "idle" ? "idle" :
           phase === "lobby" ? "lobby" :
-          phase === "question" ? (answered ? ("ans|" + idx + "|" + ((me.last || {}).choice)) : ("q|" + idx)) :
-          phase === "reveal" ? ("reveal|" + idx + "|" + ((me.last || {}).choice) + "|" + (me.score || 0)) :
+          phase === "question" ? (answered ? ("ans|" + idx + "|" + ansLabel) : ("q|" + idx)) :
+          phase === "reveal" ? ("reveal|" + idx + "|" + ansLabel + "|" + (me.score || 0)) :
           ("ended|" + (me.score || 0));
         if (sig === lastView) return;
         lastView = sig;
         if (phase === "idle") { renderWait("Waiting for the host to start a game…"); return; }
         if (phase === "lobby") { renderWait("You're in! Waiting for the host to start…"); return; }
-        if (phase === "question") { answered ? renderAnswered((me.last || {}).choice || 0, qs[idx] || {}) : renderQuestion(g, qs); return; }
+        if (phase === "question") { answered ? renderLocked(ansLabel) : renderQuestion(g, qs); return; }
         if (phase === "reveal") { renderReveal(g, qs, me); return; }
         if (phase === "ended") { renderEnded(me, players); return; }
       }).catch(function () {});
