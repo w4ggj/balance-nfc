@@ -296,7 +296,31 @@
         if (phase === "ended") { if (!samePhase) renderEnded(players); return; }
       }).catch(function () {});
     }
-    function clearTimer() { if (timerT) { clearInterval(timerT); timerT = null; } }
+    var lbGen = 0;
+    function clearTimer() { if (timerT) { clearInterval(timerT); timerT = null; } lbGen++; }  // also stops any leaderboard auto-scroll
+    // Slowly scroll a leaderboard viewport when its content is taller than the screen.
+    function startLbScroll(vp) {
+      lbGen++; var myGen = lbGen;
+      requestAnimationFrame(function () {
+        var content = vp.firstElementChild; if (!content) return;
+        content.style.transform = "translateY(0)";
+        var overflow = content.scrollHeight - vp.clientHeight;
+        if (overflow <= 4) return;                 // fits — no scroll needed
+        var pos = 0, dir = 1, pause = 160;         // ~2.6s pause at each end
+        function step() {
+          if (myGen !== lbGen) return;             // superseded by a rebuild
+          if (pause > 0) { pause--; }
+          else {
+            pos += dir * 0.4;                      // ~24 px/s
+            if (pos >= overflow) { pos = overflow; dir = -1; pause = 200; }
+            else if (pos <= 0) { pos = 0; dir = 1; pause = 200; }
+          }
+          content.style.transform = "translateY(" + (-pos) + "px)";
+          requestAnimationFrame(step);
+        }
+        step();
+      });
+    }
 
     function header(title) { var h = el("div", "tv-head"); var img = el("img", "tv-logo"); img.src = "../assets/logo.png"; img.alt = ""; h.appendChild(img); h.appendChild(el("div", "tv-title", title)); return h; }
 
@@ -401,15 +425,18 @@
         win.appendChild(el("div", "code", String(lb[0].p.score || 0) + " pts"));
         stage.appendChild(win);
       }
+      var vp = el("div", "lb-scroll");
       var list = el("div", "mini-lb");
-      lb.slice(0, 10).forEach(function (row, i) {
+      lb.slice(0, 50).forEach(function (row, i) {
         var r = el("div", "lb-row");
         r.appendChild(el("span", "lb-rk", String(i + 1)));
         r.appendChild(el("span", "lb-nm", row.p.name || "player"));
         r.appendChild(el("span", "lb-sc", String(row.p.score || 0)));
         list.appendChild(r);
       });
-      stage.appendChild(list);
+      vp.appendChild(list);
+      stage.appendChild(vp);
+      startLbScroll(vp);
     }
 
     renderIdle();
