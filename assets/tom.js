@@ -42,7 +42,7 @@
       return best;
     });
   }
-  function loadLatest() {
+  function loadLatestTom() {
     if (!BGF.fbShallow) return fullScanLatest();
     return BGF.fbShallow("tournaments").then(function (keys) {
       var ks = keys ? Object.keys(keys) : [];
@@ -54,16 +54,42 @@
     }).catch(function () { return fullScanLatest(); });
   }
 
+  // Other games (One Piece / Riftbound / Magic) arrive from the Balance Live
+  // Standings browser extension as tournaments/x-<game>-<id>, with a tiny pointer
+  // at tournaments/_live naming the newest one. Show whichever of the newest TOM
+  // event and that pointer was updated most recently.
+  function loadLatest() {
+    var liveP = BGF.fbGet("tournaments/_live").catch(function () { return null; });
+    return Promise.all([loadLatestTom(), liveP]).then(function (res) {
+      var tomSnap = res[0], live = res[1], tomPath = resolvedPath;
+      var tomMs = (tomSnap && tomSnap.meta && tomSnap.meta.updatedMs) || 0;
+      if (live && live.key && /^x-[a-z]+-[A-Za-z0-9_-]+$/.test(live.key) && (live.updatedMs || 0) > tomMs) {
+        resolvedPath = "tournaments/" + live.key;
+        return BGF.fbGet(resolvedPath);
+      }
+      resolvedPath = tomPath;
+      return tomSnap;
+    });
+  }
+
+  // A board re-checks which event is newest once a minute (it used to lock onto
+  // the first event it found until the hourly reload), so a second event that
+  // starts later in the day takes over the TV on its own.
+  var resolvedAt = 0, RESOLVE_MS = 60 * 1000;
+  function isPin(v) { return !!v && (/^\d{2}-\d{2}-\d+$/.test(v) || /^x-[a-z]+-[A-Za-z0-9_-]+$/.test(v)); }
+
   function fetchSnapshot() {
     if (qp("demo") != null) {
       return fetch("tombridge/sample-snapshot.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
     }
     // Only treat "t" as a tournament PIN when it looks like a real TOM id
-    // (MM-DD-number). A bare number is a cache-buster, not a tournament — reading
-    // tournaments/<timestamp> returned nothing and idled the board.
+    // (MM-DD-number) or an extension id (x-<game>-<id>). A bare number is a
+    // cache-buster, not a tournament — reading tournaments/<timestamp> returned
+    // nothing and idled the board.
     var pin = qp("t");
-    if (pin && /^\d{2}-\d{2}-\d+$/.test(pin)) { resolvedPath = "tournaments/" + pin; return BGF.fbGet(resolvedPath); }
-    if (resolvedPath) return BGF.fbGet(resolvedPath);
+    if (isPin(pin)) { resolvedPath = "tournaments/" + pin; return BGF.fbGet(resolvedPath); }
+    if (resolvedPath && Date.now() - resolvedAt < RESOLVE_MS) return BGF.fbGet(resolvedPath);
+    resolvedAt = Date.now();
     return loadLatest();
   }
 
@@ -99,7 +125,7 @@
     foot.appendChild(fresh);
     var live = h("div", "live");
     live.appendChild(h("span", "pulse"));
-    live.appendChild(h("span", null, "Auto-updating from TOM"));
+    live.appendChild(h("span", null, (snap && snap.meta && snap.meta.sourceLabel) || "Auto-updating from TOM"));
     foot.appendChild(live);
   }
 

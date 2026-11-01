@@ -214,6 +214,18 @@
       return withinWindow(best);
     }).catch(function () { return null; });
   }
+  // One Piece / Riftbound / Magic: the Balance Live Standings extension writes
+  // tournaments/x-<game>-<id> plus a pointer at tournaments/_live. Returns that
+  // pointer ({key, game, name, round, final, updatedMs}) when it's for this game
+  // and recent, else null.
+  function latestLiveFor(game) {
+    return fbGet("tournaments/_live").then(function (p) {
+      if (!p || !p.key || p.game !== game) return null;
+      return (Date.now() - (p.updatedMs || 0)) < TOM_LIVE_WINDOW_MS ? p : null;
+    }).catch(function () { return null; });
+  }
+  var LIVE_GAMES = { onepiece: "ONE", riftbound: "RFT", mtg: "MTG" };
+
   function latestLiveTournament() {
     // Prefer a tiny shallow key list, then read ONLY the newest tournament — the
     // same lightweight path board.html uses, so weak kiosks don't choke on the
@@ -917,10 +929,12 @@
       switch (active) {
         case "commander-league": return withCb("commander-board.html");
         case "tournament":       return withCb("swiss-board.html" + passQuery);
-        case "pokemon":          return withCb(live ? ("board.html" + passQuery) : "event-tv.html?game=pokemon");
-        case "onepiece":         return withCb("event-tv.html?game=onepiece");
-        case "riftbound":        return withCb("event-tv.html?game=riftbound");
-        case "mtg":              return withCb("event-tv.html?game=mtg");
+        // Pin the board to this game's event (?t=) so a different game's live
+        // data can never take over the TV while this toggle is on.
+        case "pokemon":          return withCb(live ? ("board.html" + ((live.meta && live.meta.tournamentId && !/demo/.test(passQuery)) ? "?t=" + live.meta.tournamentId : passQuery)) : "event-tv.html?game=pokemon");
+        case "onepiece":
+        case "riftbound":
+        case "mtg":              return withCb(live ? ("board.html?t=" + live.key) : ("event-tv.html?game=" + active));
         default:                 return null; // main / unknown
       }
     }
@@ -948,7 +962,9 @@
         getConfig().then(function (cfg) {
           var active = cfg.active || "main";
           if (active === "pokemon") {
-            latestLiveTournament().then(function (live) { apply(targetFor("pokemon", !!live)); });
+            latestLiveTournament().then(function (live) { apply(targetFor("pokemon", live)); });
+          } else if (LIVE_GAMES[active]) {
+            latestLiveFor(LIVE_GAMES[active]).then(function (live) { apply(targetFor(active, live)); });
           } else {
             apply(targetFor(active, false));
           }
