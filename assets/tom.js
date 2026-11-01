@@ -295,7 +295,7 @@
     var root = document.getElementById("tapRoot");
     var rawTbl = qp("table") || qp("tbl") || BGF.getTable && BGF.getTable();
     var tomTable = mapTable(rawTbl);
-    document.getElementById("hdrEv").textContent = snap && snap.meta ? (snap.meta.name + " · Round " + snap.meta.round) : "Tournament";
+    document.getElementById("hdrEv").textContent = snap && snap.meta ? (snap.meta.name + (snap.meta.round != null ? " · Round " + snap.meta.round : "")) : "Tournament";
 
     root.innerHTML = "";
     if (!snap) { root.appendChild(emptyState("No tournament running", "When a tournament is live, scan your table to see your match.")); setFoot(snap); return; }
@@ -332,6 +332,9 @@
 
     // standings peek scoped to the division(s) at this table
     var divs = uniqueDivs(match.players);
+    // Extension events (One Piece / Riftbound / Magic) have one standings list and no
+    // per-player division — peek at that list.
+    if (!divs.length && snap.standings) divs = Object.keys(snap.standings).slice(0, 1);
     divs.forEach(function (dvid) {
       var d = snap.standings && snap.standings[dvid];
       if (!d) return;

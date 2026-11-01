@@ -175,6 +175,15 @@
         });
         return;
       }
+      // One Piece / Riftbound / Magic: same live table view as Pokémon whenever the
+      // Balance Live Standings extension is sending pairings for that game;
+      // otherwise the game page, exactly as before.
+      if (LIVE_GAMES[cfg.active]) {
+        liveTableTarget(cfg.active, tbl).then(function (url) {
+          location.replace(url || (cfg.active + ".html" + tblQuery(tbl)));
+        });
+        return;
+      }
       if (SPECIAL[cfg.active]) {
         location.replace(SPECIAL[cfg.active] + ".html" + tblQuery(tbl));
         return;
@@ -225,6 +234,21 @@
     }).catch(function () { return null; });
   }
   var LIVE_GAMES = { onepiece: "ONE", riftbound: "RFT", mtg: "MTG" };
+
+  // Where a table-tag scan should land during a One Piece / Riftbound / Magic event:
+  // "table.html?t=<key>&tbl=N" when that game has a live extension event WITH table
+  // pairings (EventLink sends standings only, and a finished event has none), else null.
+  function liveTableTarget(active, tbl) {
+    var game = LIVE_GAMES[active];
+    if (!game) return Promise.resolve(null);
+    return latestLiveFor(game).then(function (live) {
+      if (!live) return null;
+      return fbShallow("tournaments/" + live.key + "/pairings/byTable").then(function (bt) {
+        if (!bt || !Object.keys(bt).length) return null;
+        return "table.html?t=" + encodeURIComponent(live.key) + (tbl ? "&tbl=" + encodeURIComponent(tbl) : "");
+      });
+    }).catch(function () { return null; });
+  }
 
   function latestLiveTournament() {
     // Prefer a tiny shallow key list, then read ONLY the newest tournament — the
@@ -899,7 +923,7 @@
     getTable: getTable, getConfig: getConfig, setActive: setActive,
     fbGet: fbGet, fbShallow: fbShallow, fbSet: fbSet, fbUpdate: fbUpdate,
     routeHome: routeHome, initEvent: initEvent, initConfig: initConfig,
-    initBigScreen: initBigScreen, latestLiveTournament: latestLiveTournament,
+    initBigScreen: initBigScreen, latestLiveTournament: latestLiveTournament, liveTableTarget: liveTableTarget,
     initDisplay: initDisplay, mountEventOverlay: mountEventOverlay, initSignage: initSignage,
     initRemoteReload: initRemoteReload, refreshAllTVs: refreshAllTVs
   };
