@@ -9,6 +9,16 @@
   <link rel="icon" type="image/png" href="assets/logo.png" />
   <link rel="apple-touch-icon" href="assets/logo.png" />
   <link rel="stylesheet" href="assets/tom.css" />
+  <style>
+    .tap-alerts { display: flex; align-items: center; gap: 12px; margin: 20px 0 8px; padding: 14px 16px;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px; color: var(--text);
+      text-decoration: none; font-size: 14px; line-height: 1.35; }
+    .tap-alerts strong { font-size: 15px; }
+    .tap-alerts span:last-child { color: var(--muted); }
+    .tap-alerts strong { color: var(--text); }
+    .tap-alerts-bell { font-size: 24px; flex: none; }
+    @media (hover: hover) { .tap-alerts:hover { border-color: var(--gold); } }
+  </style>
 </head>
 <body class="tom tap">
   <main class="tap-wrap">
@@ -18,11 +28,26 @@
     </div>
     <div id="tapRoot" aria-live="polite"></div>
     <p class="tap-foot" id="tapFoot"></p>
+    <!-- Event alerts signup (Nov 2026): balancegamingfl.com/pages/event-alerts, game pre-checked from the event key. -->
+    <a class="tap-alerts" id="tapAlerts" href="https://balancegamingfl.com/pages/event-alerts?src=table">
+      <span class="tap-alerts-bell" aria-hidden="true">🔔</span>
+      <span><strong>Never miss an event</strong><br>Get an email when new events go up</span>
+    </a>
     <p class="credit">Designed by <a href="https://tavaone.com" target="_blank" rel="noopener">Tava One LLC</a></p>
   </main>
 
   <script src="assets/app.js"></script>
   <script src="assets/tom.js"></script>
   <script>TOM.initTable();</script>
+  <script>
+    (function () {
+      // x-one-* / x-rft-* / x-mtg-* = extension snapshots; anything else is a Pokemon TOM id.
+      var t = (new URLSearchParams(location.search).get('t') || '').toLowerCase();
+      var m = /^x-(one|rft|mtg)-/.exec(t);
+      var game = m ? { one: 'onepiece', rft: 'riftbound', mtg: 'mtg' }[m[1]] : (t ? 'pokemon' : '');
+      var a = document.getElementById('tapAlerts');
+      if (a && game) a.href += '&game=' + game;
+    })();
+  </script>
 </body>
 </html>
