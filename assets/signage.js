@@ -380,6 +380,17 @@
       if (withLg.length === items.length) withLg.push({ kind: "league" });
       items = withLg;
     }
+    // Google review card (Nov 2026): the Balance Gaming listing had 0 reviews.
+    // After every 10th card, and at least once per loop once there are 4+ cards.
+    if (items.length >= 4) {
+      var withRv = [];
+      for (var v = 0; v < items.length; v++) {
+        withRv.push(items[v]);
+        if ((v + 1) % 10 === 0) withRv.push({ kind: "review" });
+      }
+      if (withRv.length === items.length) withRv.push({ kind: "review" });
+      items = withRv;
+    }
     return items;
   }
 
@@ -413,6 +424,7 @@
       if (!alt) { paintWelcome(right); return; }
       it = alt;
     }
+    if (it.kind === "review") { paintReviewCard(right); return; }
     if (it.kind === "league") {
       var li = leagueInfo(leagueData);
       if (li) paintLeagueCard(right, leagueData, li); else paintWelcome(right);
@@ -481,6 +493,27 @@
     var card = el("div", "sg-fun");
     card.appendChild(el("div", "sg-fun-text", text));
     right.appendChild(card);
+  }
+
+  // Google review card. Joe OK'd Nov 2 2026. No incentives or "review for a pack"
+  // wording (Google policy). The QR opens the Balance Gaming listing's review form
+  // (NOT the karate listing).
+  var REVIEW_URL = "https://search.google.com/local/writereview?placeid=ChIJreMX16XlwogRAhHh8fQsk-8";
+  function paintReviewCard(right) {
+    right.innerHTML = "";
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", "Google Reviews"));
+    head.appendChild(el("div", "sg-r-sub", "Balance Gaming"));
+    right.appendChild(head);
+    var box = el("div", "sg-review");
+    var txt = el("div", "sg-review-txt");
+    txt.appendChild(el("div", "sg-lg-big", "Had fun at the tables?"));
+    txt.appendChild(el("div", "sg-lg-line", "A Google review helps other players find us. Scan to leave one."));
+    box.appendChild(txt);
+    var q = el("div", "sg-review-qr");
+    var svg = qrSvg(REVIEW_URL, 4);
+    if (svg) { q.innerHTML = svg; box.appendChild(q); }
+    right.appendChild(box);
   }
 
   // FNM Commander League card (Nov 2026). Shows all week while league.meta says a
