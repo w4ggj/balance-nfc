@@ -550,7 +550,10 @@
   global.TOM = {
     TAG_TO_TABLE: TAG_TO_TABLE, LIVE_WINDOW_MS: LIVE_WINDOW_MS,
     initPairings: initPairings, initStandings: initStandings, initTable: initTable,
-    initBoard: initBoard, initBoardSplit: initBoardSplit, initOverlay: initOverlay, loadLatest: loadLatest
+    initBoard: initBoard, initBoardSplit: initBoardSplit, initOverlay: initOverlay, loadLatest: loadLatest,
+    // Which tournament the board is showing (e.g. "tournaments/x-one-123") — the
+    // shelf bar uses it to pick that game's in-stock products.
+    currentPath: function () { return resolvedPath; }
   };
   if (typeof module !== "undefined" && module.exports) module.exports = global.TOM;
 

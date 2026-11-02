@@ -240,3 +240,22 @@ body.overlay.showing { background: var(--bg); }
   .pl.right { text-align: left; }
   .vsep { justify-self: start; padding: 1px 0; }
 }
+
+/* ---- "On the shelf now" bar under the live board (assets/shelf.js) ---- */
+.shelf-bar {
+  display: flex; align-items: center; gap: 1.6vw;
+  margin: 0 22px 6px; padding: 1vh 1.6vw;
+  background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: 12px;
+  min-height: 9vh;
+}
+.shelf-bar > * { animation: shelfin .6s ease; }
+.shelf-bar[hidden], body:not(.tomsplit) .shelf-bar { display: none; }
+body.tomsplit .shelf-bar { flex: 0 0 auto; }
+.shelf-tag { flex: 0 0 auto; font-size: clamp(10px, .9vw, 14px); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); writing-mode: horizontal-tb; }
+.shelf-img { flex: 0 0 auto; height: 7.5vh; width: 7.5vh; object-fit: contain; background: #fff; border-radius: 8px; padding: 3px; }
+.shelf-txt { flex: 1 1 auto; min-width: 0; }
+.shelf-name { font-size: clamp(15px, 1.6vw, 26px); font-weight: 800; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shelf-sub { font-size: clamp(11px, 1vw, 16px); color: var(--muted); margin-top: 3px; }
+.shelf-price { flex: 0 0 auto; font-size: clamp(20px, 2.2vw, 36px); font-weight: 900; color: var(--gold); }
+@keyframes shelfin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (max-width: 700px) { .shelf-bar { margin: 0 10px 6px; } .shelf-tag { display: none; } }

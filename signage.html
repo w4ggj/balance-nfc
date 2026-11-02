@@ -173,6 +173,10 @@
       body[data-screen="entrance"] .sg-qr { width: 320px; }
       body[data-screen="entrance"] .sg-qr-sub { font-size: 24px; }
     }
+    /* On the shelf now (assets/shelf.js): in-stock product card in the showcase. Mirrors signage.css. */
+    .sg-shelf .sg-re-img img { background: #fff; padding: 2.4vh; max-height: 58vh; }
+    .sg-shelf .sg-re-name { font-size: clamp(26px, 3.2vw, 56px); }
+    .sg-shelf-price { font-size: clamp(36px, 4.6vw, 80px); font-weight: 900; color: var(--ev); line-height: 1; margin: .6vh 0 1.6vh; }
   </style>
 </head>
 <body class="signage" data-screen="main">
@@ -213,7 +217,7 @@
     /* Cache-bust the scripts so the unattended TVs always run the latest build. */
     (function () {
       var t = Date.now();
-      ["assets/qrcode.js", "assets/app.js", "assets/commander.js", "assets/tournament.js", "assets/signage.js"]
+      ["assets/qrcode.js", "assets/app.js", "assets/commander.js", "assets/tournament.js", "assets/shelf.js", "assets/signage.js"]
         .forEach(function (src) { document.write('<script src="' + src + '?t=' + t + '"><\/script>'); });
     })();
   </script>

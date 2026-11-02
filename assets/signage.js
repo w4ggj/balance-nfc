@@ -350,7 +350,19 @@
         if ((i + 1) % 3 === 0) { out.push({ kind: "fun", text: pool[fi % pool.length] }); fi++; }
       }
       if (out.length === items.length) out.push({ kind: "fun", text: pool[0] }); // few events → still show one
-      return out;
+      items = out;
+    }
+    // "On the shelf now" (assets/shelf.js): an in-stock product + price after
+    // every 2nd card. Joe (Nov 2026): stock and prices only, no discounts.
+    if (global.BGFShelf) {
+      if (!items.length) return [{ kind: "shelf" }];
+      var withShelf = [];
+      for (var k = 0; k < items.length; k++) {
+        withShelf.push(items[k]);
+        if ((k + 1) % 2 === 0) withShelf.push({ kind: "shelf" });
+      }
+      if (withShelf.length === items.length) withShelf.push({ kind: "shelf" });
+      items = withShelf;
     }
     return items;
   }
@@ -363,6 +375,15 @@
     var items = buildShowcase();
     if (!items.length) { paintWelcome(right); return; }
     var it = items[showcaseIdx % items.length];
+    if (it.kind === "shelf") {
+      var prod = global.BGFShelf ? BGFShelf.next("all") : null;
+      if (prod) { paintShelfCard(right, prod); return; }
+      // Products not loaded yet (or none in stock): show the next real card instead.
+      var alt = null;
+      for (var s = 1; s < items.length && !alt; s++) { var c = items[(showcaseIdx + s) % items.length]; if (c.kind !== "shelf") alt = c; }
+      if (!alt) { paintWelcome(right); return; }
+      it = alt;
+    }
     if (it.kind === "fun") { paintFunCard(right, it.text); return; }
     right.style.setProperty("--ev", "#a07bff");
     var ev = it.ev, d = evStart(ev);
@@ -374,6 +395,27 @@
     right.appendChild(head);
     right.appendChild(eventCardEls(ev, d, ev.game));
     addCornerQRUrl(right, ev.registerUrl || MAIN_SITE, ev.registerUrl ? "Scan to register" : "Scan to visit");
+  }
+  // In-stock product card for the showcase (assets/shelf.js item).
+  function paintShelfCard(right, p) {
+    right.innerHTML = "";
+    right.style.setProperty("--ev", "#f5c518");
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", "On the Shelf Now"));
+    head.appendChild(el("div", "sg-r-sub", "In stock today"));
+    right.appendChild(head);
+    var card = el("div", "sg-r-event has-img sg-shelf");
+    var box = el("div", "sg-re-img");
+    var img = new Image(); img.src = p.image; img.alt = "";
+    img.onerror = function () { box.style.display = "none"; card.classList.remove("has-img"); };
+    box.appendChild(img); card.appendChild(box);
+    var info = el("div", "sg-re-info");
+    if (p.label) info.appendChild(el("div", "sg-re-kick", p.label));
+    info.appendChild(el("div", "sg-re-name", p.title));
+    info.appendChild(el("div", "sg-shelf-price", p.price));
+    info.appendChild(el("div", "sg-re-when", "Grab it at the counter"));
+    card.appendChild(info);
+    right.appendChild(card);
   }
   function paintFunCard(right, text) {
     right.innerHTML = "";
@@ -1255,6 +1297,7 @@
     if (screen === "entrance") {
       renderEntranceQR(); setInterval(renderEntranceQR, POLL_FB_MS);
     } else {
+      if (global.BGFShelf) BGFShelf.load("all");   // warm the in-stock product cards
       loadRight(); setInterval(loadRight, POLL_RIGHT_MS);
       setInterval(rotateRight, 10000); // live: standings↔pairings/pods · showcase: next event
       // Classroom mode: phone-controlled slides overlay the board when turned on.
