@@ -371,6 +371,7 @@
   }
 
   // Spotlight the upcoming events (and fun cards) one at a time.
+  var shelfTurn = 0;   // alternates shelf slots: product, snack bar, product...
   function renderShowcase() {
     if (videoOn) return;
     var right = document.getElementById("sgRight");
@@ -379,6 +380,9 @@
     if (!items.length) { paintWelcome(right); return; }
     var it = items[showcaseIdx % items.length];
     if (it.kind === "shelf") {
+      shelfTurn++;
+      var sn = global.BGFShelf && BGFShelf.snacks ? BGFShelf.snacks() : null;
+      if (sn && shelfTurn % 2 === 0) { paintSnackCard(right, sn); return; }
       var prod = global.BGFShelf ? BGFShelf.next("all") : null;
       if (prod) { paintShelfCard(right, prod); return; }
       // Products not loaded yet (or none in stock): show the next real card instead.
@@ -421,6 +425,23 @@
     info.appendChild(el("div", "sg-shelf-price", p.price));
     info.appendChild(el("div", "sg-re-when", "Grab it at the counter"));
     card.appendChild(info);
+    right.appendChild(card);
+  }
+  // Snack bar card (drinks & snacks prices, Nov 2026). No stock counts: food/drink isn't tracked.
+  function paintSnackCard(right, groups) {
+    right.innerHTML = "";
+    right.style.setProperty("--ev", "#2ec4b6");
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", "Snack Bar"));
+    head.appendChild(el("div", "sg-r-sub", "At the counter"));
+    right.appendChild(head);
+    var card = el("div", "sg-snacks");
+    groups.forEach(function (g) {
+      var row = el("div", "sg-snack-row");
+      row.appendChild(el("span", "sg-snack-name", g.label));
+      row.appendChild(el("span", "sg-snack-price", BGFShelf.snackPrice(g)));
+      card.appendChild(row);
+    });
     right.appendChild(card);
   }
   function paintFunCard(right, text) {
@@ -1304,6 +1325,7 @@
       renderEntranceQR(); setInterval(renderEntranceQR, POLL_FB_MS);
     } else {
       if (global.BGFShelf) BGFShelf.load("all");   // warm the in-stock product cards
+      if (global.BGFShelf && BGFShelf.loadSnacks) BGFShelf.loadSnacks();   // and the snack bar prices
       loadRight(); setInterval(loadRight, POLL_RIGHT_MS);
       setInterval(rotateRight, 10000); // live: standings↔pairings/pods · showcase: next event
       // Classroom mode: phone-controlled slides overlay the board when turned on.

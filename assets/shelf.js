@@ -150,12 +150,28 @@
   function mountBar(host, getKey, secs) {
     if (!host) return;
     secs = secs || 12;
-    var shown = null;
+    var shown = null, turn = 0;
+    // Every 3rd turn (or when nothing's in stock) the bar shows the snack bar.
+    function paintSnacks() {
+      var line = snackLine();
+      if (!line) return false;
+      shown = "snacks"; host.hidden = false; host.innerHTML = "";
+      var tag = document.createElement("div"); tag.className = "shelf-tag"; tag.textContent = "Snack bar";
+      var txt = document.createElement("div"); txt.className = "shelf-txt";
+      var name = document.createElement("div"); name.className = "shelf-name"; name.textContent = "Drinks & snacks at the counter";
+      var sub = document.createElement("div"); sub.className = "shelf-sub"; sub.textContent = line;
+      txt.appendChild(name); txt.appendChild(sub);
+      var price = document.createElement("div"); price.className = "shelf-price"; price.textContent = "from " + money(snackMin());
+      host.appendChild(tag); host.appendChild(txt); host.appendChild(price);
+      return true;
+    }
     function paint() {
       var game = gameFromKey(getKey ? getKey() : "");
-      load(game).then(function () {
+      turn++;
+      Promise.all([load(game), loadSnacks()]).then(function () {
+        if (turn % 3 === 0 && paintSnacks()) return;
         var it = next(game);
-        if (!it) { host.hidden = true; return; }
+        if (!it) { if (!paintSnacks()) host.hidden = true; return; }
         if (shown === it.handle && host.childNodes.length) return;
         shown = it.handle;
         host.hidden = false;
@@ -177,6 +193,35 @@
     setInterval(paint, secs * 1000);
   }
 
-  global.BGFShelf = { load: load, next: next, mountBar: mountBar, gameFromKey: gameFromKey, cleanTitle: cleanTitle, money: money };
+  // ---- Snack bar (Nov 2026): drinks & snacks prices from board-api /snacks.
+  // Food/drink stock isn't tracked, so it's prices only ("at the counter").
+  var SNACKS_URL = "https://board-api.jleone0.workers.dev/snacks";
+  var snackGroups = null, snacksAt = 0, snacksLoading = null;
+  function loadSnacks() {
+    if (snackGroups && Date.now() - snacksAt < CACHE_MS) return Promise.resolve(snackGroups);
+    if (snacksLoading) return snacksLoading;
+    snacksLoading = fetch(SNACKS_URL).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (d) { snackGroups = (d && d.groups) || []; snacksAt = Date.now(); return snackGroups; })
+      .catch(function () { return snackGroups || []; })
+      .then(function (g) { snacksLoading = null; return g; });
+    return snacksLoading;
+  }
+  // Synchronous for the TV rotations; refreshes in the background.
+  function snacks() {
+    if (!snackGroups || Date.now() - snacksAt >= CACHE_MS) loadSnacks();
+    return snackGroups && snackGroups.length ? snackGroups : null;
+  }
+  function snackPrice(g) { return (g.max > g.min ? "from " : "") + money(g.min); }
+  function snackLine() {
+    var g = snacks(); if (!g) return "";
+    return g.map(function (x) { return x.label + " " + snackPrice(x); }).join("  \u00b7  ");
+  }
+  function snackMin() {
+    var g = snacks(); if (!g) return null;
+    return Math.min.apply(null, g.map(function (x) { return x.min; }));
+  }
+
+  global.BGFShelf = { load: load, next: next, mountBar: mountBar, gameFromKey: gameFromKey, cleanTitle: cleanTitle, money: money,
+    loadSnacks: loadSnacks, snacks: snacks, snackPrice: snackPrice, snackLine: snackLine };
   if (typeof module !== "undefined" && module.exports) module.exports = global.BGFShelf;
 })(typeof window !== "undefined" ? window : globalThis);

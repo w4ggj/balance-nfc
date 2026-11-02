@@ -39,6 +39,18 @@ export default {
     };
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
 
+    // GET /snacks -> drinks & snacks price groups for the TV "Snack bar" card
+    // (Nov 2026). Food/drink stock isn't tracked in Shopify, so this is prices only.
+    if (new URL(request.url).pathname === "/snacks") {
+      const h = Object.assign({}, cors, { "Cache-Control": "public, max-age=300" });
+      try {
+        const groups = await loadSnacks(env);
+        return new Response(JSON.stringify({ updated: Date.now(), groups }), { headers: h });
+      } catch (err) {
+        return new Response(JSON.stringify({ updated: Date.now(), groups: [], error: String(err && err.message || err) }), { status: 200, headers: h });
+      }
+    }
+
     try {
       const days = Number(env.HORIZON_DAYS || 21);
       const tz = env.TIMEZONE || "America/New_York";
@@ -369,4 +381,46 @@ function seatsFromText(text) {
 function urlFromText(text) {
   const m = String(text || "").match(/https?:\/\/[^\s"'<>]+\/products\/[a-z0-9\-]+/i);
   return m ? m[0] : null;
+}
+
+/* ---- Snack bar (Nov 2026) ---------------------------------------------
+   Joe (Nov 2 2026): what the store regularly carries is water, soda, energy
+   drinks, Powerade, chips, crackers and candy bars. Shopify still has old
+   active items (ice cream, jerky, pastries, cookies...) and food/drink stock
+   isn't tracked, so ONLY titles matching these groups count; everything else
+   is ignored. First matching group wins. */
+const SNACK_EXCLUDE = /ice cream|cookie sandwich|chips ahoy|vitamin water/i;
+const SNACK_GROUPS = [
+  { label: "Water & soda",     type: "Drinks", re: /water|coke|pepsi|sprite|fanta|pibb|dr\.? ?pepper|mello yello|root beer|barq|mountain dew|ginger ale|7 ?up|soda/i },
+  { label: "Powerade",         type: "Drinks", re: /powerade|gatorade/i },
+  { label: "Energy drinks",    type: "Drinks", re: /monster|reign|red ?bull|celsius|bang|rockstar|ghost/i },
+  { label: "Chips & crackers", type: "Food",   re: /cheetos|doritos|fritos|funyuns|lays|ruffles|sun ?chips|popcorners|pringles|takis|chips|cracker|ritz|wheat thins|lance|pretzel/i },
+  { label: "Candy bars",       type: "Food",   re: /snickers|twix|kit ?kat|milky way|musketeers|hershey|reese|m&m|caramello|rolo|butterfinger|baby ruth|payday|almond joy/i }
+];
+async function loadSnacks(env) {
+  if (!env.SHOPIFY_SHOP || !env.SHOPIFY_ADMIN_TOKEN) return [];
+  const ver = env.SHOPIFY_API_VERSION || "2024-10";
+  const query = "query($q:String!){products(first:250,query:$q){nodes{title productType priceRangeV2{minVariantPrice{amount}}}}}";
+  const r = await fetch("https://" + env.SHOPIFY_SHOP + "/admin/api/" + ver + "/graphql.json", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": env.SHOPIFY_ADMIN_TOKEN },
+    body: JSON.stringify({ query: query, variables: { q: "(product_type:Drinks OR product_type:Food) AND status:active" } })
+  });
+  if (!r.ok) throw new Error("Shopify Admin " + r.status);
+  const data = await r.json();
+  if (data.errors && data.errors.length) throw new Error("Shopify GraphQL: " + JSON.stringify(data.errors).slice(0, 200));
+  const nodes = (data.data && data.data.products && data.data.products.nodes) || [];
+  const acc = SNACK_GROUPS.map(function (g) { return { label: g.label, min: null, max: null, count: 0 }; });
+  nodes.forEach(function (p) {
+    const price = Number(p.priceRangeV2 && p.priceRangeV2.minVariantPrice && p.priceRangeV2.minVariantPrice.amount);
+    if (!(price > 0)) return;
+    if (SNACK_EXCLUDE.test(p.title)) return;
+    const idx = SNACK_GROUPS.findIndex(function (g) { return g.type === p.productType && g.re.test(p.title); });
+    if (idx < 0) return;
+    const a = acc[idx];
+    a.count++;
+    a.min = a.min == null ? price : Math.min(a.min, price);
+    a.max = a.max == null ? price : Math.max(a.max, price);
+  });
+  return acc.filter(function (a) { return a.count > 0; });
 }
