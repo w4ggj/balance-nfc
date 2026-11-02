@@ -43,9 +43,11 @@ export default {
       const days = Number(env.HORIZON_DAYS || 21);
       const tz = env.TIMEZONE || "America/New_York";
 
+      // A Shopify hiccup must not blank the schedule: keep the calendar events
+      // and just go without prices/seats for that poll.
       const [calEvents, shopEvents] = await Promise.all([
         loadCalendar(env, days),
-        loadShopify(env)
+        loadShopify(env).catch(function () { return []; })
       ]);
 
       const events = merge(calEvents, shopEvents, env, tz);
@@ -167,15 +169,21 @@ async function loadShopify(env) {
   });
 }
 
+// Event products are found by PRODUCT TYPE, not the "events" collection: the
+// Admin API returns null for collectionByHandle("events") on this store (the
+// storefront collection exists, the Admin API can't see it), so the old query
+// silently came back empty and every paid event showed as "Free" (found Nov 1
+// 2026: EB-05 $30 showed "Free · open"). Every event listing is product_type
+// "Event" (create_event sets it), so query those directly.
 async function shopifyFetch(env, withInventory, cursor) {
   const ver = env.SHOPIFY_API_VERSION || "2024-10";
-  const handle = env.EVENTS_COLLECTION_HANDLE || "events";
+  const search = env.EVENTS_PRODUCT_QUERY || "product_type:Event AND status:active";
   const invField = withInventory ? " inventoryQuantity" : "";
   const query =
-    "query($handle:String!,$cursor:String){collectionByHandle(handle:$handle){products(first:250,after:$cursor,sortKey:CREATED,reverse:true){" +
+    "query($q:String!,$cursor:String){products(first:250,after:$cursor,query:$q,sortKey:CREATED_AT,reverse:true){" +
     "pageInfo{hasNextPage endCursor} nodes{" +
     "title handle onlineStoreUrl featuredImage{url} " +
-    "variants(first:10){nodes{title price availableForSale" + invField + "}}}}}}";
+    "variants(first:10){nodes{title price availableForSale" + invField + "}}}}}";
 
   const r = await fetch("https://" + env.SHOPIFY_SHOP + "/admin/api/" + ver + "/graphql.json", {
     method: "POST",
@@ -183,7 +191,7 @@ async function shopifyFetch(env, withInventory, cursor) {
       "Content-Type": "application/json",
       "X-Shopify-Access-Token": env.SHOPIFY_ADMIN_TOKEN
     },
-    body: JSON.stringify({ query: query, variables: { handle: handle, cursor: cursor || null } })
+    body: JSON.stringify({ query: query, variables: { q: search, cursor: cursor || null } })
   });
   if (!r.ok) throw new Error("Shopify Admin " + r.status);
   const data = await r.json();
@@ -194,8 +202,7 @@ async function shopifyFetch(env, withInventory, cursor) {
     if (withInventory) return { denied: true };
     throw new Error("Shopify GraphQL: " + JSON.stringify(data.errors).slice(0, 200));
   }
-  const conn = (data && data.data && data.data.collectionByHandle &&
-    data.data.collectionByHandle.products) || {};
+  const conn = (data && data.data && data.data.products) || {};
   const info = conn.pageInfo || {};
   return { nodes: conn.nodes || [], hasNextPage: !!info.hasNextPage, endCursor: info.endCursor || null };
 }
@@ -226,11 +233,22 @@ function merge(calEvents, shopEvents, env, tz) {
       // "…League Cup Q2 May" listing) from attaching their price to a recurring
       // calendar event that has no product of its own.
       const key = normalize(ev.name);
-      match = shopEvents.find(function (s) {
-        if (!s.date || !evDate || s.date !== evDate) return false;
+      const sameDay = shopEvents.filter(function (s) { return s.date && evDate && s.date === evDate; });
+      match = sameDay.find(function (s) {
         const sn = normalize(stripDate(s.title));
         return sn && key && (sn.indexOf(key) !== -1 || key.indexOf(sn) !== -1);
       }) || null;
+      // Word-order fallback: every meaningful word of the product title appears
+      // in the calendar name ("Star Trek Prerelease" vs "Prerelease — Magic: The
+      // Gathering: Star Trek"). Needs 2+ words so a one-word title can't grab a
+      // random event on the same day.
+      if (!match) {
+        const calWords = words(ev.name);
+        match = sameDay.find(function (s) {
+          const sw = words(stripDate(s.title));
+          return sw.length >= 2 && sw.every(function (w) { return calWords.indexOf(w) !== -1; });
+        }) || null;
+      }
     }
 
     const seatsLeft = match ? match.seatsLeft : null;
@@ -298,6 +316,11 @@ function stripDate(title) {
 
 function normalize(s) {
   return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+const STOP_WORDS = { the: 1, and: 1, of: 1, a: 1, an: 1, at: 1, for: 1, "&": 1 };
+function words(s) {
+  return normalize(s).split(" ").filter(function (w) { return w && !STOP_WORDS[w]; });
 }
 
 function handleFromText(text) {
