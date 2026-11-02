@@ -50,6 +50,9 @@
   function statusWord(ev) {
     if (ev.status === "sold-out") return "sold out";
     if (ev.status === "almost") return (ev.seatsLeft != null ? ev.seatsLeft + " seats left" : "almost full");
+    // Calendar-only paid nights (e.g. Nexus Nights, no online sign-up): the feed
+    // sends total seats as `capacity`, not seats left.
+    if (ev.seatsLeft == null && ev.capacity) return ev.capacity + " seats";
     return "open";
   }
   function statusCls(ev) { return ev.status === "sold-out" ? "soldout" : (ev.status === "almost" ? "almost" : "open"); }

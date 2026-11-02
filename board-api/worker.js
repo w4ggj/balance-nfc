@@ -263,6 +263,10 @@ function merge(calEvents, shopEvents, env, tz) {
     // read the price and register link from its description so a paid event
     // never shows as "Free" just because the product wasn't matched.
     const descPrice = match ? null : priceFromText(ev.description);
+    // Calendar-only paid nights (no online sign-up): show the seat count from the
+    // description as capacity and call them open. No seats-left tracking exists.
+    const capacity = (!match && descPrice) ? seatsFromText(ev.description) : null;
+    if (!match && descPrice) status = "open";
 
     return {
       name: ev.name,
@@ -277,6 +281,7 @@ function merge(calEvents, shopEvents, env, tz) {
       // matched Shopify product's image. Lets any event (even non-ticketed) have art.
       image: imageFromText(ev.description) || (match ? match.image : null),
       seatsLeft: seatsLeft,
+      capacity: capacity,             // calendar-only events: total seats (not seats left)
       status: status
     };
   });
@@ -343,11 +348,21 @@ function imageFromText(text) {
   return null;
 }
 
-// Fallback price straight from the calendar description ("$10 entry", "Entry: $5").
+// Fallback price straight from the calendar description ("$10 entry", "Entry: $5",
+// or the events pipeline's "Entry fee: 7.00 USD" — calendar-only events like
+// Nexus Nights carry that and have no Shopify listing).
 // Returns the amount as a string (e.g. "10"), or null if none / explicitly free.
 function priceFromText(text) {
-  const m = String(text || "").match(/\$\s*(\d+(?:\.\d{1,2})?)/);
+  const t = String(text || "");
+  const m = t.match(/entry\s*fee\s*:?\s*\$?\s*(\d+(?:\.\d{1,2})?)/i) || t.match(/\$\s*(\d+(?:\.\d{1,2})?)/);
   return (m && Number(m[1]) > 0) ? m[1] : null;
+}
+
+// Seat count from the description ("Seats: 32"), for calendar-only events whose
+// sign-ups aren't sold online — shown as capacity, not seats left.
+function seatsFromText(text) {
+  const m = String(text || "").match(/seats\s*:?\s*(\d+)/i);
+  return (m && Number(m[1]) > 0) ? Number(m[1]) : null;
 }
 
 // Fallback register link from the description (a store /products/ URL).
