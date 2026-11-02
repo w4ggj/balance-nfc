@@ -39,13 +39,18 @@
     return pods;
   }
 
-  var DEFAULT_SCORING = { votePoints: 1, questionnairePoints: 1 };
+  var DEFAULT_SCORING = { votePoints: 1, questionnairePoints: 1, attendancePoints: 0 };
 
   function standings(commander) {
     commander = commander || {};
     var players = commander.players || {}, nights = commander.nights || {};
     var sc = (commander.league && commander.league.scoring) || DEFAULT_SCORING;
     var vp = sc.votePoints != null ? sc.votePoints : 1, qp = sc.questionnairePoints != null ? sc.questionnairePoints : 1;
+    var ap = sc.attendancePoints || 0;
+    // Season window: only nights from meta.startDate for meta.weeks weeks count,
+    // so a new season starts at zero without deleting old nights.
+    var meta = (commander.league && commander.league.meta) || {}, from = meta.startDate || "", to = "";
+    if (from && meta.weeks) { var td = new Date(from + "T12:00:00Z"); td.setUTCDate(td.getUTCDate() + 7 * meta.weeks); to = td.toISOString().slice(0, 10); }
     var stat = {};
     function row(uid) {
       if (!stat[uid]) stat[uid] = { uid: uid, name: (players[uid] && players[uid].name) || "Player",
@@ -54,7 +59,19 @@
     }
     Object.keys(players).forEach(row);
     Object.keys(nights).forEach(function (nid) {
+      if (from && nid < from) return;
+      if (to && nid >= to) return;
       var night = nights[nid] || {}, games = night.votes || {};
+      if (ap) {
+        // Attendance points: checked in or seated in a pod, and not dropped.
+        var here = {}, att = night.attendance || {}, pods = night.pods || {}, dropped = night.dropped || {};
+        Object.keys(att).forEach(function (u) { if (att[u]) here[u] = 1; });
+        Object.keys(pods).forEach(function (pn) { var m = (pods[pn] && pods[pn].members) || {}; Object.keys(m).forEach(function (u) { here[u] = 1; }); });
+        Object.keys(here).forEach(function (u) {
+          if (dropped[u]) return;
+          var r = row(u); r.points += ap; r.attended = (r.attended || 0) + 1; r.nights[nid] = (r.nights[nid] || 0) + ap;
+        });
+      }
       Object.keys(games).forEach(function (g) {
         var byVoter = games[g] || {};
         Object.keys(byVoter).forEach(function (voter) {
