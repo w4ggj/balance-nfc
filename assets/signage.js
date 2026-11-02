@@ -406,8 +406,11 @@
     right.appendChild(head);
     var card = el("div", "sg-r-event has-img sg-shelf");
     var box = el("div", "sg-re-img");
-    var img = new Image(); img.src = p.image; img.alt = "";
+    box.style.visibility = "hidden";   // no empty white frame while the photo loads
+    var img = new Image(); img.alt = "";
+    img.onload = function () { box.style.visibility = ""; };
     img.onerror = function () { box.style.display = "none"; card.classList.remove("has-img"); };
+    img.src = p.image;
     box.appendChild(img); card.appendChild(box);
     var info = el("div", "sg-re-info");
     if (p.label) info.appendChild(el("div", "sg-re-kick", p.label));

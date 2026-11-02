@@ -129,6 +129,8 @@
     if (!p || Date.now() - p.at >= CACHE_MS) load(game);   // refresh in the background
     if (!p || !p.items.length) return null;
     var it = p.items[p.i % p.items.length]; p.i++;
+    // Warm the next photo so it's cached by the time it rotates in.
+    try { var nx = p.items[p.i % p.items.length]; if (nx && nx.image && typeof Image !== "undefined") { var pre = new Image(); pre.src = nx.image; } } catch (e) { /* ignore */ }
     return it;
   }
 
@@ -159,8 +161,10 @@
         host.hidden = false;
         host.innerHTML = "";
         var tag = document.createElement("div"); tag.className = "shelf-tag"; tag.textContent = "On the shelf";
-        var img = new Image(); img.className = "shelf-img"; img.alt = ""; img.src = it.image;
+        var img = new Image(); img.className = "shelf-img"; img.alt = ""; img.style.visibility = "hidden";
+        img.onload = function () { img.style.visibility = ""; };
         img.onerror = function () { img.style.display = "none"; };
+        img.src = it.image;
         var txt = document.createElement("div"); txt.className = "shelf-txt";
         var name = document.createElement("div"); name.className = "shelf-name"; name.textContent = it.title;
         var sub = document.createElement("div"); sub.className = "shelf-sub"; sub.textContent = (it.label ? it.label + " · " : "") + "grab it at the counter";
