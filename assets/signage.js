@@ -358,14 +358,27 @@
     // "On the shelf now" (assets/shelf.js): an in-stock product + price after
     // every 2nd card. Joe (Nov 2026): stock and prices only, no discounts.
     if (global.BGFShelf) {
-      if (!items.length) return [{ kind: "shelf" }];
-      var withShelf = [];
-      for (var k = 0; k < items.length; k++) {
-        withShelf.push(items[k]);
-        if ((k + 1) % 2 === 0) withShelf.push({ kind: "shelf" });
+      if (!items.length) items = [{ kind: "shelf" }];
+      else {
+        var withShelf = [];
+        for (var k = 0; k < items.length; k++) {
+          withShelf.push(items[k]);
+          if ((k + 1) % 2 === 0) withShelf.push({ kind: "shelf" });
+        }
+        if (withShelf.length === items.length) withShelf.push({ kind: "shelf" });
+        items = withShelf;
       }
-      if (withShelf.length === items.length) withShelf.push({ kind: "shelf" });
-      items = withShelf;
+    }
+    // FNM Commander League card (Nov 2026): all week while a season is on,
+    // after every 6th card (and at least once).
+    if (leagueInfo(leagueData)) {
+      var withLg = [];
+      for (var q = 0; q < items.length; q++) {
+        withLg.push(items[q]);
+        if ((q + 1) % 6 === 0) withLg.push({ kind: "league" });
+      }
+      if (withLg.length === items.length) withLg.push({ kind: "league" });
+      items = withLg;
     }
     return items;
   }
@@ -390,6 +403,11 @@
       for (var s = 1; s < items.length && !alt; s++) { var c = items[(showcaseIdx + s) % items.length]; if (c.kind !== "shelf") alt = c; }
       if (!alt) { paintWelcome(right); return; }
       it = alt;
+    }
+    if (it.kind === "league") {
+      var li = leagueInfo(leagueData);
+      if (li) paintLeagueCard(right, leagueData, li); else paintWelcome(right);
+      return;
     }
     if (it.kind === "fun") { paintFunCard(right, it.text); return; }
     right.style.setProperty("--ev", "#a07bff");
@@ -454,6 +472,73 @@
     var card = el("div", "sg-fun");
     card.appendChild(el("div", "sg-fun-text", text));
     right.appendChild(card);
+  }
+
+  // FNM Commander League card (Nov 2026). Shows all week while league.meta says a
+  // season is on: before the first night it sells the league (start date, free,
+  // prize), once points exist it shows the live top 5. QR -> the join page.
+  var LEAGUE_URL = "https://nfc.balancegamingfl.com/commander.html";
+  var leagueData = null;
+  function loadLeague() {
+    if (!global.BGF) return;
+    BGF.fbGet("commander").then(function (c) { leagueData = c || null; });
+  }
+  var LG_MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var LG_DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  function lgAddDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
+  // Season window: from 3 weeks before startDate until the day before
+  // startDate + 7*weeks. Finale = the last league Friday.
+  function leagueInfo(c) {
+    var m = c && c.league && c.league.meta;
+    if (!m || m.status !== "active" || !m.startDate || !m.weeks) return null;
+    var p = String(m.startDate).split("-");
+    var start = new Date(+p[0], +p[1] - 1, +p[2]);
+    if (isNaN(start.getTime())) return null;
+    var now = new Date(); now.setHours(0, 0, 0, 0);
+    if (now < lgAddDays(start, -21) || now >= lgAddDays(start, 7 * m.weeks)) return null;
+    var days = Math.round((now - start) / 864e5);
+    var finale = lgAddDays(start, 7 * (m.weeks - 1));
+    return {
+      meta: m, start: start, finale: finale, weeks: m.weeks,
+      week: days < 0 ? 0 : Math.min(m.weeks, Math.floor(days / 7) + 1),
+      pre: days < 0, startsToday: days === 0, over: now > finale
+    };
+  }
+  function paintLeagueCard(right, c, info) {
+    right.innerHTML = "";
+    var m = info.meta;   // accent stays the store red (loadRight resets --ev each poll)
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", m.name || "Commander League"));
+    head.appendChild(el("div", "sg-r-sub", info.pre ? "Fridays · 7pm · Free" : info.over ? "Final standings" : "Week " + info.week + " of " + info.weeks));
+    right.appendChild(head);
+    var rows = [];
+    try { rows = global.BGFCL ? BGFCL.Engine.standings(c) : []; } catch (e) { rows = []; }
+    var scored = rows.some(function (s) { return s.points > 0; });
+    var prize = info.over ? "" : (m.prize || "Top 3 win prizes") + " on " + LG_MON[info.finale.getMonth()] + " " + info.finale.getDate();
+    var box = el("div", "sg-league");
+    if (!scored) {
+      var s = info.start;
+      box.appendChild(el("div", "sg-lg-big", info.startsToday ? "Starts tonight at 7pm" : info.pre ? "Starts " + LG_DOW[s.getDay()] + ", " + LG_MON[s.getMonth()] + " " + s.getDate() : "Every Friday at 7pm"));
+      box.appendChild(el("div", "sg-lg-line", "Free to play, points every Friday"));
+    } else {
+      var tbl = el("div", "sg-stbl");
+      var h = el("div", "sg-strow head");
+      h.appendChild(el("span", "sg-st-rk", "#"));
+      h.appendChild(el("span", "sg-st-nm", "Player"));
+      h.appendChild(el("span", "sg-st-pt", "Pts"));
+      tbl.appendChild(h);
+      rows.slice(0, 5).forEach(function (r) {
+        var row = el("div", "sg-strow" + (r.rank === 1 ? " top" : ""));
+        row.appendChild(el("span", "sg-st-rk", String(r.rank)));
+        row.appendChild(el("span", "sg-st-nm", r.name));
+        row.appendChild(el("span", "sg-st-pt", String(r.points)));
+        tbl.appendChild(row);
+      });
+      box.appendChild(tbl);
+    }
+    if (prize) box.appendChild(el("div", "sg-lg-line sg-lg-prize", prize));
+    right.appendChild(box);
+    addCornerQRUrl(right, LEAGUE_URL, "Scan to join");
   }
 
   // Big event card (image + details) for the showcase and live game view. The
@@ -1326,6 +1411,7 @@
     } else {
       if (global.BGFShelf) BGFShelf.load("all");   // warm the in-stock product cards
       if (global.BGFShelf && BGFShelf.loadSnacks) BGFShelf.loadSnacks();   // and the snack bar prices
+      loadLeague(); setInterval(loadLeague, 60000);   // FNM league card in the showcase
       loadRight(); setInterval(loadRight, POLL_RIGHT_MS);
       setInterval(rotateRight, 10000); // live: standings↔pairings/pods · showcase: next event
       // Classroom mode: phone-controlled slides overlay the board when turned on.

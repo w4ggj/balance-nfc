@@ -181,6 +181,17 @@
 .sg-snacks { display: flex; flex-direction: column; justify-content: center; gap: 1vh; padding: 2vh 3vw; flex: 1; }
 .sg-snack-row { display: flex; justify-content: space-between; align-items: baseline; gap: 2vw; font-size: clamp(22px, 2.8vw, 50px); font-weight: 800; padding: .9vh 0; border-bottom: 1px solid rgba(255,255,255,.12); }
 .sg-snack-price { color: var(--ev); font-weight: 900; white-space: nowrap; }
+/* FNM Commander League card (signage.js paintLeagueCard). Mirrors signage.css. */
+.sg-league { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 2.4vh; padding: 0 clamp(100px, 9vw, 170px) 0 1vw; }
+.sg-league .sg-stbl { flex: 0 0 auto; }
+.sg-lg-big { font-size: clamp(30px, 4.4vw, 80px); font-weight: 900; letter-spacing: -.02em; line-height: 1.05; }
+.sg-lg-line { font-size: clamp(18px, 2.3vw, 42px); font-weight: 800; line-height: 1.25; color: var(--muted); }
+.sg-lg-prize { color: var(--ev); }
+@supports not (width: clamp(1px, 2px, 3px)) {
+  .sg-league { padding: 0 170px 0 20px; }
+  .sg-lg-big { font-size: 72px; }
+  .sg-lg-line { font-size: 36px; }
+}
   </style>
 </head>
 <body class="signage" data-screen="main">
