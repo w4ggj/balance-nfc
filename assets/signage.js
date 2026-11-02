@@ -385,6 +385,15 @@
 
   // Spotlight the upcoming events (and fun cards) one at a time.
   var shelfTurn = 0;   // alternates shelf slots: product, snack bar, product...
+  // Wed + Thu are D&D nights (Joe, Nov 2026: big D&D groups play, barely buy),
+  // so every other shelf product those days is a D&D book or dice set.
+  var dndTurn = 0;
+  function shelfGameNow() {
+    var d = new Date().getDay();
+    if (d !== 3 && d !== 4) return "all";
+    dndTurn++;
+    return dndTurn % 2 ? "dnd" : "all";
+  }
   function renderShowcase() {
     if (videoOn) return;
     var right = document.getElementById("sgRight");
@@ -396,7 +405,7 @@
       shelfTurn++;
       var sn = global.BGFShelf && BGFShelf.snacks ? BGFShelf.snacks() : null;
       if (sn && shelfTurn % 2 === 0) { paintSnackCard(right, sn); return; }
-      var prod = global.BGFShelf ? BGFShelf.next("all") : null;
+      var prod = global.BGFShelf ? (BGFShelf.next(shelfGameNow()) || BGFShelf.next("all")) : null;
       if (prod) { paintShelfCard(right, prod); return; }
       // Products not loaded yet (or none in stock): show the next real card instead.
       var alt = null;
@@ -1409,7 +1418,7 @@
     if (screen === "entrance") {
       renderEntranceQR(); setInterval(renderEntranceQR, POLL_FB_MS);
     } else {
-      if (global.BGFShelf) BGFShelf.load("all");   // warm the in-stock product cards
+      if (global.BGFShelf) BGFShelf.load("all");   // warm the in-stock product cards (the D&D pool loads on demand Wed/Thu)
       if (global.BGFShelf && BGFShelf.loadSnacks) BGFShelf.loadSnacks();   // and the snack bar prices
       loadLeague(); setInterval(loadLeague, 60000);   // FNM league card in the showcase
       loadRight(); setInterval(loadRight, POLL_RIGHT_MS);

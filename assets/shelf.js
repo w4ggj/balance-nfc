@@ -20,13 +20,18 @@
     onepiece:  ["one-piece-sealed"],
     riftbound: ["riftbound-sealed"],
     mtg:       ["mtg-sealed-product", "playmats"],
-    all:       ["tcg-sealed-product", "playmats"]
+    all:       ["tcg-sealed-product", "playmats"],
+    dnd:       ["books"]                       // D&D books (Wed/Thu D&D nights, Nov 2026)
   };
+  // Second-slot collections per pool (default: sleeves + deck boxes). D&D mixes
+  // in dice instead: two books, then a dice set.
+  var POOL_ACC = { dnd: ["dice-sets"] };
   var GAME_LABEL = [
     [/pokemon/i, "Pokémon"], [/one piece/i, "One Piece"], [/riftbound/i, "Riftbound"],
     [/magic/i, "Magic: The Gathering"], [/weiss/i, "Weiss Schwarz"], [/digimon/i, "Digimon"],
     [/lorcana/i, "Lorcana"], [/flesh and blood/i, "Flesh and Blood"], [/yugioh|yu-gi-oh/i, "Yu-Gi-Oh!"],
-    [/final fantasy/i, "Final Fantasy TCG"], [/sleeve/i, "Sleeves"], [/deck box/i, "Deck boxes"], [/playmat/i, "Playmats"]
+    [/final fantasy/i, "Final Fantasy TCG"], [/d&d|dungeons/i, "Dungeons & Dragons"], [/\bdice\b/i, "Dice"],
+    [/sleeve/i, "Sleeves"], [/deck box/i, "Deck boxes"], [/playmat/i, "Playmats"]
   ];
 
   var colCache = {};   // handle -> { at, items }
@@ -38,7 +43,18 @@
     var s = String(t || "").replace(/\s*\[([^\]]*)\]/g, function (m, inner) {
       return /[a-z]/.test(inner) ? " – " + inner.trim() : "";
     });
-    return s.replace(/\s{2,}/g, " ").trim() || String(t || "");
+    return unshout(s.replace(/\s{2,}/g, " ").trim()) || String(t || "");
+  }
+  // Distributor titles that arrive in ALL CAPS ("DUNGEONS AND DRAGONS (2025
+  // EDITION): MONSTER MANUAL") read as shouting on a TV -> Title Case, keeping
+  // common acronyms. Titles with any lowercase letter are left alone.
+  function unshout(s) {
+    if (/[a-z]/.test(s) || !/[A-Z]{4}/.test(s)) return s;
+    s = s.toLowerCase().replace(/(^|[\s(\/:&-])([a-z])/g, function (m, p, c) { return p + c.toUpperCase(); });
+    for (var k = 0; k < 2; k++) {
+      s = s.replace(/([^:(]\s)(A|An|And|At|By|For|In|Of|On|Or|The|To|With)(?=\s)/g, function (m, pre, w) { return pre + w.toLowerCase(); });
+    }
+    return s.replace(/\b(Tcg|Ccg|Etb|Mtg|Rpg|Sv|Ex|Gx|Vmax|Vstar|Ii|Iii|Iv)\b/g, function (w) { return w.toUpperCase(); });
   }
   function money(n) {
     var v = Number(n);
@@ -110,7 +126,8 @@
     var p = pools[game];
     if (p && Date.now() - p.at < CACHE_MS) return Promise.resolve(p.items);
     var mainHandles = POOLS[game];
-    return Promise.all(mainHandles.concat(ACCESSORIES).map(loadCollection)).then(function (lists) {
+    var accHandles = POOL_ACC[game] || ACCESSORIES;
+    return Promise.all(mainHandles.concat(accHandles).map(loadCollection)).then(function (lists) {
       var main = [], acc = [];
       lists.forEach(function (l, i) {
         l.forEach(function (it) { (i < mainHandles.length && !it.accessory ? main : acc).push(it); });
