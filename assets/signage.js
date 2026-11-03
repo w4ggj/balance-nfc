@@ -380,6 +380,17 @@
       if (withLg.length === items.length) withLg.push({ kind: "league" });
       items = withLg;
     }
+    // Buylist card (Nov 3 2026, Joe "yes"): after the 5th of every 10 cards, so it sits
+    // between review cards. Small loops get one in the middle.
+    if (items.length >= 4) {
+      var withBl = [];
+      for (var bi = 0; bi < items.length; bi++) {
+        withBl.push(items[bi]);
+        if ((bi + 1) % 10 === 5) withBl.push({ kind: "buylist" });
+      }
+      if (withBl.length === items.length) withBl.splice(Math.floor(withBl.length / 2), 0, { kind: "buylist" });
+      items = withBl;
+    }
     // Google review card (Nov 2026): the Balance Gaming listing had 0 reviews.
     // After every 10th card, and at least once per loop once there are 4+ cards.
     if (items.length >= 4) {
@@ -425,6 +436,7 @@
       it = alt;
     }
     if (it.kind === "review") { paintReviewCard(right); return; }
+    if (it.kind === "buylist") { paintBuylistCard(right); return; }
     if (it.kind === "league") {
       var li = leagueInfo(leagueData);
       if (li) paintLeagueCard(right, leagueData, li); else paintWelcome(right);
@@ -512,6 +524,26 @@
     box.appendChild(txt);
     var q = el("div", "sg-review-qr");
     var svg = qrSvg(REVIEW_URL, 4);
+    if (svg) { q.innerHTML = svg; box.appendChild(q); }
+    right.appendChild(box);
+  }
+
+  // Buylist card. Rates are the ones published on /pages/buylist and About (Joe OK'd
+  // publishing them Nov 1 2026). If the rates change, change them here too.
+  var BUYLIST_URL = "https://balancegamingfl.com/pages/buylist?utm_source=tv&utm_medium=qr&utm_campaign=buylist";
+  function paintBuylistCard(right) {
+    right.innerHTML = "";
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", "We Buy Cards"));
+    head.appendChild(el("div", "sg-r-sub", "Pokémon · Magic · One Piece"));
+    right.appendChild(head);
+    var box = el("div", "sg-review");
+    var txt = el("div", "sg-review-txt");
+    txt.appendChild(el("div", "sg-lg-big", "Got cards you don't play?"));
+    txt.appendChild(el("div", "sg-lg-line", "We pay 50% of market in cash or 60% in store credit. Ask at the counter."));
+    box.appendChild(txt);
+    var q = el("div", "sg-review-qr");
+    var svg = qrSvg(BUYLIST_URL, 4);
     if (svg) { q.innerHTML = svg; box.appendChild(q); }
     right.appendChild(box);
   }
