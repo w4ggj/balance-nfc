@@ -468,7 +468,13 @@
       if (!alt) { paintWelcome(right); return; }
       it = alt;
     }
-    if (it.kind === "review") { paintReviewCard(right); return; }
+    if (it.kind === "review") {
+      // The review slot alternates with the event-alerts card (Nov 3 2026, Joe "yes"),
+      // so the TV gains the alerts sign-up without adding another promo slot.
+      reviewTurn++;
+      if (reviewTurn % 2 === 0) paintAlertsCard(right); else paintReviewCard(right);
+      return;
+    }
     if (it.kind === "buylist") { paintBuylistCard(right); return; }
     if (it.kind === "league") {
       var li = leagueInfo(leagueData);
@@ -557,6 +563,27 @@
     box.appendChild(txt);
     var q = el("div", "sg-review-qr");
     var svg = qrSvg(REVIEW_URL, 4);
+    if (svg) { q.innerHTML = svg; box.appendChild(q); }
+    right.appendChild(box);
+  }
+
+  // Event alerts card: email sign-up for new events. src=tv shows up in the Elite
+  // worker's alert_signups log so TV sign-ups can be counted.
+  var reviewTurn = 0;
+  var ALERTS_URL = "https://balancegamingfl.com/pages/event-alerts?src=tv&utm_source=tv&utm_medium=qr&utm_campaign=event-alerts";
+  function paintAlertsCard(right) {
+    right.innerHTML = "";
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", "Event Alerts"));
+    head.appendChild(el("div", "sg-r-sub", "Free email sign-up"));
+    right.appendChild(head);
+    var box = el("div", "sg-review");
+    var txt = el("div", "sg-review-txt");
+    txt.appendChild(el("div", "sg-lg-big", "Never miss an event"));
+    txt.appendChild(el("div", "sg-lg-line", "Get an email when new Pokémon, Magic, One Piece and Riftbound events go up. Scan to sign up."));
+    box.appendChild(txt);
+    var q = el("div", "sg-review-qr");
+    var svg = qrSvg(ALERTS_URL, 4);
     if (svg) { q.innerHTML = svg; box.appendChild(q); }
     right.appendChild(box);
   }
