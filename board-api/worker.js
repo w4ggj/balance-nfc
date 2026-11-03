@@ -174,6 +174,16 @@ async function loadShopify(env) {
       url: p.onlineStoreUrl || ("https://balancegamingfl.com/products/" + p.handle),
       price: price,
       seatsLeft: tracked ? seats : null,   // null = not tracked / no read_inventory
+      // Per-variant detail so a listing that sells several dates (Magic Academy:
+      // one variant per Wednesday) shows THAT night's seats, not all nights added up.
+      variants: (p.variants.nodes || []).map(function (v) {
+        return {
+          price: v.price,
+          available: !!v.availableForSale,
+          seats: typeof v.inventoryQuantity === "number" ? Math.max(0, v.inventoryQuantity) : null,
+          when: monthDayFromText(v.title)   // {md:"11-04", year:"2026"|null} or null
+        };
+      }),
       available: available,                // fallback signal for Open/Sold-out
       image: (p.featuredImage && p.featuredImage.url) || null,
       date: dateFromTitle(p.title)         // "YYYY-MM-DD" or null
@@ -195,7 +205,7 @@ async function shopifyFetch(env, withInventory, cursor) {
     "query($q:String!,$cursor:String){products(first:250,after:$cursor,query:$q,sortKey:CREATED_AT,reverse:true){" +
     "pageInfo{hasNextPage endCursor} nodes{" +
     "title handle onlineStoreUrl featuredImage{url} " +
-    "variants(first:10){nodes{title price availableForSale" + invField + "}}}}}";
+    "variants(first:50){nodes{title price availableForSale" + invField + "}}}}}";
 
   const r = await fetch("https://" + env.SHOPIFY_SHOP + "/admin/api/" + ver + "/graphql.json", {
     method: "POST",
@@ -263,13 +273,28 @@ function merge(calEvents, shopEvents, env, tz) {
       }
     }
 
-    const seatsLeft = match ? match.seatsLeft : null;
+    let seatsLeft = match ? match.seatsLeft : null;
+    let avail = match ? match.available : null;
+    let matchPrice = match ? match.price : null;
+    // Multi-date listing (variants named like "Wednesday November 4th 2026 @ 8PM"):
+    // use the variant for this calendar night. No variant for this night = no seat
+    // info (don't show the other nights' seats). Single-variant listings unchanged.
+    if (match && match.variants && match.variants.length > 1 && evDate) {
+      const dated = match.variants.filter(function (v) { return v.when; });
+      if (dated.length) {
+        const v = dated.find(function (v) {
+          return v.when.md === evDate.slice(5) && (!v.when.year || v.when.year === evDate.slice(0, 4));
+        });
+        if (v) { seatsLeft = v.seats; avail = v.available; if (v.price != null) matchPrice = v.price; }
+        else { seatsLeft = null; avail = null; }
+      }
+    }
     // Exact count when we have inventory; otherwise Open/Sold-out from availability.
     let status = null;
     if (match) {
       if (seatsLeft != null) status = statusFor(seatsLeft, almost);
-      else if (match.available === true) status = "open";
-      else if (match.available === false) status = "sold-out";
+      else if (avail === true) status = "open";
+      else if (avail === false) status = "sold-out";
     }
     // No Shopify product matched? Honor what the calendar event itself says —
     // read the price and register link from its description so a paid event
@@ -287,7 +312,7 @@ function merge(calEvents, shopEvents, env, tz) {
       end: ev.end,
       allDay: ev.allDay,
       ticketed: !!match || !!descPrice,
-      price: match ? match.price : descPrice,
+      price: match ? matchPrice : descPrice,
       registerUrl: match ? match.url : (urlFromText(ev.description) || null),
       // An "image: <url>" in the calendar event description wins; otherwise the
       // matched Shopify product's image. Lets any event (even non-ticketed) have art.
@@ -300,6 +325,17 @@ function merge(calEvents, shopEvents, env, tz) {
 
   out.sort(function (a, b) { return new Date(a.start) - new Date(b.start); });
   return out;
+}
+
+// "Wednesday November 4th 2026 @ 8PM" / "Monday November 9th @ 6PM" -> {md:"11-04", year}
+const MONTHS = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7,
+  august: 8, september: 9, october: 10, november: 11, december: 12 };
+function monthDayFromText(t) {
+  const m = String(t || "").toLowerCase().match(
+    /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2})(?:st|nd|rd|th)?\b(?:,?\s+(\d{4}))?/);
+  if (!m) return null;
+  const pad = function (n) { return (n < 10 ? "0" : "") + n; };
+  return { md: pad(MONTHS[m[1]]) + "-" + pad(Number(m[2])), year: m[3] || null };
 }
 
 function statusFor(seatsLeft, almost) {
