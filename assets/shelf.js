@@ -79,6 +79,7 @@
     return {
       handle: p.handle,
       title: cleanTitle(p.title),
+      raw: String(p.title || ""),          // original title (keeps set codes like [OP-18]) for set matching
       price: (hi > lo ? "from " : "") + money(lo),
       image: imgUrl(img, 800),
       label: label(p),
@@ -149,6 +150,29 @@
     // Warm the next photo so it's cached by the time it rotates in.
     try { var nx = p.items[p.i % p.items.length]; if (nx && nx.image && typeof Image !== "undefined") { var pre = new Image(); pre.src = nx.image; } } catch (e) { /* ignore */ }
     return it;
+  }
+
+  // Next in-stock product from a game's pool whose title has every word (Nov 2026,
+  // prerelease nights lead with that set). Words are lowercase letters/digits only;
+  // titles are squashed the same way, so "op18" matches "[OP-18]" and "star","trek"
+  // matches "Star Trek - Play Booster Pack [TRK]". null until the pool loads or if
+  // nothing matches, so callers fall back to the normal mix.
+  var matchIdx = {};
+  function squash(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, ""); }
+  function nextMatching(game, words) {
+    game = POOLS[game] ? game : "all";
+    if (!words || !words.length) return null;
+    var p = pools[game];
+    if (!p || Date.now() - p.at >= CACHE_MS) load(game);
+    if (!p || !p.items.length) return null;
+    var hits = p.items.filter(function (it) {
+      var t = squash(it.raw || it.title);
+      return words.every(function (w) { return t.indexOf(w) !== -1; });
+    });
+    if (!hits.length) return null;
+    var key = game + "|" + words.join(" ");
+    var i = matchIdx[key] || 0; matchIdx[key] = i + 1;
+    return hits[i % hits.length];
   }
 
   // Game for the live board from the tournament key it resolved:
@@ -238,7 +262,7 @@
     return Math.min.apply(null, g.map(function (x) { return x.min; }));
   }
 
-  global.BGFShelf = { load: load, next: next, mountBar: mountBar, gameFromKey: gameFromKey, cleanTitle: cleanTitle, money: money,
+  global.BGFShelf = { load: load, next: next, nextMatching: nextMatching, squash: squash, mountBar: mountBar, gameFromKey: gameFromKey, cleanTitle: cleanTitle, money: money,
     loadSnacks: loadSnacks, snacks: snacks, snackPrice: snackPrice, snackLine: snackLine };
   if (typeof module !== "undefined" && module.exports) module.exports = global.BGFShelf;
 })(typeof window !== "undefined" ? window : globalThis);

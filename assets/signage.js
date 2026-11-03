@@ -416,6 +416,33 @@
     dndTurn++;
     return dndTurn % 2 ? "dnd" : "all";
   }
+  // Prerelease nights (Joe, Nov 3 2026): on the day of a prerelease, 2 of every 3
+  // shelf product slots show that set's in-stock product (boosters, Commander decks,
+  // sleeves...) because players want more of the set they just opened. The set
+  // words come from the event name ("Prerelease - Magic: The Gathering: Star Trek"
+  // -> star, trek; "... OP-18 Prerelease" -> op18). If nothing for the set is in
+  // stock in Shopify yet, the slot falls back to the normal mix.
+  var SET_STOP = { prerelease: 1, prereleases: 1, pre: 1, rift: 1, release: 1, event: 1, magic: 1, the: 1, gathering: 1,
+    mtg: 1, one: 1, piece: 1, card: 1, game: 1, pokemon: 1, tcg: 1, riftbound: 1, at: 1, balance: 1, gaming: 1, and: 1 };
+  var prereleaseTurn = 0;
+  function prereleaseFocus() {
+    var now = new Date();
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    var today = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+    for (var i = 0; i < lastEvents.length; i++) {
+      var e = lastEvents[i];
+      if (!e || !/prerelease|pre-rift/i.test(e.name || "")) continue;
+      if (String(e.start || "").slice(0, 10) !== today) continue;
+      var g = String(e.game || "") + " " + String(e.name || "");
+      var game = /magic/i.test(g) ? "mtg" : /one piece/i.test(g) ? "onepiece" : /pok/i.test(g) ? "pokemon" : /riftbound/i.test(g) ? "riftbound" : null;
+      if (!game) continue;
+      var words = String(e.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .split(/[^a-z0-9-]+/).map(function (w) { return w.replace(/-/g, ""); })
+        .filter(function (w) { return w && !SET_STOP[w] && !/^\d+$/.test(w); });
+      if (words.length) return { game: game, words: words };
+    }
+    return null;
+  }
   function renderShowcase() {
     if (videoOn) return;
     var right = document.getElementById("sgRight");
@@ -427,7 +454,13 @@
       shelfTurn++;
       var sn = global.BGFShelf && BGFShelf.snacks ? BGFShelf.snacks() : null;
       if (sn && shelfTurn % 2 === 0) { paintSnackCard(right, sn); return; }
-      var prod = global.BGFShelf ? (BGFShelf.next(shelfGameNow()) || BGFShelf.next("all")) : null;
+      var prod = null;
+      var fx = prereleaseFocus();
+      if (fx && global.BGFShelf && BGFShelf.nextMatching) {
+        prereleaseTurn++;
+        if (prereleaseTurn % 3 !== 0) prod = BGFShelf.nextMatching(fx.game, fx.words);
+      }
+      if (!prod) prod = global.BGFShelf ? (BGFShelf.next(shelfGameNow()) || BGFShelf.next("all")) : null;
       if (prod) { paintShelfCard(right, prod); return; }
       // Products not loaded yet (or none in stock): show the next real card instead.
       var alt = null;
