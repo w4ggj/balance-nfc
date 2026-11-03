@@ -475,7 +475,16 @@
       if (reviewTurn % 2 === 0) paintAlertsCard(right); else paintReviewCard(right);
       return;
     }
-    if (it.kind === "buylist") { paintBuylistCard(right); return; }
+    if (it.kind === "buylist") {
+      // Nov 15 - Dec 24 the buylist slot alternates with the holiday gift card (Nov 3 2026),
+      // same window as the homepage gift tile, so no extra promo slot is added.
+      if (giftSeason()) {
+        buylistTurn++;
+        if (buylistTurn % 2 === 0) { paintGiftCard(right); return; }
+      }
+      paintBuylistCard(right);
+      return;
+    }
     if (it.kind === "league") {
       var li = leagueInfo(leagueData);
       if (li) paintLeagueCard(right, leagueData, li); else paintWelcome(right);
@@ -604,6 +613,32 @@
     box.appendChild(txt);
     var q = el("div", "sg-review-qr");
     var svg = qrSvg(BUYLIST_URL, 4);
+    if (svg) { q.innerHTML = svg; box.appendChild(q); }
+    right.appendChild(box);
+  }
+
+  // Holiday gift card card. Gift cards ring up at the counter through SortSwift (Joe,
+  // Nov 1 2026) and sell online. QR -> the in-stock gift ideas page. Prices only, no deals.
+  var buylistTurn = 0;
+  var GIFT_URL = "https://balancegamingfl.com/pages/gift-ideas?utm_source=tv&utm_medium=qr&utm_campaign=gift-ideas";
+  function giftSeason() {
+    var d = new Date();
+    var md = (d.getMonth() + 1) * 100 + d.getDate();
+    return md >= 1115 && md <= 1224;
+  }
+  function paintGiftCard(right) {
+    right.innerHTML = "";
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", "Holiday Gifts"));
+    head.appendChild(el("div", "sg-r-sub", "Gift cards $10 to $300"));
+    right.appendChild(head);
+    var box = el("div", "sg-review");
+    var txt = el("div", "sg-review-txt");
+    txt.appendChild(el("div", "sg-lg-big", "Not sure what they play?"));
+    txt.appendChild(el("div", "sg-lg-line", "A gift card works on anything in the store. Grab one at the counter, or scan for gift ideas that are in stock now."));
+    box.appendChild(txt);
+    var q = el("div", "sg-review-qr");
+    var svg = qrSvg(GIFT_URL, 4);
     if (svg) { q.innerHTML = svg; box.appendChild(q); }
     right.appendChild(box);
   }
