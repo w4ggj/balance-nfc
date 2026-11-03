@@ -407,14 +407,21 @@
 
   // Spotlight the upcoming events (and fun cards) one at a time.
   var shelfTurn = 0;   // alternates shelf slots: product, snack bar, product...
-  // Wed + Thu are D&D nights (Joe, Nov 2026: big D&D groups play, barely buy),
-  // so every other shelf product those days is a D&D book or dice set.
-  var dndTurn = 0;
+  // Game nights (Nov 3 2026): every other shelf product slot shows the game that's
+  // being played in the store that day, so the players in the room see their own
+  // product; the other slots keep the store-wide mix. Mon Pokemon League, Tue One
+  // Piece open play, Wed D&D groups + Magic open play, Thu Nexus Nights + D&D groups
+  // (Joe, Nov 2026: big D&D groups play Wed/Thu, barely buy), Fri/Sat Magic, Sun One
+  // Piece. An empty pool falls back to "all" at the call site.
+  var NIGHT_GAMES = { 0: ["onepiece"], 1: ["pokemon"], 2: ["onepiece"], 3: ["dnd", "mtg"],
+    4: ["riftbound", "dnd"], 5: ["mtg"], 6: ["mtg"] };
+  var nightTurn = 0;
   function shelfGameNow() {
-    var d = new Date().getDay();
-    if (d !== 3 && d !== 4) return "all";
-    dndTurn++;
-    return dndTurn % 2 ? "dnd" : "all";
+    var list = NIGHT_GAMES[new Date().getDay()] || [];
+    if (!list.length) return "all";
+    nightTurn++;
+    if (nightTurn % 2) return "all";
+    return list[Math.floor(nightTurn / 2) % list.length];
   }
   // Prerelease nights (Joe, Nov 3 2026): on the day of a prerelease, 2 of every 3
   // shelf product slots show that set's in-stock product (boosters, Commander decks,
