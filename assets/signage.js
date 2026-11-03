@@ -453,6 +453,9 @@
     if (it.kind === "shelf") {
       shelfTurn++;
       var sn = global.BGFShelf && BGFShelf.snacks ? BGFShelf.snacks() : null;
+      // Every 6th shelf slot is the Elite membership card (Nov 2026); the other even
+      // slots stay the snack bar.
+      if (shelfTurn % 6 === 0) { paintEliteCard(right); return; }
       if (sn && shelfTurn % 2 === 0) { paintSnackCard(right, sn); return; }
       var prod = null;
       var fx = prereleaseFocus();
@@ -526,6 +529,26 @@
     card.appendChild(info);
     right.appendChild(card);
   }
+  // Elite membership card. Perks and price are the ones on the Elite product page; the
+  // 10% only starts after the first renewal, so the card says so.
+  var ELITE_URL = "https://balancegamingfl.com/products/elite-membership-1?utm_source=tv&utm_medium=qr&utm_campaign=elite";
+  function paintEliteCard(right) {
+    right.innerHTML = "";
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", "Elite Membership"));
+    head.appendChild(el("div", "sg-r-sub", "$10 a month · cancel anytime"));
+    right.appendChild(head);
+    var box = el("div", "sg-review");
+    var txt = el("div", "sg-review-txt");
+    txt.appendChild(el("div", "sg-lg-big", "Buy sealed here a lot?"));
+    txt.appendChild(el("div", "sg-lg-line", "Elite members get 10% off sealed after their first month, member-only parties, and first word on limited product. Scan to join."));
+    box.appendChild(txt);
+    var q = el("div", "sg-review-qr");
+    var svg = qrSvg(ELITE_URL, 4);
+    if (svg) { q.innerHTML = svg; box.appendChild(q); }
+    right.appendChild(box);
+  }
+
   // Snack bar card (drinks & snacks prices, Nov 2026). No stock counts: food/drink isn't tracked.
   function paintSnackCard(right, groups) {
     right.innerHTML = "";
