@@ -480,9 +480,15 @@
     }
     if (it.kind === "review") {
       // The review slot alternates with the event-alerts card (Nov 3 2026, Joe "yes"),
-      // so the TV gains the alerts sign-up without adding another promo slot.
+      // so the TV gains the alerts sign-up without adding another promo slot. Nov 6 -
+      // Dec 15 it becomes a 3-way with the Toys for Tots drop-off card (Joe, Nov 6 2026).
       reviewTurn++;
-      if (reviewTurn % 2 === 0) paintAlertsCard(right); else paintReviewCard(right);
+      if (toysSeason()) {
+        var tm = reviewTurn % 3;
+        if (tm === 0) paintAlertsCard(right); else if (tm === 1) paintReviewCard(right); else paintToysCard(right);
+      } else {
+        if (reviewTurn % 2 === 0) paintAlertsCard(right); else paintReviewCard(right);
+      }
       return;
     }
     if (it.kind === "buylist") {
@@ -669,6 +675,32 @@
     box.appendChild(txt);
     var q = el("div", "sg-review-qr");
     var svg = qrSvg(GIFT_URL, 4);
+    if (svg) { q.innerHTML = svg; box.appendChild(q); }
+    right.appendChild(box);
+  }
+
+  // Toys for Tots drop-off card. Balance is a drop-off location Nov 6 - Dec 15
+  // (Joe, Nov 6 2026). Same date-gate style as the gift card. No deals, and NOT
+  // the Toys for Tots logo — store logo only if art is ever added. QR -> the info page.
+  var TOYS_URL = "https://balancegamingfl.com/pages/toys-for-tots?utm_source=tv&utm_medium=qr&utm_campaign=toys-for-tots";
+  function toysSeason() {
+    var d = new Date();
+    var md = (d.getMonth() + 1) * 100 + d.getDate();
+    return md >= 1106 && md <= 1215;
+  }
+  function paintToysCard(right) {
+    right.innerHTML = "";
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", "Toys for Tots"));
+    head.appendChild(el("div", "sg-r-sub", "Drop-off location"));
+    right.appendChild(head);
+    var box = el("div", "sg-review");
+    var txt = el("div", "sg-review-txt");
+    txt.appendChild(el("div", "sg-lg-big", "Got a toy to give?"));
+    txt.appendChild(el("div", "sg-lg-line", "Bring a new, unwrapped toy for a kid 0 to 12 and drop it in the box at the store. Babies and 10 to 12 year olds are the biggest need."));
+    box.appendChild(txt);
+    var q = el("div", "sg-review-qr");
+    var svg = qrSvg(TOYS_URL, 4);
     if (svg) { q.innerHTML = svg; box.appendChild(q); }
     right.appendChild(box);
   }
