@@ -1524,23 +1524,17 @@
     tvOvEl.appendChild(tvOvFrame);
     document.body.appendChild(tvOvEl);
   }
-  // A standings overlay should leave the bottom ad ticker visible. Reserve the
-  // band from the ticker's top down to the screen bottom so the ticker (and
-  // anything below it) shows through under the full-screen board.
-  function tickerReservePx() {
-    var t = document.getElementById("sgTicker");
-    if (!t) return 0;
-    var r = t.getBoundingClientRect();
-    var reserve = Math.round((window.innerHeight || 0) - r.top);
-    return (reserve > 10 && reserve < (window.innerHeight || 0) * 0.35) ? reserve : 0;
-  }
+  // The live board (board.html) carries its own bottom bars — the shelf/snack ad
+  // strip (shelf.js) and the "Posted / Auto-updating" footer — so the overlay is
+  // full-bleed and does NOT reserve the signage ticker (that would stack a third
+  // bar). To show the signage ticker instead of the shelf bar, pass board.html
+  // ?shelf=0 and reserve the band here.
   function applyTvOverlay(src) {
     ensureTvOverlay();
     if (!src) {
       if (tvOvSrc) { tvOvSrc = ""; tvOvFrame.src = "about:blank"; tvOvEl.style.display = "none"; }
       return;
     }
-    tvOvEl.style.bottom = tickerReservePx() + "px";  // keep the ad ticker showing
     tvOvEl.style.display = "block";
     if (src !== tvOvSrc) { tvOvSrc = src; tvOvFrame.src = src; }
   }
@@ -1622,7 +1616,7 @@
     gameOvEl.appendChild(gameOvFrame);
     document.body.appendChild(gameOvEl);
   }
-  function showGameOv(src) { gameOvEl.style.bottom = tickerReservePx() + "px"; gameOvEl.style.display = "block"; if (src !== gameOvSrc) { gameOvSrc = src; gameOvFrame.src = src; } }
+  function showGameOv(src) { gameOvEl.style.display = "block"; if (src !== gameOvSrc) { gameOvSrc = src; gameOvFrame.src = src; } }
   function hideGameOv() { if (gameOvSrc) { gameOvSrc = ""; gameOvFrame.src = "about:blank"; gameOvEl.style.display = "none"; } }
   function loadGameOverlay() {
     if (!global.BGF) return;
