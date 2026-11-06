@@ -1590,6 +1590,39 @@
     }).catch(function () {});
   }
 
+  // ---- Game-event overlay (Magic / One Piece / Riftbound) --------------
+  // These games have no live board of their own, but "Live event on TV" should
+  // still put the game's full-screen "tonight's event" splash (event-tv.html) on
+  // the big board — the same full takeover Pokémon gets with its tournament board.
+  var GAME_OV = { mtg: 1, onepiece: 1, riftbound: 1 };
+  var gameOvEl = null, gameOvFrame = null, gameOvSrc = "", gameCb = String(Date.now());
+  function ensureGameOverlay() {
+    if (gameOvEl) return;
+    gameOvEl = document.createElement("div");
+    gameOvEl.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#0b0d12;display:none;z-index:9300;";
+    gameOvFrame = document.createElement("iframe");
+    gameOvFrame.setAttribute("scrolling", "no");
+    gameOvFrame.setAttribute("title", "Tonight's event");
+    gameOvFrame.style.cssText = "width:100%;height:100%;border:0;display:block;";
+    gameOvEl.appendChild(gameOvFrame);
+    document.body.appendChild(gameOvEl);
+  }
+  function loadGameOverlay() {
+    if (!global.BGF) return;
+    Promise.all([BGF.fbGet("display/board"), BGF.getConfig()]).then(function (r) {
+      var on = r[0] === true;
+      var active = (r[1] && r[1].active) || "main";
+      ensureGameOverlay();
+      if (on && GAME_OV[active]) {
+        var src = "event-tv.html?game=" + active + "&t=" + gameCb;
+        gameOvEl.style.display = "block";
+        if (src !== gameOvSrc) { gameOvSrc = src; gameOvFrame.src = src; }
+      } else if (gameOvSrc) {
+        gameOvSrc = ""; gameOvFrame.src = "about:blank"; gameOvEl.style.display = "none";
+      }
+    }).catch(function () {});
+  }
+
   // ---- init ------------------------------------------------------------
   function init() {
     var screen = (qp("screen") === "entrance") ? "entrance" : "main";
@@ -1621,6 +1654,8 @@
       loadTourneyOverlay(); setInterval(loadTourneyOverlay, 5000);
       // Live trivia: overlay the trivia board when the host turns it on.
       loadTriviaOverlay(); setInterval(loadTriviaOverlay, 5000);
+      // Game events (Magic / One Piece / Riftbound): full-screen "tonight's event".
+      loadGameOverlay(); setInterval(loadGameOverlay, 5000);
     }
 
     // Unattended signage: reload hourly with a cache-buster so future updates
