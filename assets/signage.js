@@ -1591,10 +1591,14 @@
   }
 
   // ---- Game-event overlay (Magic / One Piece / Riftbound) --------------
-  // These games have no live board of their own, but "Live event on TV" should
-  // still put the game's full-screen "tonight's event" splash (event-tv.html) on
-  // the big board — the same full takeover Pokémon gets with its tournament board.
+  // "Live event on TV" should put these games on the big board like Pokémon.
+  // When the Balance Live Standings extension is pushing a LIVE board for the
+  // active game (tournaments/_live → x-<code>-…), overlay that live board
+  // (board.html pinned to it). Otherwise show the game's "tonight's event"
+  // splash (event-tv.html) so the screen still promotes the night.
   var GAME_OV = { mtg: 1, onepiece: 1, riftbound: 1 };
+  var GAME_CODE = { mtg: "mtg", onepiece: "one", riftbound: "rft" };  // extension key prefixes
+  var GAME_LIVE_MS = 8 * 3600 * 1000;                                 // treat a pushed board as live for 8h
   var gameOvEl = null, gameOvFrame = null, gameOvSrc = "", gameCb = String(Date.now());
   function ensureGameOverlay() {
     if (gameOvEl) return;
@@ -1607,19 +1611,23 @@
     gameOvEl.appendChild(gameOvFrame);
     document.body.appendChild(gameOvEl);
   }
+  function showGameOv(src) { gameOvEl.style.display = "block"; if (src !== gameOvSrc) { gameOvSrc = src; gameOvFrame.src = src; } }
+  function hideGameOv() { if (gameOvSrc) { gameOvSrc = ""; gameOvFrame.src = "about:blank"; gameOvEl.style.display = "none"; } }
   function loadGameOverlay() {
     if (!global.BGF) return;
     Promise.all([BGF.fbGet("display/board"), BGF.getConfig()]).then(function (r) {
       var on = r[0] === true;
       var active = (r[1] && r[1].active) || "main";
       ensureGameOverlay();
-      if (on && GAME_OV[active]) {
-        var src = "event-tv.html?game=" + active + "&t=" + gameCb;
-        gameOvEl.style.display = "block";
-        if (src !== gameOvSrc) { gameOvSrc = src; gameOvFrame.src = src; }
-      } else if (gameOvSrc) {
-        gameOvSrc = ""; gameOvFrame.src = "about:blank"; gameOvEl.style.display = "none";
-      }
+      if (!(on && GAME_OV[active])) { hideGameOv(); return; }
+      var splash = "event-tv.html?game=" + active + "&t=" + gameCb;
+      BGF.fbGet("tournaments/_live").then(function (live) {
+        var code = GAME_CODE[active];
+        var liveForGame = live && typeof live.key === "string" &&
+          live.key.indexOf("x-" + code + "-") === 0 &&
+          (Date.now() - (live.updatedMs || 0) < GAME_LIVE_MS);
+        showGameOv(liveForGame ? ("board.html?t=" + encodeURIComponent(live.key)) : splash);
+      }).catch(function () { showGameOv(splash); });
     }).catch(function () {});
   }
 
