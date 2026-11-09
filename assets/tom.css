@@ -80,6 +80,16 @@ body.tomsplit .board { flex: 1 1 auto; min-height: 0; }
    auto-scroll when it's taller than the column. */
 .board.split .split-board { flex: 1 1 auto; min-height: 0; overflow: hidden; position: relative; }
 .board.split .split-board > .sections { will-change: transform; }
+/* Fade the bottom edge of a column *while it scrolls* so the last visible row
+   melts out above the snack-bar / footer strip instead of being hard-cut (the
+   clip used to land mid-row, which read as "the ad line is covering a pairing").
+   A column that fits doesn't get the fade — every row shows in full — and the
+   auto-scroll overshoots by a hair so the final row clears the fade at the end
+   of its travel. */
+.board.split .split-board.is-scrolling {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent 100%);
+}
 /* Inside a half-width column, stack divisions/groups vertically and keep pairings
    to a single column so names don't get squeezed. */
 .board.split .sections { flex-direction: column; flex-wrap: nowrap; gap: 14px; align-items: stretch; }

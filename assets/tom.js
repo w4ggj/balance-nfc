@@ -480,7 +480,9 @@
       if (!content) return;
       content.style.transform = "translateY(0)";
       var overflow = content.scrollHeight - vp.clientHeight;
-      if (overflow <= 4) return;                 // fits — no scroll needed
+      if (overflow <= 4) { vp.classList.remove("is-scrolling"); return; }   // fits — no scroll, no fade
+      vp.classList.add("is-scrolling");           // bottom fade (CSS) so the last row doesn't hard-cut at the ad bar
+      overflow += 30;                             // overshoot so the final row clears the bottom fade
       var pos = 0, dir = 1, pause = 110;          // ~1.8s pause at each end
       function step() {
         if (myGen !== scrollGen) return;          // superseded by a rebuild
