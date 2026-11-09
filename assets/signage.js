@@ -1572,8 +1572,10 @@
   }
   // A Pokémon tournament counts as "live" only if its TOM snapshot was updated
   // this recently; otherwise the Pokémon toggle shows the event card, not a
-  // stale old board.
-  var TOURNEY_LIVE_MS = 8 * 3600 * 1000;
+  // stale old board. ~3h: a couple hours after the last round posts the screen
+  // reverts to the place card, while a between-rounds lull mid-event (rounds
+  // run well under an hour) never trips it.
+  var TOURNEY_LIVE_MS = 3 * 3600 * 1000;
   // updatedMs of the newest TOM event — the exact one board.html would show
   // (its lexicographically-last MM-DD/YY-MM key). A tiny shallow read plus one
   // leaf read, so the 5s poll stays cheap on a weak kiosk.
