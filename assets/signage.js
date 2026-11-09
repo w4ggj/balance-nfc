@@ -1570,6 +1570,33 @@
     tvOvEl.style.display = "block";
     if (src !== tvOvSrc) { tvOvSrc = src; tvOvFrame.src = src; }
   }
+  // A Pokémon tournament counts as "live" only if its TOM snapshot was updated
+  // this recently; otherwise the Pokémon toggle shows the event card, not a
+  // stale old board. ~3h: a couple hours after the last round posts the screen
+  // reverts to the place card, while a between-rounds lull mid-event (rounds
+  // run well under an hour) never trips it.
+  var TOURNEY_LIVE_MS = 3 * 3600 * 1000;
+  // updatedMs of the newest TOM event — the exact one board.html would show
+  // (its lexicographically-last MM-DD/YY-MM key). A tiny shallow read plus one
+  // leaf read, so the 5s poll stays cheap on a weak kiosk.
+  function latestTomUpdatedMs() {
+    if (!BGF.fbShallow) {
+      return BGF.fbGet("tournaments").then(function (all) {
+        if (!all) return 0;
+        var best = 0;
+        Object.keys(all).forEach(function (k) {
+          var t = all[k];
+          if (/^\d{2}-\d{2}-\d+$/.test(k) && t && t.meta) best = Math.max(best, t.meta.updatedMs || 0);
+        });
+        return best;
+      }).catch(function () { return 0; });
+    }
+    return BGF.fbShallow("tournaments").then(function (keys) {
+      var tom = (keys ? Object.keys(keys) : []).filter(function (k) { return /^\d{2}-\d{2}-\d+$/.test(k); }).sort();
+      if (!tom.length) return 0;
+      return BGF.fbGet("tournaments/" + tom[tom.length - 1] + "/meta/updatedMs").then(function (v) { return v || 0; });
+    }).catch(function () { return 0; });
+  }
   function loadTourneyOverlay() {
     if (!global.BGF) return;
     Promise.all([BGF.fbGet("display/board"), BGF.getConfig()]).then(function (r) {
@@ -1587,15 +1614,26 @@
         // PIN, so a "t" cache-buster pinned the board to a nonexistent id and
         // idled it. Forward only params the board uses (rotate/fit for portrait
         // TVs); never forward "t"/"cb" from this page's own URL.
-        var p = new URLSearchParams(location.search), extra = "";
+        var p = new URLSearchParams(location.search), extra = "", demo = p.has("demo");
         ["rotate", "fit", "demo"].forEach(function (k) {
           if (p.has(k)) extra += "&" + k + "=" + encodeURIComponent(p.get(k));
         });
-        // Scope the board to Pokémon (TOM) only, so a stale One Piece / Magic /
-        // Riftbound _live pointer from the extension can't surface under the
-        // Pokémon toggle. Without this, board.html's loadLatest() would show
-        // whichever game's board was updated most recently.
-        applyTvOverlay("board.html?game=pokemon&cb=" + tvCb + extra);
+        // Show the live board only while a Pokémon tournament is actually
+        // running (its TOM snapshot updated within TOURNEY_LIVE_MS). Between
+        // events — including before tonight's event is pushed from TOM — show
+        // the "tonight's event" card (event-tv.html) so walk-ins see tonight's
+        // event instead of a stale old tournament board. The board is scoped to
+        // Pokémon (?game=pokemon) so a One Piece / Magic / Riftbound _live
+        // pointer from the extension can never surface here. ?demo always
+        // previews the board.
+        latestTomUpdatedMs().then(function (ms) {
+          var liveNow = demo || (ms > 0 && (Date.now() - ms < TOURNEY_LIVE_MS));
+          applyTvOverlay(liveNow
+            ? ("board.html?game=pokemon&cb=" + tvCb + extra)
+            : ("event-tv.html?game=pokemon&t=" + tvCb + extra));
+        }).catch(function () {
+          applyTvOverlay("board.html?game=pokemon&cb=" + tvCb + extra);
+        });
       } else {
         applyTvOverlay("");
       }
