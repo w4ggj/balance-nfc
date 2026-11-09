@@ -58,8 +58,30 @@
   // Standings browser extension as tournaments/x-<game>-<id>, with a tiny pointer
   // at tournaments/_live naming the newest one. Show whichever of the newest TOM
   // event and that pointer was updated most recently.
+  //
+  // ?game=<code> scopes the board to ONE game so a toggle for one game never
+  // shows another game's live board: "pokemon" (TOM) ignores the _live pointer
+  // entirely, and "mtg"/"onepiece"/"riftbound" use ONLY an _live pointer whose
+  // key carries that game's x-<prefix>- (ignoring TOM and other extension games).
+  // With no ?game, behavior is unchanged: newest across every source.
+  var GAME_PREFIX = { mtg: "x-mtg-", onepiece: "x-one-", riftbound: "x-rft-" };  // ?game → extension key prefix
   function loadLatest() {
+    var game = qp("game"), pfx = GAME_PREFIX[game];
+    // Pokémon is TOM-only: skip the _live pointer so an extension game can't leak in.
+    if (game === "pokemon") return loadLatestTom();
     var liveP = BGF.fbGet("tournaments/_live").catch(function () { return null; });
+    // An extension game (mtg/onepiece/riftbound) is _live-only: never fall back to
+    // a TOM (Pokémon) event, and only accept the pointer when it matches this game.
+    if (pfx) {
+      return liveP.then(function (live) {
+        if (live && typeof live.key === "string" && live.key.indexOf(pfx) === 0) {
+          resolvedPath = "tournaments/" + live.key;
+          return BGF.fbGet(resolvedPath);
+        }
+        resolvedPath = null;
+        return null;
+      });
+    }
     return Promise.all([loadLatestTom(), liveP]).then(function (res) {
       var tomSnap = res[0], live = res[1], tomPath = resolvedPath;
       var tomMs = (tomSnap && tomSnap.meta && tomSnap.meta.updatedMs) || 0;
