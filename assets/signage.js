@@ -1591,7 +1591,11 @@
         ["rotate", "fit", "demo"].forEach(function (k) {
           if (p.has(k)) extra += "&" + k + "=" + encodeURIComponent(p.get(k));
         });
-        applyTvOverlay("board.html?cb=" + tvCb + extra);
+        // Scope the board to Pokémon (TOM) only, so a stale One Piece / Magic /
+        // Riftbound _live pointer from the extension can't surface under the
+        // Pokémon toggle. Without this, board.html's loadLatest() would show
+        // whichever game's board was updated most recently.
+        applyTvOverlay("board.html?game=pokemon&cb=" + tvCb + extra);
       } else {
         applyTvOverlay("");
       }
