@@ -70,6 +70,10 @@ What each part does:
   from a purchase (a purchase-for-entry drawing can count as an illegal lottery
   in Florida).
 - Every 4 points = 1 entry in that game's drawing.
+- **First drawing is December 2026** (Mon Dec 28 / Tue Dec 29). League Pass
+  launched Nov 17, too late for a fair November drawing, so November check-ins
+  count toward December and the TV titles the roster "November & December".
+  Set by `FIRST_DRAW_MONTH` in `assets/league.js`.
 - The drawing is the **last Monday (Pokémon) / last Tuesday (One Piece) of the
   month**. Staff hit **Run the drawing** in the console at the end of that night.
   Entries are used up by the drawing whether or not you win; leftover points

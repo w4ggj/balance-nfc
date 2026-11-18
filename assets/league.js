@@ -35,6 +35,10 @@
   var TZ = "America/New_York";
   var THRESHOLD = 4;     // points per drawing entry
   var OPEN_HOUR = 12;    // player self check-in opens at noon (store time) on league night
+  // League Pass launched mid-November 2026, too late for a fair November drawing
+  // (two league nights left, and 4 points needed). The first drawing is
+  // December's; November check-ins count toward it. (Joe, Nov 17 2026)
+  var FIRST_DRAW_MONTH = "2026-12";
   var SITE = "https://nfc.balancegamingfl.com";
 
   var GAMES = {
@@ -79,8 +83,11 @@
   // its drawing already ran, then next month's.
   function nextDraw(L, game, now) {
     var e = eastern(now), ran = (L && L.draws && L.draws[game]) || {};
-    var id = lastNightOfMonth(game, e.y, e.m);
-    if (e.id > id || ran[id]) id = e.m === 12 ? lastNightOfMonth(game, e.y + 1, 1) : lastNightOfMonth(game, e.y, e.m + 1);
+    var y = e.y, m = e.m, id = lastNightOfMonth(game, y, m);
+    while (e.id > id || ran[id] || dateId(y, m, 1).slice(0, 7) < FIRST_DRAW_MONTH) {
+      if (m === 12) { y++; m = 1; } else m++;
+      id = lastNightOfMonth(game, y, m);
+    }
     var p = parseId(id);
     return { id: id, month: MONTHS[p.m - 1], label: niceDate(id, true), tonight: id === e.id };
   }
@@ -139,9 +146,10 @@
     var events = checkinEvents(L, game), draws = drawList(L, game);
     var bank = {}, periods = [], i = 0, start = 0;
     function close(endAt, draw) {
-      var seen = {};
+      var seen = {}, firstTs = 0;
       while (i < events.length && (endAt == null || events[i].ts <= endAt)) {
         var ev = events[i++];
+        if (!firstTs) firstTs = ev.ts;
         bank[ev.pid] = (bank[ev.pid] || 0) + 1;
         seen[ev.pid] = (seen[ev.pid] || 0) + 1;
       }
@@ -150,7 +158,7 @@
       rows.sort(byPoints);
       var carry = {};
       Object.keys(bank).forEach(function (pid) { if (!seen[pid] && bank[pid]) carry[pid] = bank[pid]; });
-      periods.push({ start: start, end: endAt, draw: draw, rows: rows, carry: carry });
+      periods.push({ start: start, end: endAt, draw: draw, rows: rows, carry: carry, firstTs: firstTs });
       if (draw) { Object.keys(bank).forEach(function (p) { bank[p] = bank[p] % t; }); start = endAt; }
     }
     draws.forEach(function (d) { close(d.at, d); });
@@ -205,11 +213,17 @@
     Object.keys(day).forEach(function (pid) { var ts = Number(day[pid]); if (ts && eastern(ts).id === tonight) here[pid] = true; });
     var nd = nextDraw(L, game, now);
     var monthName = view.draw ? MONTHS[parseId(view.draw.id).m - 1] : nd.month;
+    // A period that started in an earlier month (the launch, or a skipped
+    // drawing) is titled with both, e.g. "November & December".
+    if (!view.draw && view.firstTs) {
+      var fm = MONTHS[eastern(view.firstTs).m - 1];
+      if (fm !== monthName) monthName = fm + " & " + monthName;
+    }
     return { rows: view.rows, draw: view.draw, here: here, next: nd, month: monthName,
       prize: (view.draw && view.draw.prize) || ((L && L.meta && L.meta[game] && L.meta[game].prize) || "") };
   }
 
-  var Engine = { GAMES: GAMES, THRESHOLD: THRESHOLD, OPEN_HOUR: OPEN_HOUR, eastern: eastern, niceDate: niceDate,
+  var Engine = { GAMES: GAMES, THRESHOLD: THRESHOLD, OPEN_HOUR: OPEN_HOUR, FIRST_DRAW_MONTH: FIRST_DRAW_MONTH, eastern: eastern, niceDate: niceDate,
     lastNightOfMonth: lastNightOfMonth, nextDraw: nextDraw, isLeagueNight: isLeagueNight, checkinOpen: checkinOpen,
     gameTonight: gameTonight, displayName: displayName, nameOf: nameOf, checkinEvents: checkinEvents, drawList: drawList,
     winnersOf: winnersOf, ledger: ledger, current: current, standing: standing, pool: pool, pickWinner: pickWinner,
