@@ -11,7 +11,9 @@
   <link rel="apple-touch-icon" href="assets/logo.png" />
   <link rel="stylesheet" href="assets/brand.css" />
   <link rel="stylesheet" href="assets/commander.css" />
-  <link rel="stylesheet" href="assets/league.css" />
+  <!-- Cache-bust: GitHub Pages lets browsers keep CSS ~10 min, and a stale
+       league.css with fresh HTML/JS broke the TV layout on Nov 17. -->
+  <script>document.write('<link rel="stylesheet" href="assets/league.css?t=' + Date.now() + '">');</script>
 </head>
 <body class="league">
   <main class="wrap">
