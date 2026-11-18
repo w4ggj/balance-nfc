@@ -48,7 +48,7 @@ body.league[data-game="onepiece"] { --game: #ff5a5f; }
 
 /* ---- TV roster (league-board.html) --------------------------------------- */
 body.lpb { height: 100vh; overflow: hidden; padding: 0; }
-.lpb-wrap { height: 100vh; display: flex; flex-direction: column; padding: 3vh 2.6vw 2.4vh; gap: 2.4vh; }
+.lpb-wrap { height: 100vh; display: flex; flex-direction: column; padding: 2.6vh 2.6vw 2vh; gap: 2vh; }
 .lpb-top { display: flex; align-items: center; gap: 1.6vw; }
 .lpb-logo { height: 9vh; width: auto; filter: drop-shadow(0 6px 18px rgba(200,30,39,.3)); }
 .lpb-titles { flex: 1 1 auto; min-width: 0; }
@@ -58,25 +58,25 @@ body.lpb { height: 100vh; overflow: hidden; padding: 0; }
 .lpb-bar { height: .6vh; border-radius: 99px; background: var(--game); opacity: .85; }
 
 .lpb-grid { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 27vw 1fr; gap: 2vw; }
-.lpb-left { display: flex; flex-direction: column; gap: 2vh; min-height: 0; }
+.lpb-left { display: flex; flex-direction: column; gap: 1.6vh; min-height: 0; }
 .lpb-panel {
   background: var(--surface); border: 1px solid var(--surface-2); border-radius: 2vh;
-  box-shadow: var(--shadow); padding: 2.4vh 1.6vw;
+  box-shadow: var(--shadow); padding: 2vh 1.4vw;
 }
 .lpb-kick { font-size: 1.7vh; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--game); }
-.lpb-ev { font-size: 3.8vh; font-weight: 900; line-height: 1.08; margin-top: .8vh; }
+.lpb-ev { font-size: 3.2vh; font-weight: 900; line-height: 1.08; margin-top: .8vh; }
 .lpb-evmeta { font-size: 2vh; color: var(--muted); font-weight: 600; margin-top: .6vh; }
-.lpb-rules { margin-top: 2vh; display: grid; gap: 1.3vh; }
+.lpb-rules { margin-top: 1.4vh; display: grid; gap: 1vh; }
 .lpb-rule { display: flex; flex-direction: column; border-left: .5vh solid var(--game); padding-left: 1vw; }
-.lpb-rule b { font-size: 2.3vh; }
-.lpb-rule span { font-size: 1.8vh; color: var(--muted); }
+.lpb-rule b { font-size: 2.1vh; }
+.lpb-rule span { font-size: 1.6vh; color: var(--muted); }
 
-.lpb-qrpanel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-.lpb-qr { width: min(24vh, 20vw); aspect-ratio: 1; background: #fff; border-radius: 1.6vh; padding: 1vh; }
+.lpb-qrpanel { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.lpb-qr { width: min(18vh, 18vw); aspect-ratio: 1; background: #fff; border-radius: 1.6vh; padding: 1vh; }
 .lpb-qr svg { width: 100%; height: 100%; display: block; }
-.lpb-qrt { font-size: 3.2vh; font-weight: 900; margin-top: 1.4vh; }
+.lpb-qrt { font-size: 2.8vh; font-weight: 900; margin-top: 1.2vh; }
 .lpb-qrs { font-size: 1.9vh; color: var(--muted); font-weight: 600; margin-top: .4vh; }
-.lpb-url { font-size: 1.6vh; color: var(--muted); margin-top: .6vh; opacity: .8; }
+.lpb-url { display: none; }   /* the QR is enough on the TV; the printed sign shows the URL */
 
 .lpb-roster { display: flex; flex-direction: column; min-height: 0; position: relative; }
 .lpb-rhead { display: flex; align-items: baseline; justify-content: space-between; gap: 1vw; margin-bottom: 1.6vh; }
@@ -113,6 +113,21 @@ body.lpb { height: 100vh; overflow: hidden; padding: 0; }
 .lpb-empty { grid-column: 1 / -1; grid-row: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1vh; color: var(--muted); }
 .lpb-empty b { font-size: 4vh; color: var(--text); }
 .lpb-empty span { font-size: 2.4vh; }
+
+/* "On the shelf now" ad bar (assets/shelf.js), styled like board.html's */
+.lpb .shelf-bar {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 1.6vw; min-height: 9vh; padding: 1vh 1.6vw;
+  background: var(--surface); border: 1px solid var(--surface-2); border-left: .5vh solid var(--accent-2); border-radius: 1.4vh;
+}
+.lpb .shelf-bar[hidden] { display: none; }
+.lpb .shelf-bar > * { animation: lpbShelf .6s ease; }
+.lpb .shelf-tag { flex: 0 0 auto; font-size: 1.4vh; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-2); }
+.lpb .shelf-img { flex: 0 0 auto; height: 7.5vh; width: 7.5vh; object-fit: contain; background: #fff; border-radius: .8vh; padding: .3vh; }
+.lpb .shelf-txt { flex: 1 1 auto; min-width: 0; }
+.lpb .shelf-name { font-size: 2.8vh; font-weight: 800; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lpb .shelf-sub { font-size: 1.8vh; color: var(--muted); margin-top: .3vh; }
+.lpb .shelf-price { flex: 0 0 auto; font-size: 4vh; font-weight: 900; color: var(--accent-2); }
+@keyframes lpbShelf { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* Drawing reveal */
 .lpb-reveal {

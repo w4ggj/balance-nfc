@@ -717,7 +717,8 @@
         var perCol = Math.ceil(n / cols);
         box.style.setProperty("--cols", cols);
         box.style.setProperty("--rows", perCol);
-        box.style.setProperty("--fs", Math.max(1.5, Math.min(cols > 2 ? 2.7 : cols > 1 ? 3 : 3.6, 66 / perCol)).toFixed(2) + "vh");
+        var rowVh = (box.clientHeight / (window.innerHeight || 1080)) * 100 / perCol - 0.7;   // row height after the gap
+        box.style.setProperty("--fs", Math.max(1.4, Math.min(cols > 2 ? 2.7 : cols > 1 ? 3 : 3.6, rowVh * 0.7)).toFixed(2) + "vh");
         box.classList.toggle("dense", cols > 2);   // 3+ columns: drop the pips so names fit
         var winners = (v.draw && v.draw.winners) || [];
         rows.forEach(function (r) {

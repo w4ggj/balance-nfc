@@ -50,6 +50,9 @@
         <div class="lpb-legend" id="lpbLegend"></div>
       </section>
     </main>
+    <!-- "On the shelf now" ad bar, same as the tournament board (assets/shelf.js):
+         that game's in-stock sealed + sleeves/boxes, snack bar every 3rd turn. -->
+    <div class="shelf-bar" id="shelf" hidden></div>
   </div>
 
   <div class="lpb-reveal" id="lpbReveal" hidden>
@@ -60,12 +63,16 @@
 
   <script>
     var t = Date.now();
-    ["assets/qrcode.js", "assets/app.js", "assets/games.js", "assets/league.js"].forEach(function (src) {
+    ["assets/qrcode.js", "assets/app.js", "assets/games.js", "assets/shelf.js", "assets/league.js"].forEach(function (src) {
       document.write('<script src="' + src + '?t=' + t + '"><\/script>');
     });
   </script>
   <script>
     BGFLP.initBoard();
+    if (window.BGFShelf && new URLSearchParams(location.search).get("shelf") !== "0") {
+      var g = new URLSearchParams(location.search).get("game") || "pokemon";
+      BGFShelf.mountBar(document.getElementById("shelf"), function () { return g; }, 12);
+    }
     if (window.BGF && BGF.initRemoteReload) BGF.initRemoteReload();   // "Refresh all TVs"
     setTimeout(function () { location.reload(); }, 20 * 60 * 1000);   // pick up new code; frees kiosk memory
   </script>

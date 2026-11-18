@@ -179,6 +179,7 @@
   // TOM ids (MM-DD-n) are Pokémon; extension keys are x-one / x-rft / x-mtg.
   function gameFromKey(key) {
     key = String(key || "");
+    if (POOLS[key]) return key;   // a plain game name (League Pass TV passes "pokemon" / "onepiece")
     if (/x-one-/.test(key)) return "onepiece";
     if (/x-rft-/.test(key)) return "riftbound";
     if (/x-mtg-/.test(key)) return "mtg";
