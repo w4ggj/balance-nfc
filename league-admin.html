@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>League Pass — Staff Console</title>
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+  <link rel="stylesheet" href="assets/commander.css" />
+  <link rel="stylesheet" href="assets/league.css" />
+</head>
+<body class="league">
+  <main class="wrap">
+
+    <header class="header">
+      <h1 class="brand">League Pass — Staff Console</h1>
+      <img class="logo sm" src="assets/logo.png" alt="Balance Gaming FL" width="190" height="190" />
+      <p class="tagline">League Pass · Pokémon Mondays · One Piece Tuesdays</p>
+      <span class="welcome">🔒 <b>Keep this link private</b> — staff only</span>
+    </header>
+
+    <section id="lpAdmin" class="event-body" aria-live="polite"></section>
+
+    <p class="credit">Designed by <a href="https://tavaone.com" target="_blank" rel="noopener">Tava One LLC</a></p>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    var t = Date.now();
+    ["assets/app.js", "assets/league.js"].forEach(function (src) { document.write('<script src="' + src + '?t=' + t + '"><\/script>'); });
+  </script>
+  <script>BGFLP.initAdmin();</script>
+</body>
+</html>

@@ -28,6 +28,11 @@
   function storeHour() { return parseInt(fmt(new Date(), { hour: "2-digit", hourCycle: "h23" }), 10); }
   function dayKey(d) { return fmt(d, { year: "numeric", month: "2-digit", day: "2-digit" }); }
   function isToday(d) { return dayKey(d) === dayKey(new Date()); }
+  // League Pass nights (store time). On these nights the TV roster
+  // (league-board.html) replaces the game's "tonight's event" splash whenever
+  // no live tournament board is up. Keep in sync with GAMES in league.js.
+  var LEAGUE_NIGHTS = { pokemon: "Mon", onepiece: "Tue" };
+  function leagueNight(game) { return LEAGUE_NIGHTS[game] === fmt(new Date(), { weekday: "short" }); }
   function isTomorrow(d) { var t = new Date(); t.setDate(t.getDate() + 1); return dayKey(d) === dayKey(t); }
   // Parse an event start. All-day events arrive as a date-only string
   // ("2026-08-23"); `new Date()` reads that as UTC midnight, which shows as the
@@ -1626,11 +1631,15 @@
         // Pokémon (?game=pokemon) so a One Piece / Magic / Riftbound _live
         // pointer from the extension can never surface here. ?demo always
         // previews the board.
+        // Monday (League Pass night) with no live tournament: the League Pass
+        // roster + check-in QR instead of the event card.
         latestTomUpdatedMs().then(function (ms) {
           var liveNow = demo || (ms > 0 && (Date.now() - ms < TOURNEY_LIVE_MS));
           applyTvOverlay(liveNow
             ? ("board.html?game=pokemon&cb=" + tvCb + extra)
-            : ("event-tv.html?game=pokemon&t=" + tvCb + extra));
+            : leagueNight("pokemon")
+              ? ("league-board.html?game=pokemon&t=" + tvCb)
+              : ("event-tv.html?game=pokemon&t=" + tvCb + extra));
         }).catch(function () {
           applyTvOverlay("board.html?game=pokemon&cb=" + tvCb + extra);
         });
@@ -1699,7 +1708,11 @@
       var active = (r[1] && r[1].active) || "main";
       ensureGameOverlay();
       if (!(on && GAME_OV[active])) { hideGameOv(); return; }
-      var splash = "event-tv.html?game=" + active + "&t=" + gameCb;
+      // On a League Pass night (One Piece Tuesdays) the splash is the League
+      // Pass roster + check-in QR; a live extension board still wins.
+      var splash = leagueNight(active)
+        ? "league-board.html?game=" + active + "&t=" + gameCb
+        : "event-tv.html?game=" + active + "&t=" + gameCb;
       BGF.fbGet("tournaments/_live").then(function (live) {
         var code = GAME_CODE[active];
         var liveForGame = live && typeof live.key === "string" &&

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>League Pass — Balance Martial Arts &amp; Gaming</title>
+  <meta name="description" content="Balance League Pass: check in to Pokémon League (Mondays) and One Piece open play (Tuesdays) at Balance Martial Arts &amp; Gaming, Pinellas Park, FL." />
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+  <link rel="stylesheet" href="assets/commander.css" />
+  <link rel="stylesheet" href="assets/league.css" />
+</head>
+<body class="league">
+  <main class="wrap">
+
+    <header class="header">
+      <h1 class="brand">Balance Martial Arts &amp; Gaming — League Pass</h1>
+      <img class="logo sm" src="assets/logo.png" alt="Balance Gaming FL" width="190" height="190" />
+    </header>
+
+    <section class="event-hero">
+      <span class="event-kicker"><span class="dot"></span> League Pass</span>
+      <h2 class="event-title" id="lpTitle">League Pass</h2>
+      <p class="event-sub" id="lpSub">Check in on league night. Every 4 check-ins = 1 entry in the monthly prize drawing.</p>
+    </section>
+
+    <section id="lpPlayer" class="event-body" aria-live="polite"></section>
+
+    <p class="credit">Designed by <a href="https://tavaone.com" target="_blank" rel="noopener">Tava One LLC</a></p>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase (compat): email-link auth + realtime database. Same project as
+       the Commander League, so one sign-in works for both. -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script>document.write('<script src="assets/league.js?t=' + Date.now() + '"><\/script>');</script>
+  <script>BGFLP.initPlayer();</script>
+</body>
+</html>

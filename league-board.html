@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>League Pass Roster — Balance Gaming FL</title>
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+  <link rel="stylesheet" href="assets/league.css" />
+</head>
+<body class="league lpb">
+  <!-- TV roster for league night. ?game=pokemon|onepiece. The signage main TV
+       overlays this on that game's league night when the game is toggled on
+       and "Live event on TV" is on. ?demo=1 (or ?demo=draw) previews sample data. -->
+  <div class="lpb-wrap">
+    <header class="lpb-top">
+      <img class="lpb-logo" src="assets/logo.png" alt="Balance Gaming FL" />
+      <div class="lpb-titles">
+        <div class="lpb-game" id="lpbGame">League Pass</div>
+        <div class="lpb-date" id="lpbDate"></div>
+      </div>
+      <div class="lpb-clock" id="lpbClock"></div>
+    </header>
+    <div class="lpb-bar"></div>
+
+    <main class="lpb-grid">
+      <section class="lpb-left">
+        <div class="lpb-panel">
+          <div class="lpb-kick">Tonight</div>
+          <div id="lpbTonight"></div>
+          <div class="lpb-rules" id="lpbRules"></div>
+        </div>
+        <div class="lpb-panel lpb-qrpanel">
+          <div class="lpb-qr" id="lpbQr"></div>
+          <div class="lpb-qrt" id="lpbQrTitle">Scan to check in</div>
+          <div class="lpb-qrs" id="lpbQrSub"></div>
+          <div class="lpb-url" id="lpbUrl"></div>
+        </div>
+      </section>
+
+      <section class="lpb-roster">
+        <div class="lpb-rhead">
+          <div class="lpb-month" id="lpbMonth">Roster</div>
+          <div class="lpb-rsub" id="lpbRosterSub"></div>
+        </div>
+        <div class="lpb-banner" id="lpbBanner" hidden></div>
+        <div class="lpb-rows" id="lpbRows"></div>
+        <div class="lpb-legend" id="lpbLegend"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="lpb-reveal" id="lpbReveal" hidden>
+    <div class="lpb-rkick" id="lpbRevealKick">Drawing</div>
+    <div class="lpb-rname" id="lpbRevealName"></div>
+    <div class="lpb-rsub2">🎉 Winner! See the counter.</div>
+  </div>
+
+  <script>
+    var t = Date.now();
+    ["assets/qrcode.js", "assets/app.js", "assets/games.js", "assets/league.js"].forEach(function (src) {
+      document.write('<script src="' + src + '?t=' + t + '"><\/script>');
+    });
+  </script>
+  <script>
+    BGFLP.initBoard();
+    if (window.BGF && BGF.initRemoteReload) BGF.initRemoteReload();   // "Refresh all TVs"
+    setTimeout(function () { location.reload(); }, 20 * 60 * 1000);   // pick up new code; frees kiosk memory
+  </script>
+</body>
+</html>

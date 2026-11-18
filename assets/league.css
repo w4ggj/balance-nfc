@@ -1,0 +1,144 @@
+/* ============================================================
+   Balance League Pass — phone, staff console, TV roster, QR sign
+   Layers on brand.css + commander.css (cards, buttons, fields).
+   --game comes from body[data-game] (pokemon gold / one piece red).
+   ============================================================ */
+body.league { --game: #ffcb05; }
+body.league[data-game="onepiece"] { --game: #ff5a5f; }
+
+/* Re-renders after the first paint skip brand.css's fade-in (see settle()). */
+.event-body.lp-live > * { animation: none !important; }
+
+/* ---- Phone ------------------------------------------------------------ */
+.lp-me.here { border-color: color-mix(in srgb, var(--game) 60%, transparent); }
+.lp-merow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.lp-badge {
+  flex: 0 0 auto; font-size: 12px; font-weight: 800; letter-spacing: .04em;
+  padding: 6px 12px; border-radius: 999px; color: #0b1220; background: #34d399;
+}
+.lp-won {
+  margin-top: 12px; padding: 12px 14px; border-radius: 12px; font-weight: 800;
+  color: #0b1220; background: var(--game);
+}
+.lp-stats { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
+.lp-pts b { font-size: 40px; line-height: 1; font-weight: 900; color: var(--game); margin-right: 6px; }
+.lp-pts span { color: var(--muted); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.lp-pips { display: inline-flex; gap: 6px; vertical-align: middle; }
+.lp-pip { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--surface-2); background: transparent; }
+.lp-pip.on { background: var(--game); border-color: var(--game); }
+.lp-prize { font-weight: 800; margin: 10px 0 0; }
+.lp-fine { color: var(--muted); font-size: 12.5px; margin: 10px 0 0; }
+.lp-ticket { font-size: 12px; font-weight: 800; color: var(--game); white-space: nowrap; }
+
+/* ---- Staff console ------------------------------------------------------ */
+.lp-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.lp-tab {
+  padding: 12px; border-radius: 12px; font-weight: 800; font-size: 15px; cursor: pointer;
+  color: var(--text); background: var(--surface); border: 1px solid var(--surface-2);
+}
+.lp-tab.on { background: var(--game); color: #0b1220; border-color: var(--game); }
+.lp-pick { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+.lp-addrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.lp-addrow .field { margin: 0; }
+.lp-addrow .btn { grid-column: 1 / -1; }
+.lp-dim { opacity: .55; font-size: .85em; }
+.lp-rright { display: inline-flex; align-items: center; gap: 10px; }
+.lp-rright .lp-pip { width: 10px; height: 10px; }
+.lp-winrow { font-size: 18px; font-weight: 800; padding: 6px 2px; }
+
+/* ---- TV roster (league-board.html) --------------------------------------- */
+body.lpb { height: 100vh; overflow: hidden; padding: 0; }
+.lpb-wrap { height: 100vh; display: flex; flex-direction: column; padding: 3vh 2.6vw 2.4vh; gap: 2.4vh; }
+.lpb-top { display: flex; align-items: center; gap: 1.6vw; }
+.lpb-logo { height: 9vh; width: auto; filter: drop-shadow(0 6px 18px rgba(200,30,39,.3)); }
+.lpb-titles { flex: 1 1 auto; min-width: 0; }
+.lpb-game { font-size: 5.4vh; font-weight: 900; letter-spacing: -.02em; line-height: 1; }
+.lpb-date { font-size: 2.4vh; color: var(--muted); font-weight: 700; margin-top: .8vh; }
+.lpb-clock { font-size: 4.4vh; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lpb-bar { height: .6vh; border-radius: 99px; background: var(--game); opacity: .85; }
+
+.lpb-grid { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 27vw 1fr; gap: 2vw; }
+.lpb-left { display: flex; flex-direction: column; gap: 2vh; min-height: 0; }
+.lpb-panel {
+  background: var(--surface); border: 1px solid var(--surface-2); border-radius: 2vh;
+  box-shadow: var(--shadow); padding: 2.4vh 1.6vw;
+}
+.lpb-kick { font-size: 1.7vh; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--game); }
+.lpb-ev { font-size: 3.8vh; font-weight: 900; line-height: 1.08; margin-top: .8vh; }
+.lpb-evmeta { font-size: 2vh; color: var(--muted); font-weight: 600; margin-top: .6vh; }
+.lpb-rules { margin-top: 2vh; display: grid; gap: 1.3vh; }
+.lpb-rule { display: flex; flex-direction: column; border-left: .5vh solid var(--game); padding-left: 1vw; }
+.lpb-rule b { font-size: 2.3vh; }
+.lpb-rule span { font-size: 1.8vh; color: var(--muted); }
+
+.lpb-qrpanel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.lpb-qr { width: min(24vh, 20vw); aspect-ratio: 1; background: #fff; border-radius: 1.6vh; padding: 1vh; }
+.lpb-qr svg { width: 100%; height: 100%; display: block; }
+.lpb-qrt { font-size: 3.2vh; font-weight: 900; margin-top: 1.4vh; }
+.lpb-qrs { font-size: 1.9vh; color: var(--muted); font-weight: 600; margin-top: .4vh; }
+.lpb-url { font-size: 1.6vh; color: var(--muted); margin-top: .6vh; opacity: .8; }
+
+.lpb-roster { display: flex; flex-direction: column; min-height: 0; position: relative; }
+.lpb-rhead { display: flex; align-items: baseline; justify-content: space-between; gap: 1vw; margin-bottom: 1.6vh; }
+.lpb-month { font-size: 4vh; font-weight: 900; letter-spacing: -.01em; }
+.lpb-rsub { font-size: 2.1vh; color: var(--muted); font-weight: 700; text-align: right; }
+.lpb-banner {
+  margin-bottom: 1.4vh; padding: 1.4vh 1.4vw; border-radius: 1.4vh; font-size: 2.8vh; font-weight: 900;
+  color: #0b1220; background: var(--game); text-align: center;
+}
+.lpb-rows {
+  --cols: 1; --rows: 10; --fs: 3vh;
+  flex: 1 1 auto; min-height: 0; display: grid; grid-auto-flow: column;
+  grid-template-columns: repeat(var(--cols), 1fr); grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+  column-gap: 1.6vw; row-gap: .7vh; font-size: var(--fs);
+}
+.lpb-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto 1.6em 1.5em; align-items: center; gap: .5em;
+  padding: 0 .6em 0 .7em; border-radius: .5em; background: var(--surface); border: 1px solid var(--surface-2);
+  min-height: 0; overflow: hidden;
+}
+.lpb-row.here { border-color: color-mix(in srgb, #34d399 70%, transparent); box-shadow: inset .35em 0 0 #34d399; }
+.lpb-row.won { background: color-mix(in srgb, var(--game) 22%, var(--surface)); border-color: var(--game); }
+.lpb-nm { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lpb-rows.dense .lpb-row { grid-template-columns: minmax(0, 1fr) 1.6em 1.5em; }
+.lpb-rows.dense .lp-pips { display: none; }
+.lpb-row .lp-pips { gap: .22em; }
+.lpb-row .lp-pip { width: .5em; height: .5em; border-width: .1em; }
+.lpb-pts { font-weight: 900; text-align: right; color: var(--game); font-variant-numeric: tabular-nums; }
+.lpb-tk { font-size: .8em; font-weight: 800; white-space: nowrap; text-align: center; }
+.lpb-tk sub { font-size: .6em; vertical-align: baseline; margin-left: .05em; }
+.lpb-legend { font-size: 1.8vh; color: var(--muted); margin-top: 1vh; font-weight: 600; min-height: 2.2vh; }
+.lpb-legend::before { content: ""; display: inline-block; width: 1.2vh; height: 1.2vh; border-radius: 50%; background: #34d399; margin-right: .6vw; vertical-align: middle; }
+.lpb-legend:empty::before { display: none; }
+.lpb-empty { grid-column: 1 / -1; grid-row: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1vh; color: var(--muted); }
+.lpb-empty b { font-size: 4vh; color: var(--text); }
+.lpb-empty span { font-size: 2.4vh; }
+
+/* Drawing reveal */
+.lpb-reveal {
+  position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(70vw 60vh at 50% 45%, color-mix(in srgb, var(--game) 30%, transparent), transparent 70%), rgba(11,13,18,.94);
+  text-align: center;
+}
+.lpb-reveal[hidden] { display: none; }
+.lpb-rkick { font-size: 3vh; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--game); }
+.lpb-rname { font-size: 13vh; font-weight: 900; letter-spacing: -.02em; line-height: 1.05; margin-top: 2vh; color: var(--muted); }
+.lpb-reveal.done .lpb-rname { color: var(--text); animation: lpbPop .6s ease-out both; text-shadow: 0 0 6vh color-mix(in srgb, var(--game) 60%, transparent); }
+.lpb-rsub2 { font-size: 3.2vh; font-weight: 800; margin-top: 3vh; opacity: 0; }
+.lpb-reveal.done .lpb-rsub2 { opacity: 1; transition: opacity .6s .4s; }
+@keyframes lpbPop { 0% { transform: scale(.7); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+/* ---- Printable counter sign (league-qr.html) ------------------------------- */
+body.lq { background: #fff; color: #111; }
+.lq-wrap { max-width: 7in; margin: 0 auto; padding: .5in .4in; text-align: center; }
+.lq-logo { width: 1.6in; height: auto; }
+.lq-title { font-size: 40px; font-weight: 900; margin: 10px 0 0; letter-spacing: -.01em; }
+.lq-bar { width: 1.6in; height: 6px; border-radius: 99px; background: var(--game); margin: 14px auto; }
+.lq-sub { font-size: 20px; margin: 0 auto 22px; max-width: 5.6in; line-height: 1.35; }
+.lq-qr { width: 3.6in; height: 3.6in; margin: 0 auto; }
+.lq-qr svg { width: 100%; height: 100%; }
+.lq-scan { font-size: 30px; font-weight: 900; margin-top: 14px; }
+.lq-url { font-size: 14px; color: #555; margin-top: 6px; }
+.lq-fine { font-size: 13px; color: #555; margin-top: 22px; }
+.lq-print { display: block; margin: 24px auto 0; }
+@media print { .lq-print { display: none; } @page { margin: .4in; } }

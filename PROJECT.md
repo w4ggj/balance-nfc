@@ -13,6 +13,7 @@ control panel.
 - **Staff control panel (private):** `…/config.html` — one hub linking every tool
 - **Tournament (Swiss) admin:** `…/admin.html` · **board (TV):** `…/swiss-board.html`
 - **Commander League:** `…/commander-admin.html` (staff) · `…/commander-board.html` (TV) · `…/commander.html` (players)
+- **League Pass (Pokémon Mon / One Piece Tue):** `…/league-admin.html` (staff) · `…/league-board.html?game=…` (TV) · `…/league.html?game=…` (players) · `…/league-qr.html?game=…` (printable sign)
 - **Pokémon TOM wall boards:** `…/pairings.html`, `…/standings.html`, `…/board.html`
 - **Signage TVs:** `…/signage.html?screen=main` (75" landscape) · `…/signage.html?screen=entrance` (40" portrait)
 - **Advertising TV (legacy DakBoard):** `…/overlay.html` · `…/event-tv.html?game=…`
@@ -39,6 +40,17 @@ control panel.
   per game (with a reason) or abstain, plus a +1 end-of-night questionnaire;
   private personal stats; aggregate season **leaderboard** on the TV. Serverless —
   Firebase Auth + RTDB rules enforce one write-once vote per game and no self-votes.
+- **League Pass** — open-play check-in points for Pokémon League (Mondays) and
+  One Piece open play (Tuesdays). Players scan a QR (TV or counter sign) → email-
+  link sign-in once (a parent's email can hold several kids) → one tap checks
+  them in after that. 1 point per league-night check-in, 4 points = 1 entry in
+  that game's monthly drawing, run from the staff console on the last league
+  night of the month; entries are used up by the drawing and leftover points
+  carry. Staff check phone-less kids in by name. On league night, with the game
+  toggled on and "Live event on TV" on, the main TV shows the month's roster
+  (first name + last initial + points), tonight's open play, and the check-in
+  QR, plus a spin-and-reveal when the drawing runs. A live tournament board
+  still takes priority. Setup + rules: `LEAGUE_SETUP.md`.
 - **Pokémon TOM integration** — a watcher on the store PC mirrors TOM's reports
   to Firebase; wall boards show live pairings/standings; scanning a table shows
   that table's live match + standings peek.
@@ -121,6 +133,7 @@ GitHub Pages) — re-deploy by pasting `board-api/worker.js` into the dashboard.
 | `pairings.html` / `standings.html` / `board.html` | TOM (Pokémon) wall boards |
 | `table.html` | TOM per-table tap view |
 | `commander.html` / `commander-admin.html` / `commander-board.html` | Commander player / staff / TV |
+| `league.html` / `league-admin.html` / `league-board.html` / `league-qr.html` | League Pass player / staff / TV / printable QR sign |
 | `signage.html` | In-store signage TVs (`?screen=main` / `?screen=entrance`) |
 | `config.html` | Staff control panel — one card per program + Board & signage + all tool links |
 | `overlay.html` | Legacy DakBoard overlay (self-refreshing; superseded by signage.html) |
@@ -129,9 +142,11 @@ GitHub Pages) — re-deploy by pasting `board-api/worker.js` into the dashboard.
 | `assets/signage.js` | Signage board (events, live board, showcase, ticker, QR) |
 | `assets/tournament.js` | Swiss engine + tournament UI + wall board |
 | `assets/commander.js` | Commander engine + player/admin/board |
+| `assets/league.js` / `assets/league.css` | League Pass engine (points ledger, drawing) + player/admin/TV/sign |
 | `assets/games.js` | Game info pages + Shopify events pull (phone + TV) |
 | `assets/qrcode.js` | Vendored QR generator (MIT) for signage QRs |
 | `assets/tom.js` / `assets/brand.css` / `assets/signage.css` / `assets/tom.css` | Logic + styles |
 | `board-api/` | Cloudflare Worker: Google Calendar + Shopify → signage feed |
 | `tombridge/` | TOM → Firebase pipeline (runs on the store PC) |
 | `COMMANDER_SETUP.md` | Firebase rules + Auth setup for the league |
+| `LEAGUE_SETUP.md` | Firebase rules + how League Pass scores, runs, and shows on the TV |

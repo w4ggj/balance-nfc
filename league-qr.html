@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>League Pass QR sign — Balance Gaming FL</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+  <link rel="stylesheet" href="assets/league.css" />
+</head>
+<body class="league lq">
+  <!-- Printable counter sign: ?game=pokemon|onepiece -->
+  <main class="lq-wrap">
+    <img class="lq-logo" src="assets/logo.png" alt="Balance Gaming FL" />
+    <h1 class="lq-title" id="lqTitle">League Pass</h1>
+    <div class="lq-bar"></div>
+    <p class="lq-sub" id="lqSub"></p>
+    <div class="lq-qr" id="lqQr"></div>
+    <div class="lq-scan">Scan to check in</div>
+    <div class="lq-url" id="lqUrl"></div>
+    <p class="lq-fine">First time? It asks for a name and an email (a parent's email is fine). No email? The counter can check you in by name. Points come from showing up, never from buying anything.</p>
+    <button class="btn primary lq-print" onclick="window.print()">Print this sign</button>
+  </main>
+  <script src="assets/qrcode.js"></script>
+  <script src="assets/league.js"></script>
+  <script>BGFLP.initQrSign();</script>
+</body>
+</html>
