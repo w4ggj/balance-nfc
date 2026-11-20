@@ -396,6 +396,19 @@
       if (withBl.length === items.length) withBl.splice(Math.floor(withBl.length / 2), 0, { kind: "buylist" });
       items = withBl;
     }
+    // Deck builder card (Nov 20 2026): after the 8th of every 10 cards, so it sits between
+    // the buylist and review slots. League nights (Mon Pokémon, Tue One Piece) also get one
+    // after every 4th card, since those players are the ones it's built for.
+    if (items.length >= 4) {
+      var league = [1, 2].indexOf(new Date().getDay()) >= 0;
+      var withDk = [];
+      for (var di = 0; di < items.length; di++) {
+        withDk.push(items[di]);
+        if ((di + 1) % 10 === 8 || (league && (di + 1) % 4 === 0 && (di + 1) % 10 !== 8)) withDk.push({ kind: "deck" });
+      }
+      if (withDk.length === items.length) withDk.push({ kind: "deck" });
+      items = withDk;
+    }
     // Google review card (Nov 2026): the Balance Gaming listing had 0 reviews.
     // After every 10th card, and at least once per loop once there are 4+ cards.
     if (items.length >= 4) {
@@ -506,6 +519,7 @@
       paintBuylistCard(right);
       return;
     }
+    if (it.kind === "deck") { paintDeckCard(right); return; }
     if (it.kind === "league") {
       var li = leagueInfo(leagueData);
       if (li) paintLeagueCard(right, leagueData, li); else paintWelcome(right);
@@ -654,6 +668,28 @@
     box.appendChild(txt);
     var q = el("div", "sg-review-qr");
     var svg = qrSvg(BUYLIST_URL, 4);
+    if (svg) { q.innerHTML = svg; box.appendChild(q); }
+    right.appendChild(box);
+  }
+
+  // Deck builder card (Nov 20 2026). The page is balancegamingfl.com/pages/build-a-deck:
+  // players load their collection, get tournament decks they're closest to (or a fun one
+  // built from their cards), and missing cards link to Balance singles. Free with a Balance
+  // account. Merge this only once Joe has approved the page for launch.
+  var DECK_URL = "https://balancegamingfl.com/pages/build-a-deck?utm_source=tv&utm_medium=qr&utm_campaign=deck-builder";
+  function paintDeckCard(right) {
+    right.innerHTML = "";
+    var head = el("div", "sg-r-head");
+    head.appendChild(el("div", "sg-r-title", "Deck Builder"));
+    head.appendChild(el("div", "sg-r-sub", "Pokémon · Magic · One Piece"));
+    right.appendChild(head);
+    var box = el("div", "sg-review");
+    var txt = el("div", "sg-review-txt");
+    txt.appendChild(el("div", "sg-lg-big", "What can you build with your cards?"));
+    txt.appendChild(el("div", "sg-lg-line", "Load your collection and see the tournament decks you're closest to, or get a fun one built from what you own. Free with a Balance account. Scan to start."));
+    box.appendChild(txt);
+    var q = el("div", "sg-review-qr");
+    var svg = qrSvg(DECK_URL, 4);
     if (svg) { q.innerHTML = svg; box.appendChild(q); }
     right.appendChild(box);
   }
