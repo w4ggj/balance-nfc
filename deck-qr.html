@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deck Builder QR sign · Balance Gaming FL</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+  <!-- Printable table tent / counter sign for the deck builder (Nov 20 2026).
+       Print on letter paper. ?src=table|counter|league tags the QR so scans can be told apart.
+       Don't put these out until Joe launches /pages/build-a-deck. -->
+  <style>
+    body.dq { background: #fff; color: #121212; }
+    .dq-wrap { max-width: 7in; margin: 0 auto; padding: .45in .4in; text-align: center; font-family: inherit; }
+    .dq-logo { width: 1.5in; height: auto; }
+    .dq-kick { font-size: 15px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #cc1313; margin-top: 10px; }
+    .dq-title { font-size: 42px; font-weight: 900; margin: 6px 0 0; line-height: 1.05; }
+    .dq-bar { width: 1.6in; height: 6px; border-radius: 99px; background: #cc1313; margin: 14px auto; }
+    .dq-sub { font-size: 20px; margin: 0 auto 18px; max-width: 5.8in; line-height: 1.35; }
+    .dq-qr { width: 3.4in; height: 3.4in; margin: 0 auto; }
+    .dq-qr svg { width: 100%; height: 100%; }
+    .dq-scan { font-size: 30px; font-weight: 900; margin-top: 12px; }
+    .dq-url { font-size: 14px; color: #555; margin-top: 4px; }
+    .dq-steps { display: flex; justify-content: center; gap: 18px; margin: 20px auto 0; max-width: 6.4in; text-align: left; font-size: 15px; line-height: 1.3; }
+    .dq-steps div { flex: 1; }
+    .dq-steps b { display: block; font-size: 17px; }
+    .dq-fine { font-size: 12px; color: #555; margin-top: 18px; }
+    .dq-print { display: block; margin: 22px auto 0; }
+    @media print { .dq-print { display: none; } @page { margin: .4in; } }
+  </style>
+</head>
+<body class="dq">
+  <main class="dq-wrap">
+    <img class="dq-logo" src="assets/logo.png" alt="Balance Gaming FL" />
+    <div class="dq-kick">Pokémon · Magic · One Piece</div>
+    <h1 class="dq-title">What can you build<br>with your cards?</h1>
+    <div class="dq-bar"></div>
+    <p class="dq-sub">Load your collection once. We'll show you the tournament decks you're closest to, or build a fun one from what you own.</p>
+    <div class="dq-qr" id="dqQr"></div>
+    <div class="dq-scan">Scan to build a deck</div>
+    <div class="dq-url">balancegamingfl.com/pages/build-a-deck</div>
+    <div class="dq-steps">
+      <div><b>1. Add your cards</b>Paste a list or upload a CSV from ManaBox, Moxfield, TCGplayer and more.</div>
+      <div><b>2. Pick a format</b>Easy to hard, tournament lists or something fun.</div>
+      <div><b>3. Fill the gaps</b>Missing cards link to our singles. Trade in the ones you don't use for credit.</div>
+    </div>
+    <p class="dq-fine">Free with a Balance account. Trade-in values are estimates until we see the cards: 60% of market in store credit or 50% cash.</p>
+    <button class="btn primary dq-print" onclick="window.print()">Print this sign</button>
+  </main>
+  <script src="assets/qrcode.js"></script>
+  <script>
+    (function () {
+      var m = /[?&]src=([a-z]+)/.exec(location.search), src = m ? m[1] : "table";
+      var url = "https://balancegamingfl.com/pages/build-a-deck?utm_source=" + src + "&utm_medium=qr&utm_campaign=deck-builder";
+      try { var q = qrcode(0, "M"); q.addData(url); q.make(); document.getElementById("dqQr").innerHTML = q.createSvgTag({ cellSize: 8, margin: 2, scalable: true }); }
+      catch (e) { document.getElementById("dqQr").textContent = url; }
+    })();
+  </script>
+</body>
+</html>
