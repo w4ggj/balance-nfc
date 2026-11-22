@@ -101,10 +101,14 @@
       card.appendChild(el("h2", "ec-title", stripDate(p.title)));
       var price = (p.variants && p.variants[0] && p.variants[0].price != null) ? p.variants[0].price : null;
       if (price != null && Number(price) > 0) card.appendChild(el("div", "ec-sub", "Entry $" + price));
-      // Check-in games (e.g. One Piece): the big action is "Check in", which
-      // matches the player to their website registration; "Register / details"
-      // drops to a secondary link for anyone not signed up yet.
-      if (G.checkin) {
+      // Check-in games (e.g. One Piece): on a PAID event (entry fee > 0 — a
+      // registered Shopify event, not a free open-play / league night) the big
+      // action is "Check in", which matches the player to their website
+      // registration; "Register / details" drops to a secondary link. Free
+      // listings fall through to the normal Register button (League Pass, not
+      // event check-in, covers those nights).
+      var paid = price != null && Number(price) > 0;
+      if (G.checkin && paid) {
         card.appendChild(linkBtn("✅ Check in for tonight's event", "checkin.html?game=" + game + (tbl ? "&tbl=" + encodeURIComponent(tbl) : ""), { cls: "wide primary" }));
         card.appendChild(linkBtn("Not registered? Sign up / details", SHOP + "/products/" + p.handle, { cls: "wide", blank: true }));
       } else {
@@ -213,18 +217,20 @@
       host.appendChild(el("div", "evtv-meta", "Ask the counter or check our events page for what's on."));
       return;
     }
+    var anyPaid = false;
     events.forEach(function (p) {
       var card = el("div", "evtv-card");
       card.appendChild(el("div", "evtv-kicker", "Tonight · " + G.short));
       card.appendChild(el("div", "evtv-title", stripDate(p.title)));
       var price = (p.variants && p.variants[0] && p.variants[0].price != null) ? p.variants[0].price : null;
-      if (price != null && Number(price) > 0) card.appendChild(el("div", "evtv-meta", "Entry $" + price + " · register at the counter"));
+      if (price != null && Number(price) > 0) { anyPaid = true; card.appendChild(el("div", "evtv-meta", "Entry $" + price + " · register at the counter")); }
       else card.appendChild(el("div", "evtv-meta", "Register at the counter"));
       host.appendChild(card);
     });
     // Check-in games (One Piece): show a "Scan to check in" QR on the place card
-    // so walk-ins can check in from the screen as well as from the table tags.
-    if (G.checkin) {
+    // ONLY for a PAID registered event (not a free open-play / league night, which
+    // League Pass covers). Lets walk-ins check in from the screen as well as the tags.
+    if (G.checkin && anyPaid) {
       var svg = qrSvg(CHECKIN_BASE + game, 6);
       if (svg) {
         var box = el("div", "evtv-checkin");
