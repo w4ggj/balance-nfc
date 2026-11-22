@@ -215,9 +215,12 @@
       var badge = h("div", "tbadge", String(t.table)); row.appendChild(badge);
       var m = h("div", "pmatch");
       var p1 = t.players[0], p2 = t.players[1];
-      m.appendChild(playerCell(p1, false));
+      // A decided match (one side flagged .win by the reader) highlights the
+      // winner and dims the loser, even before records fill in at round close.
+      var decided = !!((p1 && p1.win) || (p2 && p2.win));
+      m.appendChild(playerCell(p1, false, decided));
       m.appendChild(h("div", "vsep", "vs"));
-      m.appendChild(playerCell(p2, true));
+      m.appendChild(playerCell(p2, true, decided));
       row.appendChild(m);
       var dot = h("div", "sdot " + (t.status || "paired")); row.appendChild(dot);
       col.appendChild(row);
@@ -225,10 +228,17 @@
     return col;
   }
 
-  function playerCell(p, right) {
-    var c = h("div", "pl" + (right ? " right" : ""));
+  function playerCell(p, right, decided) {
+    var won = !!(p && p.win);
+    var lost = !!(decided && p && !p.win);
+    var c = h("div", "pl" + (right ? " right" : "") + (won ? " winner" : "") + (lost ? " loser" : ""));
     if (!p) { c.appendChild(h("div", "pn", "—")); return c; }
-    c.appendChild(h("div", "pn", p.name));
+    var nm = h("div", "pn");
+    var pill = won ? h("span", "winpill", "W") : null;
+    if (pill && right) nm.appendChild(pill);          // pill toward the center "vs"
+    nm.appendChild(document.createTextNode(p.name));
+    if (pill && !right) nm.appendChild(pill);
+    c.appendChild(nm);
     var sub = h("div", "pr");
     if (p.division) { var d = h("span", "pdiv", p.division + " "); sub.appendChild(d); }
     sub.appendChild(document.createTextNode(recText(p.record)));
