@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Check-In Roster (staff) — Balance Gaming FL</title>
+  <meta name="theme-color" content="#0e0f13" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="stylesheet" href="assets/brand.css" />
+</head>
+<body data-game="onepiece">
+  <main class="wrap">
+
+    <header class="header">
+      <h1 class="brand">Check-In Roster</h1>
+      <img class="logo sm" src="assets/logo.png" alt="Balance Gaming FL" width="120" height="120" />
+    </header>
+
+    <section class="event-hero">
+      <span class="event-kicker"><span class="dot"></span> Staff</span>
+      <h2 class="event-title">Who's here tonight</h2>
+      <p class="event-sub ck-admin-sub">Live roster + waitlist.</p>
+    </section>
+
+    <section id="adminBody" class="event-body" aria-live="polite"></section>
+
+    <p class="footer-note">Add <code>?game=mtg</code> / <code>?game=pokemon</code> / <code>?game=riftbound</code> to switch games.<br><b>Balance Martial Arts &amp; Gaming</b></p>
+    <p class="credit">Designed by <a href="https://tavaone.com" target="_blank" rel="noopener">Tava One LLC</a></p>
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script src="assets/games.js"></script>
+  <script src="assets/checkin.js"></script>
+  <script>BGFCheckin.initAdmin();</script>
+</body>
+</html>

@@ -51,6 +51,23 @@ export default {
       }
     }
 
+    // GET /roster?product_id=<numericProductId> -> the people who registered
+    // for that event product on the website, each with the "Bandai Player Name"
+    // they typed at checkout. Powers NFC event check-in (nfc .../checkin.html).
+    // Reads Shopify ORDERS, so the Admin token needs read_orders (+ read_customers
+    // for the buyer's name). Never hard-fails: returns [] + an error note so the
+    // check-in page can degrade to unverified check-in.
+    if (new URL(request.url).pathname === "/roster") {
+      const h = Object.assign({}, cors, { "Cache-Control": "public, max-age=20" });
+      const pid = new URL(request.url).searchParams.get("product_id");
+      try {
+        const registrants = await loadRoster(env, pid);
+        return new Response(JSON.stringify({ updated: Date.now(), product_id: pid, registrants }), { headers: h });
+      } catch (err) {
+        return new Response(JSON.stringify({ updated: Date.now(), product_id: pid, registrants: [], error: String(err && err.message || err) }), { status: 200, headers: h });
+      }
+    }
+
     try {
       const days = Number(env.HORIZON_DAYS || 21);
       const tz = env.TIMEZONE || "America/New_York";
@@ -189,6 +206,79 @@ async function loadShopify(env) {
       date: dateFromTitle(p.title)         // "YYYY-MM-DD" or null
     };
   });
+}
+
+/* ---- Shopify roster (event check-in) ---------------------------------
+   For one event product, return everyone who bought it, with the "Bandai
+   Player Name" line-item property they entered at checkout. Matching happens
+   on the phone (checkin.js); this just hands over the raw list.
+
+   Scopes: read_orders (required) + read_customers (for the buyer's name; if
+   that one is missing we retry without the customer field and return the
+   Bandai names alone, which is still enough to match).                      */
+async function loadRoster(env, productId) {
+  if (!env.SHOPIFY_SHOP || !env.SHOPIFY_ADMIN_TOKEN) throw new Error("Shopify not configured");
+  const want = String(productId || "").replace(/[^0-9]/g, "");
+  if (!want) throw new Error("product_id required");
+
+  // Events are sold in advance but not forever — only scan recent orders.
+  const sinceDays = Number(env.ROSTER_SINCE_DAYS || 120);
+  const since = new Date(Date.now() - sinceDays * 86400000).toISOString().slice(0, 10);
+  const q = "created_at:>=" + since;
+
+  let withCustomer = true;
+  let cursor = null;
+  const found = [];
+  for (let page = 0; page < 12; page++) {            // cap: 12 * 100 = 1200 recent orders
+    let res = await ordersFetch(env, q, cursor, withCustomer);
+    if (res.denied && withCustomer) {                // no read_customers → drop the name field
+      withCustomer = false;
+      res = await ordersFetch(env, q, cursor, false);
+    }
+    if (res.denied) throw new Error("Shopify denied orders — add read_orders to the app token");
+
+    (res.nodes || []).forEach(function (o) {
+      ((o.lineItems && o.lineItems.nodes) || []).forEach(function (li) {
+        const lid = li.product && (li.product.legacyResourceId || String(li.product.id || "").replace(/[^0-9]/g, ""));
+        if (String(lid) !== want) return;
+        let bandai = "";
+        (li.customAttributes || []).forEach(function (a) {
+          if (a && a.key && /bandai/i.test(a.key) && a.value) bandai = a.value;
+        });
+        const name = (o.customer && (o.customer.displayName ||
+          ((o.customer.firstName || "") + " " + (o.customer.lastName || "")).trim())) || "";
+        if (bandai || name) found.push({ name: name, bandai: bandai, order: o.name || "" });
+      });
+    });
+    if (!res.hasNextPage || !res.endCursor) break;
+    cursor = res.endCursor;
+  }
+
+  const seen = {}, out = [];
+  found.forEach(function (r) {
+    const k = (r.bandai || "").toLowerCase() + "|" + (r.name || "").toLowerCase();
+    if (seen[k]) return; seen[k] = 1; out.push(r);
+  });
+  return out;
+}
+
+async function ordersFetch(env, q, cursor, withCustomer) {
+  const ver = env.SHOPIFY_API_VERSION || "2024-10";
+  const customer = withCustomer ? " customer{displayName firstName lastName}" : "";
+  const query =
+    "query($q:String!,$cursor:String){orders(first:100,after:$cursor,query:$q,sortKey:CREATED_AT,reverse:true){" +
+    "pageInfo{hasNextPage endCursor} nodes{ name" + customer + " " +
+    "lineItems(first:25){nodes{ product{ id legacyResourceId } customAttributes{ key value } }}}}}";
+  const r = await fetch("https://" + env.SHOPIFY_SHOP + "/admin/api/" + ver + "/graphql.json", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": env.SHOPIFY_ADMIN_TOKEN },
+    body: JSON.stringify({ query: query, variables: { q: q, cursor: cursor || null } })
+  });
+  if (!r.ok) throw new Error("Shopify Admin " + r.status);
+  const data = await r.json();
+  if (data.errors && data.errors.length) return { denied: true };   // missing scope → signal retry/fail
+  const o = (data.data && data.data.orders) || {};
+  return { nodes: o.nodes || [], hasNextPage: !!(o.pageInfo && o.pageInfo.hasNextPage), endCursor: o.pageInfo && o.pageInfo.endCursor };
 }
 
 // Event products are found by PRODUCT TYPE, not the "events" collection: the

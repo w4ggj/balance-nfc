@@ -587,3 +587,53 @@ body.swiss-wall {
 .credit a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
 .credit a:active { color: var(--text); }
 @media (hover: hover) { .credit a:hover { color: var(--text); } }
+
+/* ---- Event check-in (checkin.html / checkin-admin.html) --------------- */
+.ck-form { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.ck-input {
+  flex: 1 1 180px; min-width: 0; padding: 14px 14px; font-size: 16px;
+  color: var(--text); background: var(--bg); border: 1px solid var(--surface-2);
+  border-radius: 12px; outline: none;
+}
+.ck-input:focus { border-color: var(--game); box-shadow: 0 0 0 3px var(--ring); }
+.ck-form .gl, .ck-form .btn { flex: 0 0 auto; }
+.ck-form .gl.wide { flex: 1 1 100%; }
+.ck-out { margin-top: 12px; }
+.ck-err { color: #ffb3b3; font-weight: 600; margin: 0 0 6px; }
+
+.ck-ok {
+  margin-top: 6px; padding: 18px; text-align: center; border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent-2) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent-2) 40%, var(--surface-2));
+}
+.ck-ok.wait { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 35%, var(--surface-2)); }
+.ck-ok-ico { font-size: 34px; line-height: 1; color: var(--accent-2); }
+.ck-ok.wait .ck-ok-ico { color: var(--accent); }
+.ck-ok-main { font-size: 20px; font-weight: 800; margin-top: 6px; }
+.ck-ok-sub { color: var(--text); margin-top: 4px; font-weight: 600; }
+.ck-ok-note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+/* staff roster */
+.ck-counts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.ck-count { padding: 14px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--surface-2); text-align: center; }
+.ck-count.wait { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.ck-count-n { font-size: 30px; font-weight: 800; line-height: 1; }
+.ck-count-l { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin-top: 6px; }
+.ck-walkin { margin-bottom: 8px; }
+.ck-walkin .btn.sm, .btn.sm { padding: 10px 14px; font-size: 14px; }
+.ck-row {
+  display: flex; align-items: center; gap: 10px; padding: 11px 14px; margin-bottom: 8px;
+  background: var(--surface); border: 1px solid var(--surface-2); border-radius: 12px;
+}
+.ck-row-main { flex: 1 1 auto; min-width: 0; }
+.ck-row-nm { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.ck-row-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.ck-row-acts { flex: 0 0 auto; display: flex; gap: 6px; }
+.ck-badge { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; padding: 2px 7px; border-radius: 999px; font-weight: 700; }
+.ck-badge.unverified { background: color-mix(in srgb, var(--accent) 22%, transparent); color: #ffd4d4; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* "Scan to check in" QR on the place card (event-tv.html) */
+.evtv-checkin { margin-top: 26px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.evtv-checkin .evtv-qr { background: #fff; padding: 12px; border-radius: 14px; width: 190px; height: 190px; }
+.evtv-checkin .evtv-qr svg { width: 100%; height: 100%; display: block; }
+.evtv-checkin .evtv-qr-cap { font-size: 20px; font-weight: 800; letter-spacing: .01em; }
