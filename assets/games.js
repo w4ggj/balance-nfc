@@ -27,7 +27,7 @@
   var GAMES = {
     pokemon:   { label: "Pokémon TCG",         short: "Pokémon",  singles: SHOP + "/collections/all-pokemon-singles", eventsHandle: "pokemon-events",   app: null, deck: true },
     mtg:       { label: "Magic: The Gathering", short: "Magic",    singles: SHOP + "/collections/all-mtg-singles",     eventsHandle: "mtg-events",       app: { name: "Magic Companion", url: "https://magic.wizards.com/en/companion-app" }, deck: true },
-    onepiece:  { label: "One Piece TCG",        short: "One Piece", singles: SHOP + "/collections/one-piece-singles-1", eventsHandle: "one-piece-events", app: { name: "Bandai TCG+", url: "https://www.bandai-tcg-plus.com/" }, deck: false },
+    onepiece:  { label: "One Piece TCG",        short: "One Piece", singles: SHOP + "/collections/one-piece-singles-1", eventsHandle: "one-piece-events", app: { name: "Bandai TCG+", url: "https://www.bandai-tcg-plus.com/" }, deck: false, checkin: true },
     riftbound: { label: "Riftbound",            short: "Riftbound", singles: null,                                      eventsHandle: "riftbound-events", app: null, deck: false }
   };
 
@@ -94,14 +94,24 @@
       host.appendChild(card);
       return;
     }
+    var tbl = (global.BGF && BGF.getTable) ? BGF.getTable() : null;
     events.forEach(function (p) {
       var card = el("div", "event-card live");
       card.appendChild(el("span", "ec-tag", "Tonight"));
       card.appendChild(el("h2", "ec-title", stripDate(p.title)));
       var price = (p.variants && p.variants[0] && p.variants[0].price != null) ? p.variants[0].price : null;
       if (price != null && Number(price) > 0) card.appendChild(el("div", "ec-sub", "Entry $" + price));
-      var a = linkBtn("Register / details", SHOP + "/products/" + p.handle, { cls: "wide primary", blank: true });
-      card.appendChild(a);
+      // Check-in games (e.g. One Piece): ANY event listed in Shopify for
+      // registration gets check-in — free or paid. (Official events can be free
+      // registration.) Casual open-play / league nights aren't registration
+      // listings, so they don't appear here. "Register / details" drops to a
+      // secondary link for anyone not signed up yet.
+      if (G.checkin) {
+        card.appendChild(linkBtn("✅ Check in for tonight's event", "checkin.html?game=" + game + (tbl ? "&tbl=" + encodeURIComponent(tbl) : ""), { cls: "wide primary" }));
+        card.appendChild(linkBtn("Not registered? Sign up / details", SHOP + "/products/" + p.handle, { cls: "wide", blank: true }));
+      } else {
+        card.appendChild(linkBtn("Register / details", SHOP + "/products/" + p.handle, { cls: "wide primary", blank: true }));
+      }
       host.appendChild(card);
     });
   }
@@ -174,6 +184,14 @@
   function sec(t) { return el("p", "section-label", t); }
   function socialLink(label, href) { var a = el("a", "gsoc"); a.href = href; a.target = "_blank"; a.rel = "noopener"; a.textContent = label; return a; }
 
+  // Build a QR code SVG string (needs assets/qrcode.js loaded on the page).
+  function qrSvg(url, cell) {
+    if (typeof global.qrcode !== "function") return "";
+    try { var q = global.qrcode(0, "M"); q.addData(url); q.make(); return q.createSvgTag({ cellSize: cell || 6, margin: 1, scalable: true }); }
+    catch (e) { return ""; }
+  }
+  var CHECKIN_BASE = "https://nfc.balancegamingfl.com/checkin.html?game=";
+
   // ---- TV / wall version (event-tv.html?game=…) ------------------------
   // Big-screen "tonight's event" for the advertising display. Same Shopify
   // pull as the tap page, rendered large. Auto-refreshes so it stays live.
@@ -202,10 +220,22 @@
       card.appendChild(el("div", "evtv-kicker", "Tonight · " + G.short));
       card.appendChild(el("div", "evtv-title", stripDate(p.title)));
       var price = (p.variants && p.variants[0] && p.variants[0].price != null) ? p.variants[0].price : null;
-      if (price != null && Number(price) > 0) card.appendChild(el("div", "evtv-meta", "Entry $" + price + " · register at the counter"));
+      if (price != null && Number(price) > 0) { card.appendChild(el("div", "evtv-meta", "Entry $" + price +" · register at the counter")); }
       else card.appendChild(el("div", "evtv-meta", "Register at the counter"));
       host.appendChild(card);
     });
+    // Check-in games (One Piece): show a "Scan to check in" QR for ANY event
+    // listed in Shopify for registration (free or paid). Open-play / league
+    // nights aren't registration listings, so they don't reach here.
+    if (G.checkin) {
+      var svg = qrSvg(CHECKIN_BASE + game, 6);
+      if (svg) {
+        var box = el("div", "evtv-checkin");
+        var qr = el("div", "evtv-qr"); qr.innerHTML = svg; box.appendChild(qr);
+        box.appendChild(el("div", "evtv-qr-cap", "Scan to check in"));
+        host.appendChild(box);
+      }
+    }
   }
   function initGameTv(game) {
     game = (GAMES[game] ? game : "pokemon");
