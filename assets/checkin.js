@@ -216,31 +216,44 @@
     var root = document.getElementById("adminBody");
     var head = document.querySelector(".ck-admin-sub");
     if (head) head.textContent = label(g) + " · " + localDate();
-    var evName = el("span"); // filled from today's event
     loadTodayEvent(g).then(function (ev) { if (ev && head) head.textContent = label(g) + " · " + ev.name + " · " + localDate(); });
 
+    // Build the layout ONCE so the 4s poll can't wipe the walk-in boxes you're
+    // typing in. The walk-in form is persistent; only the counts and the lists
+    // re-render, and only when the data actually changed (no needless redraw,
+    // no stolen focus).
+    root.innerHTML = "";
+    var countsWrap = el("div");
+    var walkin = addWalkIn(g);          // built once, never rebuilt
+    var lists = el("div");
+    root.appendChild(countsWrap);
+    root.appendChild(walkin);
+    root.appendChild(lists);
+
+    var lastSig = null;
     function draw(data) {
       var present = (data && data.present) || {}, waitlist = (data && data.waitlist) || {};
+      var sig = JSON.stringify([present, waitlist]);
+      if (sig === lastSig) return;      // unchanged → leave the DOM (and your typing) alone
+      lastSig = sig;
       var pk = Object.keys(present).sort(function (a, b) { return (present[a].ts || 0) - (present[b].ts || 0); });
       var wk = Object.keys(waitlist).sort(function (a, b) { return (waitlist[a].ts || 0) - (waitlist[b].ts || 0); });
-      root.innerHTML = "";
 
-      root.appendChild(counts(pk.length, wk.length));
-      root.appendChild(addWalkIn(g));
+      countsWrap.innerHTML = "";
+      countsWrap.appendChild(counts(pk.length, wk.length));
 
-      root.appendChild(sectionLabel("Checked in (" + pk.length + ")"));
-      if (!pk.length) root.appendChild(el("p", "hint", "No one checked in yet."));
-      pk.forEach(function (id) { root.appendChild(rosterRow(g, "present", id, present[id], false)); });
+      lists.innerHTML = "";
+      lists.appendChild(sectionLabel("Checked in (" + pk.length + ")"));
+      if (!pk.length) lists.appendChild(el("p", "hint", "No one checked in yet."));
+      pk.forEach(function (id) { lists.appendChild(rosterRow(g, "present", id, present[id], false)); });
 
-      root.appendChild(sectionLabel("Waitlist (" + wk.length + ")"));
-      if (!wk.length) root.appendChild(el("p", "hint", "Waitlist is empty."));
-      wk.forEach(function (id) { root.appendChild(rosterRow(g, "waitlist", id, waitlist[id], true)); });
+      lists.appendChild(sectionLabel("Waitlist (" + wk.length + ")"));
+      if (!wk.length) lists.appendChild(el("p", "hint", "Waitlist is empty."));
+      wk.forEach(function (id) { lists.appendChild(rosterRow(g, "waitlist", id, waitlist[id], true)); });
     }
 
     function tick() { BGF.fbGet(base(g)).then(draw).catch(function () {}); }
     tick(); setInterval(tick, 4000);
-
-    global.__ckDraw = draw; // for manual refresh after an action
   }
 
   function counts(p, w) {
