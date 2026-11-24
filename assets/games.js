@@ -41,6 +41,27 @@
     return a;
   }
 
+  // ---- League Pass night check (keep in sync with GAMES in league.js) ---
+  // League check-in runs on the game's weekday, store time (Eastern), from noon.
+  // We show the check-in button on the tap page then, pointing at the same
+  // league.html sign-in the TV QR uses.
+  var LEAGUE_DOW = { pokemon: 1, onepiece: 2 };   // pokemon = Monday, onepiece = Tuesday
+  var LEAGUE_OPEN_HOUR = 12;                       // self check-in opens at noon
+  function easternNowParts() {
+    try {
+      var o = {};
+      new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "2-digit", hourCycle: "h23", weekday: "short" })
+        .formatToParts(new Date()).forEach(function (p) { o[p.type] = p.value; });
+      var DOW = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+      return { hour: (+o.hour) % 24, dow: DOW[o.weekday] };
+    } catch (e) { var d = new Date(); return { hour: d.getHours(), dow: d.getDay() }; }
+  }
+  function leagueCheckinOpen(game) {
+    if (!(game in LEAGUE_DOW)) return false;
+    var e = easternNowParts();
+    return e.dow === LEAGUE_DOW[game] && e.hour >= LEAGUE_OPEN_HOUR;
+  }
+
   // ---- "tonight" date matching -----------------------------------------
   // Events are products whose TITLE STARTS WITH the event date. We build the
   // likely string forms of today and match a title that begins with one.
@@ -127,6 +148,19 @@
 
     // 1) tonight's event
     var tonight = el("div"); body.appendChild(tonight); loadTonight(game, tonight);
+
+    // 1a) League Pass check-in — on this game's league night (Pokémon Mon /
+    // One Piece Tue, from noon), tapping a tag should also offer the league
+    // sign-in for points, the same one the TV QR points to. Shows alongside
+    // tonight's event, not instead of it.
+    if (leagueCheckinOpen(game)) {
+      var lcard = el("div", "event-card live");
+      lcard.appendChild(el("span", "ec-tag", "League night"));
+      lcard.appendChild(el("h2", "ec-title", G.short + " League check-in"));
+      lcard.appendChild(el("p", "ec-sub", "Check in to earn a league point — 4 points = 1 entry in this month's drawing."));
+      lcard.appendChild(linkBtn("⭐ Check in for league points", "league.html?game=" + game, { cls: "wide primary" }));
+      body.appendChild(lcard);
+    }
 
     // 1b) "Share your photos" — shows only when a link is set in the control
     // panel (/photoUpload). Customers who scanned a table tag are already on this
